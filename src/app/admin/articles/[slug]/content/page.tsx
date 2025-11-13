@@ -18,6 +18,7 @@ export default function ArticleContentPage() {
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [isMetadataVisible, setIsMetadataVisible] = useState(true);
 
     const [data, setData] = useState<CustomEditorData>({
         content: [],
@@ -33,6 +34,7 @@ export default function ArticleContentPage() {
         thumbnail_url?: string;
         category_slug: string;
         subcategory_slug?: string;
+        created_at?: string;
     } | null>(null);
 
     useEffect(() => {
@@ -54,7 +56,11 @@ export default function ArticleContentPage() {
             const article = await res.json();
             
             if (savedMetadata) {
-                setMetadata(JSON.parse(savedMetadata));
+                const parsed = JSON.parse(savedMetadata);
+                setMetadata({
+                    ...parsed,
+                    created_at: article.created_at || parsed.created_at,
+                });
             } else {
                 setMetadata({
                 title: article.title,
@@ -65,6 +71,7 @@ export default function ArticleContentPage() {
                 thumbnail_url: article.thumbnail_url,
                 category_slug: article.category_slug,
                 subcategory_slug: article.subcategory_slug,
+                created_at: article.created_at,
             });
         }
 
@@ -145,6 +152,8 @@ export default function ArticleContentPage() {
     };
 
     const handleSave = async (editorData: CustomEditorData) => {
+        console.log('💾 handleSave called with:', editorData);
+        console.log('💾 Current data state:', data);
         if (!metadata) {
         alert("Metadata not found");
         return;
@@ -163,6 +172,9 @@ export default function ArticleContentPage() {
             subcategory_slug: metadata.subcategory_slug || undefined,
             content: JSON.stringify(editorData),
         };
+
+        console.log('📤 Sending payload:', payload);
+        console.log('📤 Stringified content:', payload.content);
 
         let res;
         if (isEdit) {
@@ -214,12 +226,83 @@ export default function ArticleContentPage() {
     return (
         <div className="h-screen flex flex-col">
             <AdminHeader/>
-            <div className="flex-1">
-                <CustomEditor
-                    data={data}
-                    onChange={setData}
-                    onPublish={handleSave}
-                />
+            <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Metadata Header */}
+                <div className="bg-white border-b border-gray-200 flex-shrink-0">
+                    {/* Collapsed State - Minimal Bar */}
+                    {!isMetadataVisible && (
+                        <div className="h-12 flex items-center justify-center px-4 py-2">
+                            <span className="text-sm text-gray-500 font-medium">Metadata hidden</span>
+                        </div>
+                    )}
+                    
+                    {/* Expanded State */}
+                    <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                        isMetadataVisible ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'
+                    }`}>
+                        <div className="px-6 py-4">
+                            <div className="max-w-4xl mx-auto">
+                                <a
+                                    href="/admin/dashboard"
+                                    className="text-blue-600 hover:text-blue-800 font-medium transition-colors mb-4 inline-block"
+                                >
+                                    &larr; Back to Dashboard
+                                </a>
+                                
+                                {metadata.thumbnail_url && (
+                                    <img
+                                        src={metadata.thumbnail_url}
+                                        alt={metadata.title}
+                                        className="w-full h-[250px] object-cover rounded-xl shadow-lg mb-4"
+                                    />
+                                )}
+
+                                <div className="flex flex-wrap gap-2 mb-3">
+                                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                                        {metadata.category}
+                                    </span>
+                                    {metadata.subcategory && (
+                                        <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
+                                            {metadata.subcategory}
+                                        </span>
+                                    )}
+                                </div>
+
+                                <h1 className="text-3xl font-bold mb-3 text-gray-900">
+                                    {metadata.title}
+                                </h1>
+
+                                <div className="flex items-center gap-4 text-gray-600">
+                                    <span className="font-medium">By {metadata.author}</span>
+                                    {metadata.created_at && (
+                                        <>
+                                            <span>&bull;</span>
+                                            <time dateTime={metadata.created_at}>
+                                                {new Date(metadata.created_at).toLocaleDateString("en-US", {
+                                                    year: "numeric",
+                                                    month: "long",
+                                                    day: "numeric",
+                                                })}
+                                            </time>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Editor */}
+                <div className="flex-1 overflow-hidden">
+                    <CustomEditor
+                        data={data}
+                        onChange={setData}
+                        onPublish={handleSave}
+                        isMetadataVisible={isMetadataVisible}
+                        onToggleMetadata={() => setIsMetadataVisible(!isMetadataVisible)}
+                        metadata={metadata || undefined}
+                    />
+                </div>
             </div>
 
             <LoadingOverlay
