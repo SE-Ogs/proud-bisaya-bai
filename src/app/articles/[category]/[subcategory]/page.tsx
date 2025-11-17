@@ -12,7 +12,7 @@ const titleize = (slug: string) =>
     .split("-")
     .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
     .join(" ");
-
+/*  */
 export default async function SubcategoryPage({ params }: Props) {
   const { category, subcategory } = params;
   const supabase = await createClient();

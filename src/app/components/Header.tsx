@@ -6,8 +6,6 @@ import Link from "next/link";
 type NavItem = {
   label: string;
   href: string;
-  // Optional: make it explicit instead of relying on position
-  // type?: "core" | "category";
 };
 
 const defaultItems: NavItem[] = [
@@ -29,7 +27,6 @@ export default function Navbar({
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Split into core vs categories. We treat everything from "Destinations" onward as categories.
   const { coreItems, categoryItems } = useMemo(() => {
     const idx = items.findIndex(
       (i) => i.label.toLowerCase() === "destinations"
@@ -50,12 +47,13 @@ export default function Navbar({
   return (
     <>
       {/* Header */}
-      <div className="fixed top-0 left-0 right-0 z-40 bg-[var(--custom-orange)]">
-        <div className="px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+      <div className="fixed top-0 left-0 right-0 z-40 bg-[var(--custom-orange)] shadow-md">
+        <div className="px-4 py-3 flex items-center justify-between gap-4">
+          {/* Logo */}
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Link href="/home" aria-label="Go to home" title="Home">
               <img
-                src="/images/pbb_hd_logo.webp" /* change to your actual logo path */
+                src="/images/pbb_hd_logo.webp"
                 alt="Proud Bisaya Bai"
                 width={50}
                 height={50}
@@ -64,11 +62,25 @@ export default function Navbar({
             </Link>
           </div>
 
-          {/* Burger Menu */}
+          {/* Categories - visible on all screens */}
+          <div className="flex items-center gap-2 flex-wrap flex-1 justify-center">
+            {categoryItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-[var(--custom-brown)] text-xs md:text-sm font-semibold transition-all hover:scale-105 whitespace-nowrap"
+                title={item.label}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Burger button - always visible */}
           <button
             aria-label={isOpen ? "Close menu" : "Open menu"}
             onClick={() => setIsOpen((v) => !v)}
-            className="rounded p-2 text-xl hover:scale-120"
+            className="rounded p-2 text-xl hover:scale-110 flex-shrink-0"
             title={isOpen ? "Close" : "Open"}
           >
             <img
@@ -82,7 +94,7 @@ export default function Navbar({
         </div>
       </div>
 
-      {/* Sidebar Nav */}
+      {/* Sidebar Nav - contains core pages */}
       <aside
         className="fixed top-0 right-0 h-screen z-50 border-l border-gray-200 shadow-lg"
         style={{
@@ -96,7 +108,6 @@ export default function Navbar({
           backgroundColor: "white",
         }}
       >
-        {/* Semi-transparent white overlay */}
         <div className="absolute inset-0 bg-white opacity-70 pointer-events-none" />
 
         {isOpen && (
@@ -109,7 +120,7 @@ export default function Navbar({
                 <button
                   aria-label="Close menu"
                   onClick={() => setIsOpen(false)}
-                  className="rounded p-2 text-xl text-black hover:text-black hover:scale-120"
+                  className="rounded p-2 text-xl text-black hover:scale-110"
                   title="Close"
                 >
                   <img
@@ -124,7 +135,7 @@ export default function Navbar({
             </div>
 
             <nav className="px-2 py-3 overflow-y-auto flex-1">
-              {/* Core links */}
+              {/* Core pages */}
               <div className="space-y-1">
                 {coreItems.map((item) => (
                   <Link
@@ -132,45 +143,24 @@ export default function Navbar({
                     href={item.href}
                     className="flex items-center gap-2 rounded px-3 py-2 text-sm text-black font-bold hover:bg-gray-100"
                     title={item.label}
+                    onClick={() => setIsOpen(false)}
                   >
                     {item.label}
                   </Link>
                 ))}
               </div>
 
-              {/* Categories section */}
-              {categoryItems.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <div className="px-3 mb-2">
-                    <span className="text-xs uppercase tracking-wide text-gray-500">
-                      Categories
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    {categoryItems.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className="flex items-center gap-2 rounded px-3 py-2 text-sm text-gray-800 hover:underline"
-                        title={`${item.label} (Category)`}
-                      >
-                        <span className="font-medium">{item.label}</span>
-                      </Link>
-                    ))}
-                  </div>
-
-                  {/* Get Featured button */}
-                  <div className="px-3 mt-4">
-                    <Link
-                      href="/contact-us"
-                      title="Get Featured"
-                      className="w-full inline-flex items-center justify-center rounded-md bg-gradient-to-r from-[var(--custom-brown)] to-[var(--custom-orange)] text-white text-sm font-semibold px-4 py-2 transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95"
-                    >
-                      Get Featured
-                    </Link>
-                  </div>
-                </div>
-              )}
+              {/* Get Featured button */}
+              <div className="px-3 mt-6">
+                <Link
+                  href="/contact-us"
+                  title="Get Featured"
+                  className="w-full inline-flex items-center justify-center rounded-md bg-gradient-to-r from-[var(--custom-brown)] to-[var(--custom-orange)] text-white text-sm font-semibold px-4 py-2 transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Get Featured
+                </Link>
+              </div>
             </nav>
           </div>
         )}
