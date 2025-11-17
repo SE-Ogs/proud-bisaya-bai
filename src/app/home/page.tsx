@@ -135,7 +135,7 @@ const Home: React.FC = async () => {
 
         {/* Facebook Live Section */}
         {/* Comment out if not used :D */}
-        {/* <section className="bg-[var(--custom-blue)] py-12">
+        <section className="bg-[var(--custom-blue)] py-12">
           <div className="text-center container mx-auto px-4">
             <div className="text-center">
               <h3 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-2">
@@ -147,9 +147,9 @@ const Home: React.FC = async () => {
               <div
                 className="relative w-full"
                 style={{ paddingBottom: "56.25%" }}
-              > */}
-        {/* three dots (•••) in the top-right corner of the video post then select embed for proper link */}
-        {/* <iframe
+              >
+                {/* three dots (•••) in the top-right corner of the video post then select embed for proper link */}
+                <iframe
                   src="https://www.facebook.com/plugins/video.php?height=314&href=https%3A%2F%2Fwww.facebook.com%2FSparta%2Fvideos%2F680780428062150%2F&show_text=false&width=560&t=0"
                   className="absolute top-0 left-0 w-full h-full rounded-lg shadow-lg"
                   style={{ border: "none", overflow: "hidden" }}
@@ -163,7 +163,7 @@ const Home: React.FC = async () => {
               </p>
             </div>
           </div>
-        </section> */}
+        </section>
 
         {/* Featured Stories */}
         <section className="bg-white py-12">

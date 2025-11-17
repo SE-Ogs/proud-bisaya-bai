@@ -190,7 +190,7 @@ export default function ContactUsPage() {
           {/* Left */}
           <aside className="lg:col-span-2">
             <h3 className="text-4xl font-extrabold text-gray-900 mb-6">
-              <span className="mr-2 inline-block rounded-md bg-[var(--custom-orange)] px-1.5 py-0.5"></span>
+              <span className="inline-block w-1.5 h-6 md:h-7 rounded-full bg-[var(--custom-orange)] mr-2" />
               Contact Us
             </h3>
             <p className="text-sm text-gray-600 mb-6">

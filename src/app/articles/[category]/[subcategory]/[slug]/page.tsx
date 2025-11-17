@@ -5,16 +5,21 @@ import SuggestedArticlesCarousel from "@/app/components/SuggestedArticlesCarouse
 import Header from "@/app/components/Header";
 import Footer from "@/app/components/Footer";
 
+interface ArticlePageParams {
+  category: string;
+  subcategory: string;
+  slug: string;
+}
+
+// For Next.js 15 async params support:
 interface ArticlePageProps {
-  params: Promise<{
-    category: string;
-    subcategory: string;
-    slug: string;
-  }>;
+  params: Promise<ArticlePageParams> | ArticlePageParams;
 }
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
-  const rawParams = await params;
+  // Handle both sync and async params depending on Next version
+  const rawParams =
+    params instanceof Promise ? await params : (params as ArticlePageParams);
 
   const category = decodeURIComponent(rawParams.category);
   const subcategory = decodeURIComponent(rawParams.subcategory);
@@ -37,13 +42,18 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   if (error || !article) {
     console.error("Article not found:", { category, subcategory, slug, error });
 
-    const { data: debugData } = await supabase
+    const { data: debugData, error: debugError } = await supabase
       .from("articles")
       .select("category_slug, subcategory_slug, slug")
       .eq("slug", slug)
       .eq("category_slug", category);
 
-    console.log("Debug - Articles with matching category and slug:", debugData);
+    console.log(
+      "Debug - Articles with matching category and slug:",
+      debugData,
+      "debugError:",
+      debugError
+    );
 
     return notFound();
   }
@@ -96,7 +106,8 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: ArticlePageProps) {
-  const rawParams = await params;
+  const rawParams =
+    params instanceof Promise ? await params : (params as ArticlePageParams);
 
   const category = decodeURIComponent(rawParams.category);
   const subcategory = decodeURIComponent(rawParams.subcategory);
@@ -104,26 +115,34 @@ export async function generateMetadata({ params }: ArticlePageProps) {
 
   const supabase = await createClient();
 
-  const { data: article } = await supabase
+  const { data: article, error } = await supabase
     .from("articles")
     .select(
-      "title, author, category, subcategory, category_slug, subcategory_slug, thumbnail_url, summary"
+      // ⬇️ removed `summary` because the column does not exist
+      "title, author, category, subcategory, category_slug, subcategory_slug, thumbnail_url"
     )
     .eq("slug", slug)
     .eq("category_slug", category)
     .eq("subcategory_slug", subcategory)
+    .eq("isPublished", true)
+    .eq("isArchived", false)
     .single();
 
-  if (!article) {
+  if (error || !article) {
+    console.error("Metadata article not found:", {
+      category,
+      subcategory,
+      slug,
+      error,
+    });
     return { title: "Article Not Found" };
   }
 
   const title = article.title;
-  const description =
-    article.summary ??
-    `By ${article.author}${article.category ? ` - ${article.category}` : ""}${
-      article.subcategory ? ` / ${article.subcategory}` : ""
-    }`;
+  // If you later add `summary` column, you can reintroduce it.
+  const description = `By ${article.author}${
+    article.category ? ` - ${article.category}` : ""
+  }${article.subcategory ? ` / ${article.subcategory}` : ""}`;
 
   return {
     title,
