@@ -9,7 +9,7 @@
   --custom-brown: #8A3412;
   --custom-orange: #FF7800;
   --custom-red: #9C2222;
-  --custom-blue: #1A2A4F;
+  --custom-blue: #172038;
 }
 
 @theme inline {
@@ -66,4 +66,13 @@ body {
   padding: 8px;
   border-radius: 8px;
   margin-bottom: 8px;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

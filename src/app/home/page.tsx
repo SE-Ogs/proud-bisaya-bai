@@ -126,7 +126,7 @@ const Home: React.FC = async () => {
               beyond.
             </p>
             <Link href="/contact-us">
-              <button className="mt-6 px-6 py-3 bg-gradient-to-r from-[var(--custom-brown)] to-[var(--custom-orange)] text-white font-semibold rounded-lg shadow-lg cursor-pointer transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95">
+              <button className="mt-6 px-6 py-3 bg-[var(--custom-red)] text-white font-semibold rounded-lg shadow-lg cursor-pointer transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95">
                 Get Featured
               </button>
             </Link>
@@ -150,7 +150,7 @@ const Home: React.FC = async () => {
               >
                 {/* three dots (•••) in the top-right corner of the video post then select embed for proper link */}
                 <iframe
-                  src="https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2FStoneMountain64%2Fvideos%2F4143402899251757&show_text=false&width=560"
+                  src="https://www.facebook.com/plugins/video.php?height=314&href=https%3A%2F%2Fwww.facebook.com%2FSparta%2Fvideos%2F680780428062150%2F&show_text=false&width=560&t=0"
                   className="absolute top-0 left-0 w-full h-full rounded-lg shadow-lg"
                   style={{ border: "none", overflow: "hidden" }}
                   allowFullScreen={true}
@@ -401,7 +401,7 @@ const Home: React.FC = async () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
 
                   {/* LIVE badge - positioned on image */}
-                  <div className="absolute top-4 left-4">
+                  {/* <div className="absolute top-4 left-4">
                     <span
                       className="inline-flex items-center gap-2 text-white text-sm font-bold px-4 py-2 rounded-full shadow-lg uppercase"
                       style={{ backgroundColor: "var(--custom-red)" }}
@@ -412,7 +412,7 @@ const Home: React.FC = async () => {
                       </span>
                       Live
                     </span>
-                  </div>
+                  </div> */}
 
                   {/* Time badge - positioned on image */}
                   <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-lg">
@@ -457,7 +457,27 @@ const Home: React.FC = async () => {
                         clipRule="evenodd"
                       />
                     </svg>
-                    Just now • Click to read full story
+                    {(() => {
+                      const now = new Date();
+                      const postDate = new Date(breakingNews.created_at);
+                      const diffMs = now.getTime() - postDate.getTime();
+                      const diffMins = Math.floor(diffMs / 60000);
+                      const diffHours = Math.floor(diffMs / 3600000);
+                      const diffDays = Math.floor(diffMs / 86400000);
+
+                      if (diffMins < 1) return "Just now";
+                      if (diffMins < 60)
+                        return `${diffMins} minute${
+                          diffMins > 1 ? "s" : ""
+                        } ago`;
+                      if (diffHours < 24)
+                        return `${diffHours} hour${
+                          diffHours > 1 ? "s" : ""
+                        } ago`;
+                      if (diffDays === 1) return "1 day ago";
+                      return `${diffDays} days ago`;
+                    })()}
+                    {" • Click to read full story"}
                   </p>
                 </div>
               </Link>
@@ -597,34 +617,81 @@ const Home: React.FC = async () => {
         </section>
 
         {/* Our Partners Section */}
-        <section className="bg-white py-8">
-          <div className="max-w-5xl mx-auto px-4">
-            <h3 className="text-lg font-bold mb-4 text-black">Our Partners</h3>
-            <div className="flex justify-between items-center bg-white p-4 rounded-lg shadow-md">
-              <div className="flex flex-col items-center">
-                <img
-                  src="/images/cebuhomepages.webp"
-                  alt="Cebu Home Pages Logo"
-                  className="w-20 h-20 object-contain"
-                />
-                <p className="text-sm text-gray-700 mt-2">Cebu Home Pages</p>
-              </div>
-              <div className="flex flex-col items-center">
-                <img
-                  src="/images/lalamove.webp"
-                  alt="Lalamove Logo"
-                  className="w-20 h-20 rounded-full object-cover"
-                />
-                <p className="text-sm text-gray-700 mt-2">Lalamove</p>
-              </div>
-              <div className="flex flex-col items-center">
-                <img
-                  src="/images/jse.webp"
-                  alt="JSE Logo"
-                  className="w-20 h-20 rounded-full object-cover"
-                />
-                <p className="text-sm text-gray-700 mt-2">JSE</p>
-              </div>
+        <section className="bg-white py-12">
+          <div className="max-w-6xl mx-auto px-6 text-center">
+            {/* SECTION HEADER */}
+            <div className="text-center mb-10">
+              <h3 className="text-2xl md:text-3xl font-extrabold text-black tracking-tight flex items-center justify-center gap-2">
+                <span className="inline-block w-1.5 h-6 md:h-7 rounded-full bg-[var(--custom-orange)]" />
+                Our Partners
+              </h3>
+            </div>
+
+            {/* PARTNERS */}
+            <div className="flex flex-wrap justify-center gap-12">
+              {/* Partner 1 */}
+              <a
+                href="https://cebuhomepages.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center max-w-[180px] transition-transform transform hover:scale-105"
+              >
+                <div className="w-28 h-28 flex items-center justify-center bg-white shadow-md rounded-full p-4 hover:shadow-lg">
+                  <img
+                    src="/images/cebuhomepages.webp"
+                    alt="Cebu Home Pages Logo"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <p className="text-sm font-semibold text-gray-800 mt-3">
+                  Cebu Home Pages
+                </p>
+                <p className="text-xs text-gray-600 mt-1 text-center">
+                  Helping Home Buyers and Investors Since 2011
+                </p>
+              </a>
+
+              {/* Partner 2 */}
+              <a
+                href="https://www.lalamove.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center max-w-[180px] transition-transform transform hover:scale-105"
+              >
+                <div className="w-28 h-28 flex items-center justify-center bg-white shadow-md rounded-full overflow-hidden hover:shadow-lg">
+                  <img
+                    src="/images/lalamove.webp"
+                    alt="Lalamove Logo"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <p className="text-sm font-semibold text-gray-800 mt-3">
+                  Lalamove
+                </p>
+                <p className="text-xs text-gray-600 mt-1 text-center">
+                  Leading same‑day delivery app and courier service
+                </p>
+              </a>
+
+              {/* Partner 3 */}
+              <a
+                href="https://example.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center max-w-[180px] transition-transform transform hover:scale-105"
+              >
+                <div className="w-28 h-28 flex items-center justify-center bg-white shadow-md rounded-full p-4 hover:shadow-lg">
+                  <img
+                    src="/images/jse.webp"
+                    alt="JSE Logo"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <p className="text-sm font-semibold text-gray-800 mt-3">JSE</p>
+                <p className="text-xs text-gray-600 mt-1 text-center">
+                  Empowering digital brands through creative innovation
+                </p>
+              </a>
             </div>
           </div>
         </section>

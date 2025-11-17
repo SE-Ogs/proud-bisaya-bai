@@ -43,7 +43,12 @@ const Footer: React.FC = () => {
 
             {/* Social icons */}
             <div className="mt-5 flex items-center gap-4">
-              <Link href="#" aria-label="Facebook">
+              <Link
+                href="https://www.facebook.com/proudbisayabai"
+                aria-label="Facebook"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <Image
                   src="/images/fb_svg.webp"
                   alt="Facebook"
@@ -52,7 +57,12 @@ const Footer: React.FC = () => {
                   className="hover:opacity-80 transition-opacity"
                 />
               </Link>
-              <Link href="#" aria-label="Instagram">
+              <Link
+                href="https://www.instagram.com/proudbisayabai"
+                aria-label="Instagram"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <Image
                   src="/images/ig_svg.webp"
                   alt="Instagram"
@@ -61,7 +71,12 @@ const Footer: React.FC = () => {
                   className="hover:opacity-80 transition-opacity"
                 />
               </Link>
-              <Link href="#" aria-label="Twitter/X">
+              <Link
+                href="https://x.com/Proudbisayabai"
+                aria-label="Twitter/X"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <Image
                   src="/images/twitter_svg.webp"
                   alt="Twitter/X"
@@ -70,7 +85,12 @@ const Footer: React.FC = () => {
                   className="hover:opacity-80 transition-opacity"
                 />
               </Link>
-              <Link href="#" aria-label="YouTube">
+              <Link
+                href="https://www.youtube.com/channel/UCfVuNpZ2yr3OsVVkYojUsUg"
+                aria-label="YouTube"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <Image
                   src="/images/yt_svg.webp"
                   alt="YouTube"
@@ -151,7 +171,7 @@ const Footer: React.FC = () => {
               </li>
               <li>
                 <Link
-                  href="/contact-us"
+                  href="/contact-us#contact-form"
                   className="hover:text-[var(--custom-orange)] transition-colors"
                 >
                   Contact
@@ -159,7 +179,7 @@ const Footer: React.FC = () => {
               </li>
               <li>
                 <Link
-                  href="#"
+                  href="/privacy-and-support"
                   className="hover:text-[var(--custom-orange)] transition-colors"
                 >
                   Privacy &amp; Support

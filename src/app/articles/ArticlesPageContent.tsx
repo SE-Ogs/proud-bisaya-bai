@@ -120,6 +120,13 @@ export default function ArticlesPageContent({
     return category.label;
   };
 
+  // Get subcategories for active category
+  const activeSubcategories = useMemo(() => {
+    if (activeCategory === "all") return [];
+    const category = categories.find((c: any) => c.slug === activeCategory);
+    return category?.subcategories || [];
+  }, [activeCategory, categories]);
+
   // Pagination + ads
   const displayedArticles = shapedArticles.slice(0, displayCount);
   const hasMore = displayCount < shapedArticles.length;
@@ -165,6 +172,72 @@ export default function ArticlesPageContent({
               placeholder="Search by title, author, category, or subcategory..."
             />
           </div>
+
+          {/* Category Filter */}
+          <div className="mb-6">
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  setActiveCategory("all");
+                  setActiveSubcategory(undefined);
+                }}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  activeCategory === "all"
+                    ? "bg-[var(--custom-blue)] text-white"
+                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                All Categories
+              </button>
+              {categories.map((category: any) => (
+                <button
+                  key={category.slug}
+                  onClick={() => {
+                    setActiveCategory(category.slug);
+                    setActiveSubcategory(undefined);
+                  }}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    activeCategory === category.slug
+                      ? "bg-gray-900 text-white"
+                      : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  {category.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Subcategory Filter (only show if category is selected) */}
+          {activeCategory !== "all" && activeSubcategories.length > 0 && (
+            <div className="mb-6">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setActiveSubcategory(undefined)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    !activeSubcategory
+                      ? "bg-[var(--custom-orange)] text-white"
+                      : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  All
+                </button>
+                {activeSubcategories.map((subcategory: any) => (
+                  <button
+                    key={subcategory.slug}
+                    onClick={() => setActiveSubcategory(subcategory.slug)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                      activeSubcategory === subcategory.slug
+                        ? "bg-[var(--custom-orange)] text-white"
+                        : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                    }`}
+                  >
+                    {subcategory.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Title and count */}
           <div className="mb-8">
@@ -215,7 +288,7 @@ export default function ArticlesPageContent({
                 <div className="flex justify-center pt-8 mt-6">
                   <button
                     onClick={loadMore}
-                    className="px-8 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors shadow-md hover:shadow-lg"
+                    className="px-8 py-3 bg-[var(--custom-blue)] text-white rounded-lg font-medium hover:bg-gray-800 transition-colors shadow-md hover:shadow-lg"
                   >
                     Load More Articles
                   </button>

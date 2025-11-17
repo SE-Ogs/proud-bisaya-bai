@@ -185,7 +185,7 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
         )}
       </div>
 
-      <footer className="mt-16 pt-8 border-t border-gray-200">
+      <footer className="mt-8 pt-4 border-t border-gray-200">
         <div className="flex justify-between items-center">
           {/* Back to articles link removed as it's already at the top */}
         </div>
