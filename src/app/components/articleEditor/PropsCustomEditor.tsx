@@ -1,4 +1,3 @@
-// Component types matching your Puck config
 export const COMPONENT_TYPES = {
   HEADING: "Heading",
   PARAGRAPH: "Paragraph",
@@ -18,6 +17,8 @@ export interface ComponentProps {
   src?: string;
   alt?: string;
   caption?: string;
+  width?: number;
+  height?: number;
   columns?: Array<{ components: Component[] }>;
   columnCount?: number;
 }
@@ -30,6 +31,12 @@ export interface Component {
 export interface CustomEditorData {
   content: Component[];
   root?: { props: Record<string, any> };
+  title?: string;
+  slug?: string;
+  author?: string;
+  category?: string;
+  subcategory?: string;
+  thumbnail_url?: string;
 }
 
 export interface RichTextEditorProps {
@@ -67,4 +74,15 @@ export interface CustomEditorProps {
   data: CustomEditorData;
   onChange: (data: CustomEditorData) => void;
   onPublish: (data: CustomEditorData) => void;
+  isMetadataVisible?: boolean;
+  onToggleMetadata?: () => void;
+  metadata?: {
+    title?: string;
+    slug?: string;
+    author?: string;
+    category?: string;
+    subcategory?: string;
+    thumbnail_url?: string;
+    created_at?: string;
+  };
 }

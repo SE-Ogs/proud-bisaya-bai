@@ -37,6 +37,202 @@ const uploadImage = async (file: File): Promise<string> => {
   return data.url;
 };
 
+// Resizable Image Component
+interface ResizableImageProps {
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  onResize: (width: number, height: number) => void;
+  onRemove: () => void;
+}
+
+const ResizableImage: React.FC<ResizableImageProps> = ({
+  src,
+  alt,
+  width: initialWidth,
+  height: initialHeight,
+  onResize,
+  onRemove
+}) => {
+  const [dimensions, setDimensions] = useState({
+    width: initialWidth || 0,
+    height: initialHeight || 0
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeHandle, setResizeHandle] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const startPos = useRef({ x: 0, y: 0, width: 0, height: 0 });
+
+  // Load natural dimensions when image loads
+  useEffect(() => {
+    if (imageRef.current && !initialWidth && !initialHeight) {
+      const img = imageRef.current;
+      if (img.complete) {
+        setDimensions({
+          width: img.naturalWidth,
+          height: img.naturalHeight
+        });
+      } else {
+        img.onload = () => {
+          setDimensions({
+            width: img.naturalWidth,
+            height: img.naturalHeight
+          });
+        };
+      }
+    }
+  }, [src, initialWidth, initialHeight]);
+
+  const handleMouseDown = (e: React.MouseEvent, handle: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setIsResizing(true);
+    setResizeHandle(handle);
+    
+    startPos.current = {
+      x: e.clientX,
+      y: e.clientY,
+      width: dimensions.width,
+      height: dimensions.height
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!resizeHandle) return;
+
+      const deltaX = e.clientX - startPos.current.x;
+      const deltaY = e.clientY - startPos.current.y;
+
+      let newWidth = startPos.current.width;
+      let newHeight = startPos.current.height;
+
+      const aspectRatio = startPos.current.width / startPos.current.height;
+
+      switch (handle) {
+        case 'se': // bottom-right
+          newWidth = Math.max(100, startPos.current.width + deltaX);
+          newHeight = newWidth / aspectRatio;
+          break;
+        case 'sw': // bottom-left
+          newWidth = Math.max(100, startPos.current.width - deltaX);
+          newHeight = newWidth / aspectRatio;
+          break;
+        case 'ne': // top-right
+          newWidth = Math.max(100, startPos.current.width + deltaX);
+          newHeight = newWidth / aspectRatio;
+          break;
+        case 'nw': // top-left
+          newWidth = Math.max(100, startPos.current.width - deltaX);
+          newHeight = newWidth / aspectRatio;
+          break;
+        case 'e': // right
+          newWidth = Math.max(100, startPos.current.width + deltaX);
+          newHeight = newWidth / aspectRatio;
+          break;
+        case 'w': // left
+          newWidth = Math.max(100, startPos.current.width - deltaX);
+          newHeight = newWidth / aspectRatio;
+          break;
+        case 's': // bottom
+          newHeight = Math.max(100, startPos.current.height + deltaY);
+          newWidth = newHeight * aspectRatio;
+          break;
+        case 'n': // top
+          newHeight = Math.max(100, startPos.current.height - deltaY);
+          newWidth = newHeight * aspectRatio;
+          break;
+      }
+
+      setDimensions({ width: newWidth, height: newHeight });
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      setResizeHandle(null);
+      onResize(dimensions.width, dimensions.height);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const ResizeHandle = ({ position, cursor }: { position: string; cursor: string }) => (
+    <div
+      className={`absolute w-3 h-3 bg-blue-500 border-2 border-white rounded-full opacity-0 group-hover/resize:opacity-100 transition-opacity cursor-${cursor} z-10 ${
+        position.includes('n') ? '-top-1.5' : ''
+      } ${position.includes('s') ? '-bottom-1.5' : ''} ${
+        position.includes('e') ? '-right-1.5' : ''
+      } ${position.includes('w') ? '-left-1.5' : ''} ${
+        position === 'n' || position === 's' ? 'left-1/2 -translate-x-1/2' : ''
+      } ${position === 'e' || position === 'w' ? 'top-1/2 -translate-y-1/2' : ''}`}
+      onMouseDown={(e) => handleMouseDown(e, position)}
+    />
+  );
+
+  return (
+    <div className="relative inline-block max-w-full">
+      <div
+        ref={containerRef}
+        className="relative group/resize"
+        style={{
+          width: dimensions.width ? `${dimensions.width}px` : 'auto',
+          height: dimensions.height ? `${dimensions.height}px` : 'auto',
+          maxWidth: '100%'
+        }}
+      >
+        <img
+          ref={imageRef}
+          src={src}
+          alt={alt}
+          className="w-full h-full object-contain rounded-lg select-none"
+          draggable={false}
+        />
+
+        {/* Remove button */}
+        <button
+          type="button"
+          onClick={onRemove}
+          className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover/resize:opacity-100 transition-opacity hover:bg-red-600 shadow-lg z-20"
+          title="Remove image"
+        >
+          <X size={16} />
+        </button>
+
+        {/* Resize indicator */}
+        <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded opacity-0 group-hover/resize:opacity-100 transition-opacity pointer-events-none z-20">
+          {Math.round(dimensions.width)} × {Math.round(dimensions.height)}
+        </div>
+
+        {/* Resize handles */}
+        <ResizeHandle position="nw" cursor="nw-resize" />
+        <ResizeHandle position="n" cursor="n-resize" />
+        <ResizeHandle position="ne" cursor="ne-resize" />
+        <ResizeHandle position="e" cursor="e-resize" />
+        <ResizeHandle position="se" cursor="se-resize" />
+        <ResizeHandle position="s" cursor="s-resize" />
+        <ResizeHandle position="sw" cursor="sw-resize" />
+        <ResizeHandle position="w" cursor="w-resize" />
+
+        {/* Resize overlay */}
+        {isResizing && (
+          <div className="absolute inset-0 border-2 border-blue-500 rounded-lg pointer-events-none" />
+        )}
+      </div>
+
+      {/* Dimensions display when resizing */}
+      {isResizing && (
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/90 text-white px-4 py-2 rounded-lg text-sm font-mono z-50 pointer-events-none">
+          {Math.round(dimensions.width)} × {Math.round(dimensions.height)}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Rich Text Editor Component
 export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   content,
@@ -55,6 +251,10 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   const handleInput = () => {
     if (editorRef.current && !isUpdatingRef.current) {
+      // Mark that user is making an action
+      if ((window as any).__setUserAction) {
+        (window as any).__setUserAction();
+      }
       onChange(editorRef.current.innerHTML);
     }
   };
@@ -71,21 +271,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         onBlur?.();
       }
     }, 150);
-  };
-
-  const uploadImage = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const res = await fetch("/api/admin/upload-image", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Image upload failed");
-
-    return data.url;
   };
 
   useEffect(() => {
@@ -235,6 +420,8 @@ export const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({
   removeFromMainCanvas,
 }) => {
   const [showDropZone, setShowDropZone] = useState(false);
+  const imageInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
+  const [uploadingImages, setUploadingImages] = useState<{ [key: number]: boolean }>({});
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -321,10 +508,11 @@ export const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({
     updateColumn(components.filter((_, i) => i !== compIndex));
   };
 
-  const updateColumnComponent = (
-    compIndex: number,
-    newProps: ComponentProps
-  ) => {
+  const updateColumnComponent = (compIndex: number, newProps: ComponentProps) => {
+    // Mark user action
+    if ((window as any).__setUserAction) {
+      (window as any).__setUserAction();
+    }
     const newComponents = [...components];
     newComponents[compIndex] = { ...newComponents[compIndex], props: newProps };
     updateColumn(newComponents);
@@ -335,6 +523,28 @@ export const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({
     const [movedComponent] = newComponents.splice(fromIndex, 1);
     newComponents.splice(toIndex, 0, movedComponent);
     updateColumn(newComponents);
+  };
+
+  const handleColumnImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, compIndex: number) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImages(prev => ({ ...prev, [compIndex]: true }));
+    try {
+      const imageUrl = await uploadImage(file);
+      updateColumnComponent(compIndex, { 
+        ...components[compIndex].props, 
+        src: imageUrl,
+        alt: components[compIndex].props.alt || file.name.replace(/\.[^/.]+$/, "")
+      });
+    } catch (error: any) {
+      alert(`Upload failed: ${error.message}`);
+    } finally {
+      setUploadingImages(prev => ({ ...prev, [compIndex]: false }));
+      if (imageInputRefs.current[compIndex]) {
+        imageInputRefs.current[compIndex]!.value = "";
+      }
+    }
   };
 
   const renderColumnComponent = (comp: Component, compIndex: number) => {
@@ -376,26 +586,58 @@ export const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({
       case COMPONENT_TYPES.PARAGRAPH:
         return (
           <RichTextEditor
-            content={comp.props.content || "<p>Type here...</p>"}
+            content={comp.props.content || '<p>Type here...</p>'}
             onChange={(html: string) =>
-              updateColumnComponent(compIndex, { ...comp.props, content: html })
-            }
+              {
+                const { text, ...restProps } = comp.props;
+                updateColumnComponent(compIndex, { ...restProps, content: html });
+              }}
           />
         );
 
       case COMPONENT_TYPES.IMAGE:
         return (
           <div className="space-y-2">
+            <input
+              ref={(el) => { imageInputRefs.current[compIndex] = el; }}
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleColumnImageUpload(e, compIndex)}
+              className="hidden"
+            />
             {comp.props.src ? (
-              <img
+              <ResizableImage
                 src={comp.props.src}
-                alt={comp.props.alt || ""}
-                className="w-full rounded"
+                alt={comp.props.alt || ''}
+                width={comp.props.width}
+                height={comp.props.height}
+                onResize={(width, height) => {
+                  updateColumnComponent(compIndex, { 
+                    ...comp.props, 
+                    width, 
+                    height 
+                  });
+                }}
+                onRemove={() => {
+                  updateColumnComponent(compIndex, { 
+                    ...comp.props, 
+                    src: '',
+                    alt: '',
+                    caption: '',
+                    width: undefined,
+                    height: undefined
+                  });
+                }}
               />
             ) : (
-              <div className="w-full h-32 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-sm">
-                No image
-              </div>
+              <button
+                type="button"
+                onClick={() => imageInputRefs.current[compIndex]?.click()}
+                disabled={uploadingImages[compIndex]}
+                className="w-full h-32 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400 text-sm font-medium hover:border-gray-400 hover:text-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {uploadingImages[compIndex] ? "Uploading..." : "Click to upload image"}
+              </button>
             )}
             <input
               type="text"
@@ -407,7 +649,21 @@ export const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({
                 })
               }
               className="w-full p-2 text-sm border rounded"
-              placeholder="Image URL..."
+              placeholder="Or paste image URL..."
+            />
+            <input
+              type="text"
+              value={comp.props.alt || ''}
+              onChange={(e) => updateColumnComponent(compIndex, { ...comp.props, alt: e.target.value })}
+              className="w-full p-2 text-sm border rounded"
+              placeholder="Alt text..."
+            />
+            <input
+              type="text"
+              value={comp.props.caption || ''}
+              onChange={(e) => updateColumnComponent(compIndex, { ...comp.props, caption: e.target.value })}
+              className="w-full p-2 text-sm border rounded"
+              placeholder="Caption (optional)..."
             />
           </div>
         );
@@ -460,11 +716,11 @@ export const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({
 };
 
 // Component Renderer
-export const ComponentRenderer: React.FC<ComponentRendererInternalProps> = ({
-  component,
-  index,
-  updateComponent,
-  deleteComponent,
+export const ComponentRenderer: React.FC<ComponentRendererInternalProps> = ({ 
+  component, 
+  index, 
+  updateComponent, 
+  deleteComponent, 
   moveComponent,
   removeFromMainCanvas,
   setUserActionFlag,
@@ -472,19 +728,34 @@ export const ComponentRenderer: React.FC<ComponentRendererInternalProps> = ({
   setComponentsDirect,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [showDropIndicator, setShowDropIndicator] = useState<
-    "top" | "bottom" | null
-  >(null);
+  const [showDropIndicator, setShowDropIndicator] = useState<'top' | 'bottom' | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const dragHandleRef = useRef<HTMLDivElement>(null);
 
   const handleDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("componentIndex", index.toString());
-    e.dataTransfer.setData("isNewComponent", "false");
+    // Only allow drag from the grip handle
+    if (e.target !== dragHandleRef.current && !dragHandleRef.current?.contains(e.target as Node)) {
+      e.preventDefault();
+      return;
+    }
+    
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('componentIndex', index.toString());
+    e.dataTransfer.setData('isNewComponent', 'false');
+    setIsDragging(true);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    setShowDropIndicator(null);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
+    // Don't show drop indicators when editing text
+    if (isEditing) return;
+    
     e.preventDefault();
     e.stopPropagation();
 
@@ -505,6 +776,9 @@ export const ComponentRenderer: React.FC<ComponentRendererInternalProps> = ({
   };
 
   const handleDrop = (e: React.DragEvent) => {
+    // Don't allow drops when editing text
+    if (isEditing) return;
+    
     e.preventDefault();
     e.stopPropagation();
 
@@ -556,21 +830,6 @@ export const ComponentRenderer: React.FC<ComponentRendererInternalProps> = ({
     }
   };
 
-  const uploadImage = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const res = await fetch("/api/admin/upload-image", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Image upload failed");
-
-    return data.url;
-  };
-
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -594,12 +853,26 @@ export const ComponentRenderer: React.FC<ComponentRendererInternalProps> = ({
   };
 
   const handleRemoveImage = () => {
-    updateComponent(index, {
-      ...component.props,
-      src: "",
-      alt: "",
-      caption: "",
+    updateComponent(index, { 
+      ...component.props, 
+      src: '',
+      alt: '',
+      caption: '',
+      width: undefined,
+      height: undefined
     });
+  };
+
+  // Handle text selection state
+  const handleTextFocus = () => {
+    setIsEditing(true);
+  };
+
+  const handleTextBlur = () => {
+    // Use setTimeout to allow click events to complete before setting editing to false
+    setTimeout(() => {
+      setIsEditing(false);
+    }, 150);
   };
 
   const renderComponent = () => {
@@ -618,6 +891,8 @@ export const ComponentRenderer: React.FC<ComponentRendererInternalProps> = ({
               }
               className="w-full text-3xl font-bold p-2 border-2 border-dashed border-transparent hover:border-gray-300 focus:border-blue-500 outline-none rounded"
               placeholder="Heading text..."
+              onFocus={handleTextFocus}
+              onBlur={handleTextBlur}
             />
             <select
               value={component.props.level || 2}
@@ -641,12 +916,13 @@ export const ComponentRenderer: React.FC<ComponentRendererInternalProps> = ({
       case COMPONENT_TYPES.PARAGRAPH:
         return (
           <RichTextEditor
-            content={component.props.content || "<p>Start typing...</p>"}
-            onChange={(html: string) =>
-              updateComponent(index, { ...component.props, content: html })
-            }
-            onFocus={() => setIsEditing(true)}
-            onBlur={() => setIsEditing(false)}
+            content={component.props.content || '<p>Start typing...</p>'}
+            onChange={(html: string) => {
+              const { text, ...restProps } = component.props;
+              updateComponent(index, { ...component.props, content: html });
+            }}
+            onFocus={handleTextFocus}
+            onBlur={handleTextBlur}
           />
         );
 
@@ -661,21 +937,20 @@ export const ComponentRenderer: React.FC<ComponentRendererInternalProps> = ({
               className="hidden"
             />
             {component.props.src ? (
-              <div className="relative group/image">
-                <img
-                  src={component.props.src}
-                  alt={component.props.alt || ""}
-                  className="w-full rounded-lg"
-                />
-                <button
-                  type="button"
-                  onClick={handleRemoveImage}
-                  className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover/image:opacity-100 transition-opacity hover:bg-red-600 shadow-lg"
-                  title="Remove image"
-                >
-                  <X size={16} />
-                </button>
-              </div>
+              <ResizableImage
+                src={component.props.src}
+                alt={component.props.alt || ''}
+                width={component.props.width}
+                height={component.props.height}
+                onResize={(width, height) => {
+                  updateComponent(index, { 
+                    ...component.props, 
+                    width, 
+                    height 
+                  });
+                }}
+                onRemove={handleRemoveImage}
+              />
             ) : (
               <button
                 type="button"
@@ -697,6 +972,8 @@ export const ComponentRenderer: React.FC<ComponentRendererInternalProps> = ({
               }
               className="w-full p-2 border rounded"
               placeholder="Image URL..."
+              onFocus={handleTextFocus}
+              onBlur={handleTextBlur}
             />
             <input
               type="text"
@@ -709,6 +986,8 @@ export const ComponentRenderer: React.FC<ComponentRendererInternalProps> = ({
               }
               className="w-full p-2 border rounded"
               placeholder="Alt text..."
+              onFocus={handleTextFocus}
+              onBlur={handleTextBlur}
             />
             <input
               type="text"
@@ -721,6 +1000,8 @@ export const ComponentRenderer: React.FC<ComponentRendererInternalProps> = ({
               }
               className="w-full p-2 border rounded"
               placeholder="Caption (optional)..."
+              onFocus={handleTextFocus}
+              onBlur={handleTextBlur}
             />
           </div>
         );
@@ -834,8 +1115,7 @@ export const ComponentRenderer: React.FC<ComponentRendererInternalProps> = ({
       className={`group relative bg-white rounded-lg p-4 mb-4 border-2 ${
         isEditing ? "border-blue-500" : "border-gray-200"
       } hover:border-gray-300 transition-colors`}
-      draggable={!isEditing}
-      onDragStart={handleDragStart}
+      // Remove draggable from the main container - only the grip handle should be draggable
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -846,8 +1126,15 @@ export const ComponentRenderer: React.FC<ComponentRendererInternalProps> = ({
       {showDropIndicator === "bottom" && (
         <div className="absolute -bottom-1 left-0 right-0 h-1 bg-blue-500 rounded-full" />
       )}
-
-      <div className="absolute -left-8 top-4 cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
+      
+      {/* Drag handle - only this element should be draggable */}
+      <div 
+        ref={dragHandleRef}
+        className="absolute -left-8 top-4 cursor-move opacity-0 group-hover:opacity-100 transition-opacity"
+        draggable
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
         <GripVertical size={20} className="text-gray-400" />
       </div>
 

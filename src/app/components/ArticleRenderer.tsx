@@ -76,13 +76,13 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
 
       case COMPONENT_TYPES.PARAGRAPH:
         return (
-          <div
+          <div 
             key={index}
-            className="text-lg leading-relaxed mb-6 text-gray-700 prose prose-lg max-w-none"
-            dangerouslySetInnerHTML={{ __html: props.content || "" }}
+            className="prose prose-lg max-w-none mb-6"
+            dangerouslySetInnerHTML={{ __html: props.content || '' }}
           />
         );
-
+      
       case COMPONENT_TYPES.RICH_TEXT:
         return (
           <div
@@ -143,7 +143,7 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
     <article className="max-w-4xl mx-auto px-6 py-2 bg-white">
       <a
         href="/articles"
-        className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+        className="block text-blue-600 hover:text-blue-800 font-medium transition-colors mb-6"
       >
         &larr; Back to Articles
       </a>
@@ -196,7 +196,6 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
 
       <footer className="mt-8 pt-4 border-t border-gray-200">
         <div className="flex justify-between items-center">
-          {/* Back to articles link removed as it's already at the top */}
         </div>
       </footer>
     </article>
