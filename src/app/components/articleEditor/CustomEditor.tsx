@@ -8,8 +8,8 @@ import {
   Component,
   ComponentProps,
   CustomEditorData,
-  CustomEditorProps
-} from '@/app/components/articleEditor/PropsCustomEditor';
+  CustomEditorProps,
+} from "@/app/components/articleEditor/PropsCustomEditor";
 
 export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = true, onToggleMetadata, metadata }: CustomEditorProps) {
   const [components, setComponents] = useState<Component[]>(data.content || []);
@@ -55,7 +55,6 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
     }
   }, [data]);
 
-  // Push updates to parent (onChange) - FIXED
   useEffect(() => {
     if (isInitialMountRef.current) return;
 
@@ -70,21 +69,21 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
       
       // Include all metadata fields when calling onChange
       onChange({ 
-        ...data, // This includes title, slug, author, category, etc.
+        ...data,
         content: components 
       });
     }
-  }, [components, onChange, data]); // Changed dependency from data.root to data
+  }, [components, onChange, data]);
 
   // Default props per component type
   const getDefaultProps = (type: string): ComponentProps => {
     switch (type) {
       case COMPONENT_TYPES.HEADING:
-        return { text: '', level: 2 };
+        return { text: "", level: 2 };
       case COMPONENT_TYPES.PARAGRAPH:
-        return { content: '<p></p>' };
+        return { content: "<p></p>" };
       case COMPONENT_TYPES.IMAGE:
-        return { src: '', alt: '', caption: '' };
+        return { src: "", alt: "", caption: "" };
       case COMPONENT_TYPES.COLUMNS:
         return { columns: [{ components: [] }, { components: [] }] };
       default:
@@ -137,8 +136,8 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
 
   const handleCanvasDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    const isNewComponent = e.dataTransfer.types.includes('componenttype');
-    if (isNewComponent || e.dataTransfer.types.includes('componentindex')) {
+    const isNewComponent = e.dataTransfer.types.includes("componenttype");
+    if (isNewComponent || e.dataTransfer.types.includes("componentindex")) {
       setShowCanvasDropZone(true);
     }
   };
@@ -187,7 +186,7 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
   const handleSave = () => {
     console.log('🔴 SAVE clicked - components:', components);
     const publishData = { 
-      ...data, // Include all metadata (title, slug, author, category, etc.)
+      ...data,
       content: components 
     };
     console.log('🔴 Calling onPublish with:', publishData);

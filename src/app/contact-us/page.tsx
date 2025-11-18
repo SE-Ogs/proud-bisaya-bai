@@ -63,7 +63,7 @@ export default function ContactUsPage() {
       {/* Advertising Packages */}
       <section className="py-16">
         <div className="mx-auto max-w-5xl px-4 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+          <h2 className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--custom-brown)] to-[var(--custom-orange)]">
             Join our growing community — Advertise with us today
           </h2>
           <p className="mt-2 text-sm text-gray-500">
@@ -74,63 +74,110 @@ export default function ContactUsPage() {
             <a
               href="#contact-form"
               onClick={goToContact}
-              className="inline-flex items-center rounded-lg bg-[var(--custom-brown)] px-8 py-4 text-white text-base font-semibold shadow-sm transition-transform transform hover:scale-105 hover:shadow-xl"
+              className="inline-flex items-center rounded-lg bg-[var(--custom-red)] px-8 py-4 text-white text-base font-semibold shadow-sm transition-transform transform hover:scale-105 hover:shadow-xl"
             >
               Get featured now!
             </a>
           </div>
         </div>
+      </section>
 
-        {/* Our Services (has grayish background) */}
-        <div className="mt-12 bg-gray-50 py-12">
-          <div className="mx-auto max-w-5xl px-4 text-center">
-            <h2 className="text-3xl font-bold text-gray-900">Our Services</h2>
-            <p className="mt-2 text-gray-600 max-w-2xl mx-auto">
-              Explore a variety of professional media and marketing services
-              designed to amplify your brand presence and connect with your
-              audience.
-            </p>
-          </div>
+      {/* Our Services (has grayish background) */}
+      <section className="relative mt-16 bg-gradient-to-b from-gray-50 via-white to-gray-100 py-16">
+        <div className="mx-auto max-w-6xl px-6 text-center">
+          {/* Section Title */}
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">
+            Our Services
+          </h2>
+          <div className="h-1.5 w-16 bg-[var(--custom-orange)] rounded-full mx-auto mt-3 mb-4" />
+          <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
+            Explore a variety of creative and digital marketing services
+            designed to amplify your brand’s story and connect with proud Bisaya
+            audiences.
+          </p>
+        </div>
 
-          {/* Package Cards */}
-          <div className="mx-auto mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2 max-w-5xl px-4">
-            {packages.map((pkg) => (
-              <div
-                key={pkg.name}
-                className="flex flex-col justify-between rounded-xl border border-gray-200 bg-white p-8 shadow-md transition-transform transform hover:-translate-y-1 hover:shadow-lg"
+        {/* Cards Grid */}
+        <div className="mx-auto mt-12 max-w-6xl grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-2 px-6">
+          {[
+            {
+              name: "Media & Content Creation",
+              description:
+                "Crafting authentic visuals and stories that spark engagement.",
+              features: [
+                "Video, Photography, and Graphic Design",
+                "Social Media Management",
+                "Vlogs and Short-Form Content (Reels, Tiktok, YouTube Shorts)",
+                "Branding and Visual Storytelling",
+              ],
+            },
+            {
+              name: "Promotions & Digital Marketing",
+              description:
+                "Building visibility through creative online campaigns.",
+              features: [
+                "Local Business Features",
+                "Tourism and Cultural Campaigns",
+                "Influencer Collaborations",
+                "Online Giveaways and Product Launches",
+              ],
+            },
+            {
+              name: "Events & Coverage",
+              description:
+                "Bringing your moments to life with energy and precision.",
+              features: [
+                "Event Hosting (Onsite and Online)",
+                "Coverage of Festivals, Launches, and Ceremonies",
+                "Press and Media Kit Preparation",
+              ],
+            },
+            {
+              name: "Photography & Videography",
+              description:
+                "Capturing your brand story through vibrant visuals.",
+              features: [
+                "Lifestyle and Portrait Sessions",
+                "Product Photography",
+                "Aerial Drone Coverage",
+                "Editorial and Conceptual Shots",
+              ],
+            },
+          ].map((service, index) => (
+            <div
+              key={index}
+              className="flex flex-col items-center text-center rounded-2xl bg-white border border-gray-100 shadow-md p-8 transition-all transform hover:-translate-y-2 hover:shadow-xl hover:border-[var(--custom-orange)]"
+            >
+              <h3 className="text-xl font-bold text-gray-900 mb-1">
+                {service.name}
+              </h3>
+              <p className="text-sm text-gray-500 mb-5">
+                {service.description}
+              </p>
+
+              <ul className="space-y-3 text-left w-full max-w-sm mx-auto">
+                {service.features.map((f, subIdx) => (
+                  <li key={subIdx} className="flex items-start gap-3">
+                    <span className="mt-2 inline-block h-1.5 w-1.5 rounded-full bg-[var(--custom-orange)] flex-shrink-0" />
+                    <p className="text-sm text-gray-700">{f}</p>
+                  </li>
+                ))}
+              </ul>
+
+              <a
+                href="#contact-form"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document
+                    .getElementById("contact-form")
+                    ?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="mt-8 inline-block w-full rounded-md bg-gradient-to-r from-[var(--custom-brown)] to-[var(--custom-orange)] text-white px-6 py-3 text-sm font-semibold transition-transform transform hover:scale-105 hover:shadow-lg"
               >
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">
-                    {pkg.name}
-                  </h3>
-
-                  <ul className="space-y-3">
-                    {pkg.features.map((f, idx) => (
-                      <li key={idx} className="flex items-start gap-3">
-                        <span className="mt-2 inline-block h-1.5 w-1.5 rounded-full bg-black flex-shrink-0" />
-                        <div>
-                          <p className="text-sm font-semibold text-gray-800">
-                            {f.text}
-                          </p>
-                          {f.note && (
-                            <p className="text-xs text-gray-500">{f.note}</p>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <a
-                  href="#contact-form"
-                  onClick={goToContact}
-                  className="mt-8 w-full text-center rounded-md bg-[var(--custom-orange)] text-white px-4 py-3 text-sm font-semibold transition-transform transform hover:scale-105 hover:shadow-lg"
-                >
-                  {pkg.cta}
-                </a>
-              </div>
-            ))}
-          </div>
+                Get Started
+              </a>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -143,7 +190,7 @@ export default function ContactUsPage() {
           {/* Left */}
           <aside className="lg:col-span-2">
             <h3 className="text-4xl font-extrabold text-gray-900 mb-6">
-              <span className="mr-2 inline-block rounded-md bg-[var(--custom-orange)] px-1.5 py-0.5"></span>
+              <span className="inline-block w-1.5 h-6 md:h-7 rounded-full bg-[var(--custom-orange)] mr-2" />
               Contact Us
             </h3>
             <p className="text-sm text-gray-600 mb-6">
@@ -276,7 +323,7 @@ export default function ContactUsPage() {
 
                 <button
                   type="submit"
-                  className="w-full mt-4 rounded-md bg-[var(--custom-brown)] text-white px-4 py-3 text-sm font-semibold transition-transform transform hover:scale-105 hover:shadow-lg"
+                  className="w-full mt-4 rounded-md bg-[var(--custom-red)] text-white px-4 py-3 text-sm font-semibold transition-transform transform hover:scale-105 hover:shadow-lg"
                 >
                   Send message
                 </button>
@@ -284,10 +331,10 @@ export default function ContactUsPage() {
                 <p className="mt-2 text-center text-[11px] text-gray-500">
                   By messaging us, you agree to our{" "}
                   <a
-                    href="/privacy"
+                    href="/privacy-and-support"
                     className="font-medium text-gray-700 underline"
                   >
-                    Privacy Policy
+                    Privacy & Support
                   </a>
                 </p>
               </form>

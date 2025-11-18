@@ -1,9 +1,9 @@
 export const COMPONENT_TYPES = {
-  HEADING: 'Heading',
-  PARAGRAPH: 'Paragraph',
-  RICH_TEXT: 'TiptapRichText',
-  IMAGE: 'ImageBlock',
-  COLUMNS: 'ColumnBlock'
+  HEADING: "Heading",
+  PARAGRAPH: "Paragraph",
+  RICH_TEXT: "TiptapRichText",
+  IMAGE: "ImageBlock",
+  COLUMNS: "ColumnBlock",
 } as const;
 
 // Column count options
