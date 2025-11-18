@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { LoadingOverlay } from "@/app/components/LoadingOverlay";
 import AdminHeader from "@/app/components/AdminHeader";
 import { CustomEditor } from "@/app/components/articleEditor/CustomEditor";
-import type { CustomEditorData } from "@/app/components/articleEditor/CustomEditor";
+import type { CustomEditorData } from "@/app/components/articleEditor/PropsCustomEditor";
 
 export default function ArticleContentPage() {
   const router = useRouter();
