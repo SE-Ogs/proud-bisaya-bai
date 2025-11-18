@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArticleMetadataHeader } from "@/app/components/articleEditor/AdminMetadataHeader";
+import { ArticleMetadataHeader } from "@/app/components/AdminMetadataHeader";
 import { LoadingOverlay } from "@/app/components/LoadingOverlay";
 import { CATEGORIES } from "@/app/components/Categories";
 import AdminHeader from "@/app/components/AdminHeader";
