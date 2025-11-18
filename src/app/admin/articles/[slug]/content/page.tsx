@@ -4,8 +4,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { LoadingOverlay } from "@/app/components/LoadingOverlay";
 import AdminHeader from "@/app/components/AdminHeader";
-import { CustomEditor } from "@/app/components/articleEditor/CustomEditor";
-import type { CustomEditorData } from "@/app/components/articleEditor/PropsCustomEditor";
+import { CustomEditor } from "@/app/components/CustomEditor";
+import type { CustomEditorData } from "@/app/components/CustomEditor";
 
 export default function ArticleContentPage() {
     const router = useRouter();
@@ -214,6 +214,43 @@ export default function ArticleContentPage() {
     return (
         <div className="h-screen flex flex-col">
             <AdminHeader/>
+            
+            {/* Header Section */}
+            <div className="bg-white border-b shadow-sm px-6 py-4">
+                <button
+                onClick={() => router.push(`/admin/articles/${slug}/metadata`)}
+                className="text-blue-600 hover:underline text-sm mb-2 inline-block"
+                >
+                ← Back to Metadata
+                </button>
+                <h1 className="text-2xl text-black font-bold">
+                {isEdit ? "Edit" : "Create"} Content: {metadata.title}
+                </h1>
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                    <strong>💡 How to add images:</strong> Click "Upload Image" button
+                    below, select your image, and the URL will be copied to your
+                    clipboard. Then paste it into the Image Block's "Image URL" field
+                    in the editor.
+                </p>
+                </div>
+                <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                {uploading ? "Uploading..." : "📤 Upload Image"}
+                </button>
+                <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                />
+            </div>
+            
+            {/* Custom Editor */}
             <div className="flex-1">
                 <CustomEditor
                     data={data}
