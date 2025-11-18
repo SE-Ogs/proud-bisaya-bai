@@ -717,63 +717,86 @@ export default function AdminDashboardPage() {
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 text-center align-middle border-b border-gray-200">
                         <div className="flex flex-col gap-2 items-center">
-                          <button
-                            onClick={() =>
-                              handleToggleEditorsPick(a.slug, a.isEditorsPick)
-                            }
-                            className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 w-full max-w-[140px] ${
-                              a.isEditorsPick
-                                ? "bg-yellow-50 border-yellow-300 text-yellow-700 shadow-sm"
-                                : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
-                            }`}
-                            aria-label={
-                              a.isEditorsPick
-                                ? "Remove from favorites"
-                                : "Add to favorites"
-                            }
-                          >
-                            <Star
-                              size={18}
-                              className={
+                          {/* Favorite / Editor's Picks */}
+                          <div className="relative group w-full max-w-[140px]">
+                            <button
+                              onClick={() =>
+                                handleToggleEditorsPick(a.slug, a.isEditorsPick)
+                              }
+                              className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 w-full ${
                                 a.isEditorsPick
-                                  ? "text-yellow-500 fill-current"
-                                  : "text-gray-400"
+                                  ? "bg-yellow-50 border-yellow-300 text-yellow-700 shadow-sm"
+                                  : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                              }`}
+                              aria-label={
+                                a.isEditorsPick
+                                  ? "Remove from favorites"
+                                  : "Add to favorites"
                               }
-                              fill={a.isEditorsPick ? "currentColor" : "none"}
-                            />
-                            <span className="text-sm font-medium">
-                              {a.isEditorsPick ? "Favorited" : "Favorite"}
-                            </span>
-                          </button>
+                            >
+                              <Star
+                                size={18}
+                                className={
+                                  a.isEditorsPick
+                                    ? "text-yellow-500 fill-current"
+                                    : "text-gray-400"
+                                }
+                                fill={a.isEditorsPick ? "currentColor" : "none"}
+                              />
+                              <span className="text-sm font-medium">
+                                {a.isEditorsPick ? "Favorited" : "Favorite"}
+                              </span>
+                            </button>
 
-                          <button
-                            onClick={() =>
-                              handleToggleBreakingNews(a.slug, a.isBreakingNews)
-                            }
-                            className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 w-full max-w-[140px] ${
-                              a.isBreakingNews
-                                ? "bg-red-50 border-red-300 text-red-700 shadow-sm"
-                                : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
-                            }`}
-                            aria-label={
-                              a.isBreakingNews
-                                ? "Mark as normal news"
-                                : "Mark as breaking news"
-                            }
-                          >
-                            <Bell
-                              size={18}
-                              className={
-                                a.isBreakingNews
-                                  ? "text-red-500 fill-current"
-                                  : "text-gray-400"
+                            {/* Tooltip for Editor's Picks */}
+                            <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-10 z-20 hidden w-max max-w-xs rounded-md bg-black px-2 py-1 text-xs text-white shadow-lg group-hover:block">
+                              For Editor&apos;s Picks: only pick a maximum of 3
+                              <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-black" />
+                            </div>
+                          </div>
+
+                          {/* Breaking News */}
+                          <div className="relative group w-full max-w-[140px]">
+                            <button
+                              onClick={() =>
+                                handleToggleBreakingNews(
+                                  a.slug,
+                                  a.isBreakingNews
+                                )
                               }
-                              fill={a.isBreakingNews ? "currentColor" : "none"}
-                            />
-                            <span className="text-sm font-medium">
-                              {a.isBreakingNews ? "Breaking!" : "Breaking"}
-                            </span>
-                          </button>
+                              className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 w-full ${
+                                a.isBreakingNews
+                                  ? "bg-red-50 border-red-300 text-red-700 shadow-sm"
+                                  : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                              }`}
+                              aria-label={
+                                a.isBreakingNews
+                                  ? "Mark as normal news"
+                                  : "Mark as breaking news"
+                              }
+                            >
+                              <Bell
+                                size={18}
+                                className={
+                                  a.isBreakingNews
+                                    ? "text-red-500 fill-current"
+                                    : "text-gray-400"
+                                }
+                                fill={
+                                  a.isBreakingNews ? "currentColor" : "none"
+                                }
+                              />
+                              <span className="text-sm font-medium">
+                                {a.isBreakingNews ? "Breaking!" : "Breaking"}
+                              </span>
+                            </button>
+
+                            {/* Tooltip for Breaking News */}
+                            <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-10 z-20 hidden w-max max-w-xs rounded-md bg-black px-2 py-1 text-xs text-white shadow-lg group-hover:block">
+                              For Breaking News: only pick a maximum of 1
+                              <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-black" />
+                            </div>
+                          </div>
                         </div>
                       </td>
                       <td className="w-1/6 px-4 py-3 text-m text-gray-900 text-center align-middle border-b border-gray-200">

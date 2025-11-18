@@ -20,11 +20,11 @@ interface ArticleRendererProps {
 
 // Component types matching your CustomEditor
 const COMPONENT_TYPES = {
-  HEADING: 'Heading',
-  PARAGRAPH: 'Paragraph',
-  RICH_TEXT: 'TiptapRichText',
-  IMAGE: 'ImageBlock',
-  COLUMNS: 'ColumnBlock'
+  HEADING: "Heading",
+  PARAGRAPH: "Paragraph",
+  RICH_TEXT: "TiptapRichText",
+  IMAGE: "ImageBlock",
+  COLUMNS: "ColumnBlock",
 };
 
 export default function ArticleRenderer({ article }: ArticleRendererProps) {
@@ -40,9 +40,9 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
   }
 
   // Extract content array from either the old Puck format or new CustomEditor format
-  const contentArray = Array.isArray(editorData) 
-    ? editorData 
-    : (editorData.content || []);
+  const contentArray = Array.isArray(editorData)
+    ? editorData
+    : editorData.content || [];
 
   const renderComponent = (component: any, index: number) => {
     const { type, props } = component;
@@ -85,10 +85,10 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
       
       case COMPONENT_TYPES.RICH_TEXT:
         return (
-          <div 
+          <div
             key={index}
             className="prose prose-lg max-w-none mb-6"
-            dangerouslySetInnerHTML={{ __html: props.content || '' }}
+            dangerouslySetInnerHTML={{ __html: props.content || "" }}
           />
         );
 
@@ -112,15 +112,22 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
 
       case COMPONENT_TYPES.COLUMNS:
         const columnCount = props.columnCount || 2;
-        const gridCols = columnCount === 2 ? 'grid-cols-2' : columnCount === 3 ? 'grid-cols-3' : 'grid-cols-4';
-        
+        const gridCols =
+          columnCount === 2
+            ? "grid-cols-2"
+            : columnCount === 3
+            ? "grid-cols-3"
+            : "grid-cols-4";
+
         return (
           <div key={index} className={`grid ${gridCols} gap-6 mb-8`}>
             {(props.columns || []).map((column: any, colIndex: number) => (
               <div key={colIndex} className="space-y-4">
-                {column.components && column.components.map((colComponent: any, colCompIndex: number) =>
-                  renderComponent(colComponent, colCompIndex)
-                )}
+                {column.components &&
+                  column.components.map(
+                    (colComponent: any, colCompIndex: number) =>
+                      renderComponent(colComponent, colCompIndex)
+                  )}
               </div>
             ))}
           </div>
