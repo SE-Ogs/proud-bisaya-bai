@@ -8,6 +8,7 @@ type SearchBarProps = {
   placeholder?: string;
   className?: string;
   inputClassName?: string;
+  inputRef?: React.RefObject<HTMLInputElement>;
 };
 
 export default function SearchBar({
@@ -16,6 +17,7 @@ export default function SearchBar({
   placeholder = "Search articles...",
   className = "",
   inputClassName = "",
+  inputRef,
 }: SearchBarProps) {
   const [localValue, setLocalValue] = useState(value);
 
@@ -27,6 +29,7 @@ export default function SearchBar({
   return (
     <div className={`relative ${className}`}>
       <input
+        ref={inputRef}
         type="text"
         value={localValue}
         onChange={(e) => {
