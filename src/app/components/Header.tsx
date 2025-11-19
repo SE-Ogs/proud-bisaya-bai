@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type NavItem = {
   label: string;
@@ -26,6 +27,7 @@ export default function Navbar({
   items?: NavItem[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
 
   const { coreItems, categoryItems } = useMemo(() => {
     const idx = items.findIndex(
@@ -75,6 +77,34 @@ export default function Navbar({
               </Link>
             ))}
           </div>
+
+          {/* Search CTA */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsOpen(false);
+              router.push("/articles?focus=search");
+            }}
+            className="flex items-center gap-2 rounded-full border border-white/50 bg-white/10 px-3 py-1.5 text-white text-xs md:text-sm font-semibold tracking-[0.2em] uppercase hover:bg-white/20 transition flex-shrink-0"
+            title="Search articles"
+          >
+            <svg
+              className="h-4 w-4 md:h-5 md:w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z"
+              />
+            </svg>
+            <span className="flex items-center gap-1">
+              <span>SEARCH</span>
+            </span>
+          </button>
 
           {/* Burger button - always visible */}
           <button

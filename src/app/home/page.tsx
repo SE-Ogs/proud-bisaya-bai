@@ -4,7 +4,9 @@ import Link from "next/link";
 import Footer from "@/app/components/Footer";
 import Header from "@/app/components/Header";
 import LatestUpdateCard from "@/app/components/LatestUpdateCard";
+import VideoCarousel from "@/app/components/VideoCarousel";
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 const Home: React.FC = async () => {
   const stories = [
@@ -90,11 +92,39 @@ const Home: React.FC = async () => {
   if (editorsErr) console.error("Editors picks query failed:", editorsErr);
   if (newsErr) console.error("News & Entertainment query failed:", newsErr);
 
+  let videosDataRaw: any[] = [];
+  let videosErr: any = null;
+  try {
+    const supabaseAdmin = createAdminClient();
+    const { data, error } = await supabaseAdmin
+      .from("videos")
+      .select("id, title, url, platform, thumbnail_url, isActive, created_at")
+      .eq("isActive", true)
+      .order("created_at", { ascending: false })
+      .limit(6);
+    if (error) {
+      videosErr = error;
+    } else {
+      videosDataRaw = data ?? [];
+    }
+  } catch (err) {
+    videosErr = err;
+  }
+  if (videosErr) console.error("Videos query failed:", videosErr);
+
   // Null-safe fallbacks
   const articlesData = articlesDataRaw ?? [];
   const breakingNews = (breakingNewsDataRaw ?? [])[0] ?? null;
   const editorsPicksData = editorsPicksDataRaw ?? [];
   const newsEntertainmentData = newsEntertainmentDataRaw ?? [];
+  const videosData = (videosDataRaw ?? [])
+    .map((video) => ({
+      ...video,
+      platform: (video.platform || "").toLowerCase(),
+    }))
+    .filter(
+      (video) => video.platform === "youtube" || video.platform === "facebook"
+    );
 
   return (
     <div>
@@ -133,9 +163,42 @@ const Home: React.FC = async () => {
           </div>
         </div>
 
+        {/* Videos Section */}
+        {videosData.length > 0 && (
+          <section className="bg-[var(--custom-blue)] py-12">
+            <div className="container mx-auto px-4">
+              <div className="text-center text-white">
+                <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--custom-orange)]">
+                  Videos
+                </p>
+                <h3 className="mt-2 text-3xl font-extrabold">
+                  Watch the Latest Highlights
+                </h3>
+                <p className="mt-3 text-white/70 max-w-2xl mx-auto">
+                  Straight from Facebook and YouTube - curated stories,
+                  interviews, and moments from Proud Bisaya Bai.
+                </p>
+              </div>
+
+              <div className="mt-10">
+                <VideoCarousel
+                  videos={videosData.map((video) => ({
+                    id: video.id,
+                    title: video.title,
+                    url: video.url,
+                    platform: video.platform as "youtube" | "facebook",
+                    created_at: video.created_at,
+                    thumbnail_url: video.thumbnail_url,
+                  }))}
+                />
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Facebook Live Section */}
         {/* Comment out if not used :D */}
-        <section className="bg-[var(--custom-blue)] py-12">
+        {/* <section className="bg-[var(--custom-blue)] py-12">
           <div className="text-center container mx-auto px-4">
             <div className="text-center">
               <h3 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-2">
@@ -148,7 +211,6 @@ const Home: React.FC = async () => {
                 className="relative w-full"
                 style={{ paddingBottom: "56.25%" }}
               >
-                {/* three dots (•••) in the top-right corner of the video post then select embed for proper link */}
                 <iframe
                   src="https://www.facebook.com/plugins/video.php?height=314&href=https%3A%2F%2Fwww.facebook.com%2FSparta%2Fvideos%2F680780428062150%2F&show_text=false&width=560&t=0"
                   className="absolute top-0 left-0 w-full h-full rounded-lg shadow-lg"
@@ -163,7 +225,7 @@ const Home: React.FC = async () => {
               </p>
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* Featured Stories */}
         <section className="bg-white py-12">
