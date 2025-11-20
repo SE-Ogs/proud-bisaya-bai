@@ -2,7 +2,6 @@
 
 import { login } from './actions'
 import { useActionState } from 'react'
-import Link from 'next/link'
 
 const initialState = { error: undefined }
 
@@ -48,11 +47,6 @@ export default function AdminLogin() {
                         Login
                     </button>
                 </form>
-                <div className="text-center mt-4">
-                    <Link href="/admin/signup" className="text-blue-500 hover:text-blue-700">
-                        Don't have an account? Sign up
-                    </Link>
-                </div>
             </div>
         </div>
     )
