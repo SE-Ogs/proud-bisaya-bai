@@ -1,12 +1,19 @@
 "use client";
 import React, { useState, useEffect } from "react";
 
+interface ImageStats {
+  total: number;
+  missingAlt: number;
+}
+
 interface SEOAnalyzerModalProps {
   open: boolean;
   onClose: () => void;
   title?: string;
   metaDescription?: string;
   content?: string;
+  wordCount?: number;
+  imageStats?: ImageStats;
 }
 
 export default function SEOAnalyzerModal({
@@ -15,6 +22,8 @@ export default function SEOAnalyzerModal({
   title = "",
   metaDescription = "",
   content = "",
+  wordCount,
+  imageStats,
 }: SEOAnalyzerModalProps) {
   const [result, setResult] = useState<any>(null);
 
@@ -48,11 +57,21 @@ const detectKeyword = (text: string) => {
     const checks: string[] = [];
     let score = 0;
 
+
   let combinedText = content.trim();
   if (!content.startsWith(metaDescription)) {
     combinedText = `${metaDescription} ${content}`.trim();
   }
-  const wordCount = combinedText.split(/\s+/).filter(Boolean).length;
+
+  const computedWordCount =
+    typeof wordCount === "number"
+      ? wordCount
+      : combinedText.split(/\s+/).filter(Boolean).length;
+
+  const totalImages = imageStats?.total ?? 0;
+  const missingAltCount = imageStats?.missingAlt ?? 0;
+  const imageScoreValue = totalImages > 0 ? 5 : 0;
+
 
 
     const keyword = detectKeyword(content || "");
@@ -74,12 +93,27 @@ const detectKeyword = (text: string) => {
     }
 
 
-    if (wordCount >= 300) {
+    if (computedWordCount >= 300) {
       score += 15;
-      checks.push(`Content length sufficient (${wordCount} words).`);
-    } else issues.push(`Content too short (${wordCount} words, need 300+).`);
+      checks.push(`Content length sufficient (${computedWordCount} words).`);
+    } else issues.push(`Content too short (${computedWordCount} words, need 300+).`);
 
-    const seoScore = Math.round((score / 40) * 100);
+    if (totalImages > 0) {
+      if (missingAltCount === 0) {
+        score += imageScoreValue;
+        checks.push("All images include descriptive alt text.");
+      } else {
+        issues.push(
+          `${missingAltCount} of ${totalImages} image${
+            missingAltCount === 1 ? "" : "s"
+          } missing alt text.`
+        );
+      }
+    }
+
+    const maxScore = 40 + imageScoreValue;
+    const seoScore =
+      maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
     const summary =
       seoScore >= 80
         ? "Excellent SEO ✅"
@@ -87,7 +121,16 @@ const detectKeyword = (text: string) => {
         ? "Good SEO ⚠️"
         : "Needs Improvement ❌";
 
-    setResult({ keyword, seoScore, summary, issues, checks, wordCount, metaDescription});
+    setResult({
+      keyword,
+      seoScore,
+      summary,
+      issues,
+      checks,
+      wordCount: computedWordCount,
+      metaDescription,
+      imageStats: { total: totalImages, missingAlt: missingAltCount },
+    });
   };
 
   useEffect(() => {
@@ -110,7 +153,7 @@ const detectKeyword = (text: string) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[9999]">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 relative">
         <button
           onClick={onClose}

@@ -1,9 +1,10 @@
+"use client"
+
 import { Puck } from "@measured/puck";
 import type { Config, Data } from "@measured/puck";
 import { title } from "process";
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import SEOAnalyzerModal from "./SEOAnalyzerModal";
-import { useState, useEffect } from "react";
 
 interface PuckEditorProps {
   config: Config;
@@ -42,23 +43,83 @@ export function PuckEditor({
     }
   }, [metadataProp]);
 
-  const extractReadableText = (data: any): string => {
-  if (!data) return "";
+const countWords = (text: string) =>
+  text
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
 
-  let text = "";
+const decodeHtmlEntities = (text: string) =>
+  text
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">");
+
+const stripHtml = (html: string) =>
+  decodeHtmlEntities(
+    html
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+  ).trim();
+
+const normalizeText = (value?: string) =>
+  value ? stripHtml(value).replace(/\s+/g, " ").trim() : "";
+
+interface ImageStats {
+  total: number;
+  missingAlt: number;
+}
+
+const extractContentMetrics = (
+  data: any
+): { readableText: string; wordCount: number; imageStats: ImageStats } => {
+  if (!data) {
+    return {
+      readableText: "",
+      wordCount: 0,
+      imageStats: { total: 0, missingAlt: 0 },
+    };
+  }
+
+  const parts: string[] = [];
+  let imageTotal = 0;
+  let imageMissingAlt = 0;
+
+  const addText = (value: any) => {
+    if (typeof value === "string") {
+      const normalized = normalizeText(value);
+      if (normalized) {
+        parts.push(normalized);
+      }
+    }
+  };
 
   const traverse = (node: any) => {
     if (!node) return;
 
     if (node.props) {
-      const possibleText =
-        node.props.content ||
-        node.props.text ||
-        node.props.children ||
-        node.props.value ||
-        "";
+      addText(node.props.content);
+      addText(node.props.text);
+      addText(node.props.children);
+      addText(node.props.value);
+      addText(node.props.caption);
 
-      if (typeof possibleText === "string") text += possibleText + " ";
+      const hasImageProps =
+        typeof node.props.src === "string" ||
+        typeof node.props.alt === "string" ||
+        typeof node.props.imageUrl === "string";
+
+      if (hasImageProps) {
+        imageTotal += 1;
+        const altText =
+          typeof node.props.alt === "string" ? normalizeText(node.props.alt) : "";
+        if (!altText) {
+          imageMissingAlt += 1;
+        }
+      }
     }
 
     if (Array.isArray(node.content)) node.content.forEach(traverse);
@@ -67,7 +128,16 @@ export function PuckEditor({
   };
 
   traverse(data);
-  return text.trim();
+
+  const readableText = parts.join(" ").trim();
+  return {
+    readableText,
+    wordCount: countWords(readableText),
+    imageStats: {
+      total: imageTotal,
+      missingAlt: imageMissingAlt,
+    },
+  };
 };
 
 const extractFirstParagraph = (text: string): string => {
@@ -95,7 +165,17 @@ const extractFirstParagraph = (text: string): string => {
 };
 
 
+  const { readableText, wordCount, imageStats } = useMemo(
+    () => extractContentMetrics(data),
+    [data]
+  );
+  const metaDescription = useMemo(
+    () => extractFirstParagraph(readableText),
+    [readableText]
+  );
+
   return (
+    <>
     <div className="flex-1 overflow-y-hidden">
       <Puck
         config={config}
@@ -134,15 +214,16 @@ const extractFirstParagraph = (text: string): string => {
           ),
         }}
       />
-
+    </div>
     <SEOAnalyzerModal
       open={showSEO}
       onClose={() => setShowSEO(false)}
       title={metadata?.title || ""}
-      metaDescription={extractFirstParagraph(extractReadableText(data))}
-      content={extractReadableText(data)} 
+      metaDescription={metaDescription}
+      content={readableText}
+      wordCount={wordCount}
+      imageStats={imageStats}
     />
-
-    </div>
+    </>
   );
 }

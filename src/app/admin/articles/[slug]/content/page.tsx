@@ -256,6 +256,7 @@ export default function ArticleContentPage() {
                     data={data}
                     onChange={setData}
                     onPublish={handleSave}
+                    metadata={metadata}
                 />
             </div>
 

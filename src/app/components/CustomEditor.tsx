@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Trash2, GripVertical, Plus, Type, Image, Layout, AlignLeft, AlignCenter, AlignRight, Bold, Italic, Underline } from 'lucide-react';
+import SEOAnalyzerModal from './SEOAnalyzerModal';
 
 // Component types matching your Puck config
 const COMPONENT_TYPES = {
@@ -764,15 +765,135 @@ interface CustomEditorProps {
   data: CustomEditorData;
   onChange: (data: CustomEditorData) => void;
   onPublish: (data: CustomEditorData) => void;
+  metadata?: {
+    title: string;
+    slug: string;
+    author: string;
+    category: string;
+    subcategory?: string;
+    thumbnail_url?: string;
+    category_slug?: string;
+    subcategory_slug?: string;
+  } | null;
 }
 
-export function CustomEditor({ data, onChange, onPublish }: CustomEditorProps) {
+const decodeHtmlEntities = (text: string) =>
+  text
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>');
+
+const stripHtml = (html: string) =>
+  decodeHtmlEntities(
+    html
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+  ).trim();
+
+const normalizeText = (text?: string) =>
+  text ? stripHtml(text).replace(/\s+/g, ' ').trim() : '';
+
+const countWords = (text: string) =>
+  text
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+
+interface ImageStats {
+  total: number;
+  missingAlt: number;
+}
+
+interface ContentMetrics {
+  readableText: string;
+  wordCount: number;
+  imageStats: ImageStats;
+}
+
+const collectContentMetrics = (components: Component[]): ContentMetrics => {
+  const parts: string[] = [];
+  let imageTotal = 0;
+  let imageMissingAlt = 0;
+
+  const collectFromComponent = (component?: Component) => {
+    if (!component) return;
+    const props = component.props || {};
+
+    const addText = (value?: string) => {
+      const normalized = normalizeText(value);
+      if (normalized) {
+        parts.push(normalized);
+      }
+    };
+
+    addText(props.text);
+    addText(props.content);
+    addText(props.caption);
+
+    if (component.type === COMPONENT_TYPES.IMAGE) {
+      imageTotal += 1;
+      if (!normalizeText(props.alt)) {
+        imageMissingAlt += 1;
+      }
+    }
+
+    if (component.type === COMPONENT_TYPES.COLUMNS && props.columns) {
+      props.columns.forEach((col) => {
+        if (Array.isArray(col.components)) {
+          col.components.forEach(collectFromComponent);
+        }
+      });
+    }
+  };
+
+  components.forEach(collectFromComponent);
+
+  const readableText = parts.join('\n').replace(/\s+/g, ' ').trim();
+  return {
+    readableText,
+    wordCount: countWords(readableText),
+    imageStats: {
+      total: imageTotal,
+      missingAlt: imageMissingAlt,
+    },
+  };
+};
+
+const extractFirstParagraph = (text: string): string => {
+  if (!text) return '';
+
+  const paragraphs = text
+    .split(/\n\s*\n|(?<=[.?!])\s{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  const meaningfulParagraphs = paragraphs.filter(
+    (p) =>
+      p.length > 40 &&
+      !/^#{1,6}\s/.test(p) &&
+      !/^by\s/i.test(p) &&
+      !/^(introduction|summary|about)\b/i.test(p)
+  );
+
+  const first = meaningfulParagraphs[0] || paragraphs[0] || '';
+  return first.length > 160 ? first.slice(0, 157).trim() + '...' : first;
+};
+
+export function CustomEditor({ data, onChange, onPublish, metadata }: CustomEditorProps) {
   const [components, setComponents] = useState<Component[]>(data.content || []);
   const [showCanvasDropZone, setShowCanvasDropZone] = useState(false);
+  const [showSEO, setShowSEO] = useState(false);
   const isInitialMountRef = useRef(true);
   const lastSyncedDataRef = useRef<string>(JSON.stringify(data.content || []));
   const isUserActionRef = useRef(false);
   const skipNextSyncRef = useRef(false);
+
+  const contentMetrics = useMemo(() => collectContentMetrics(components), [components]);
+  const { readableText, wordCount: contentWordCount, imageStats } = contentMetrics;
+  const metaDescription = useMemo(() => extractFirstParagraph(readableText), [readableText]);
 
   // Expose components and setter to window for drop handling
   useEffect(() => {
@@ -917,6 +1038,7 @@ export function CustomEditor({ data, onChange, onPublish }: CustomEditorProps) {
   };
 
   return (
+    <>
     <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* Left Sidebar - Components */}
       <div className="w-64 bg-white border-r overflow-y-auto">
@@ -978,8 +1100,8 @@ export function CustomEditor({ data, onChange, onPublish }: CustomEditorProps) {
         <div className="bg-white border-b sticky top-0 z-40 px-6 py-4">
           <div className="flex items-center justify-end gap-2">
             <button
-              onClick={() => console.log('SEO')}
-              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+              onClick={() => setShowSEO(true)}
+              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors cursor-pointer"
             >
               SEO
             </button>
@@ -1034,5 +1156,15 @@ export function CustomEditor({ data, onChange, onPublish }: CustomEditorProps) {
         </div>
       </div>
     </div>
+    <SEOAnalyzerModal
+      open={showSEO}
+      onClose={() => setShowSEO(false)}
+      title={metadata?.title || ''}
+      metaDescription={metaDescription}
+      content={readableText}
+      wordCount={contentWordCount}
+      imageStats={imageStats}
+    />
+    </>
   );
 }
