@@ -3,6 +3,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Session } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/client";
 
 type NavItem = {
   label: string;
@@ -27,7 +29,10 @@ export default function Navbar({
   items?: NavItem[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
 
   const { coreItems, categoryItems } = useMemo(() => {
     const idx = items.findIndex(
@@ -45,6 +50,44 @@ export default function Navbar({
       document.documentElement.style.setProperty("--sidebar-width", width);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (isMounted) {
+        setSession(data.session);
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      if (isMounted) {
+        setSession(currentSession);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await supabase.auth.signOut();
+      setSession(null);
+      router.push("/home");
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to logout:", error);
+    } finally {
+      setIsOpen(false);
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <>
@@ -192,16 +235,28 @@ export default function Navbar({
                 </Link>
               </div>
 
-              {/* Login button */}
+              {/* Auth button */}
               <div className="px-3 mt-3">
-                <Link
-                  href="/admin/login"
-                  title="Login"
-                  className="w-full inline-flex items-center justify-center rounded-md bg-[var(--custom-blue)] text-white text-sm font-semibold px-4 py-2 transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Login
-                </Link>
+                {session ? (
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                    title="Logout"
+                    className="w-full inline-flex items-center justify-center rounded-md bg-red-600 text-white text-sm font-semibold px-4 py-2 transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95 disabled:opacity-70 disabled:hover:scale-100"
+                  >
+                    {isLoggingOut ? "Logging out..." : "Logout"}
+                  </button>
+                ) : (
+                  <Link
+                    href="/admin/login"
+                    title="Login"
+                    className="w-full inline-flex items-center justify-center rounded-md bg-[var(--custom-blue)] text-white text-sm font-semibold px-4 py-2 transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Login
+                  </Link>
+                )}
               </div>
             </nav>
           </div>
