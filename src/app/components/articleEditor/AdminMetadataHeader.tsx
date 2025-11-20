@@ -128,10 +128,16 @@ export function ArticleMetadataHeader({
               <input
                 type="text"
                 value={articleSlug}
-                onChange={(e) => setArticleSlug(e.target.value)}
+                onChange={(e) =>
+                  setArticleSlug(
+                    e.target.value
+                      .toLowerCase()
+                      .replace(/[^a-z0-9]+/g, "-")
+                      .replace(/(^-|-$)/g, "")
+                  )
+                }
                 placeholder="article-slug"
-                disabled={!!slug}
-                className="w-full border border-gray-300 rounded-lg px-3 py-3 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-3 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
             </div>

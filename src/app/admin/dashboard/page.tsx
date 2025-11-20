@@ -386,6 +386,31 @@ export default function AdminDashboardPage() {
     }
   }
 
+  async function handleDeleteArticle(slug: string) {
+    if (
+      !confirm(
+        "Permanently delete this archived article? This action cannot be undone."
+      )
+    )
+      return;
+
+    try {
+      const res = await fetch(`/api/admin/articles/${slug}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to delete article");
+      }
+
+      setArticles((prev) =>
+        prev.filter((article) => (article.slug ? article.slug !== slug : true))
+      );
+    } catch (err: any) {
+      alert(err.message);
+    }
+  }
+
   async function handleUnarchive(slug: string) {
     if (
       !confirm("Unarchive this article? It will return to its previous state.")
@@ -1247,6 +1272,14 @@ export default function AdminDashboardPage() {
                               className="text-white font-bold px-10.5 py-2 rounded-lg bg-red-400 hover:bg-red-500 w-full"
                             >
                               Archive
+                            </button>
+                          )}
+                          {a.isArchived && (
+                            <button
+                              onClick={() => handleDeleteArticle(a.slug)}
+                              className="text-white font-bold px-10 py-2 rounded-lg bg-red-600 hover:bg-red-700 w-full"
+                            >
+                              Delete
                             </button>
                           )}
                         </div>
