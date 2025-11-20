@@ -20,11 +20,11 @@ interface ArticleRendererProps {
 
 // Component types matching your CustomEditor
 const COMPONENT_TYPES = {
-  HEADING: 'Heading',
-  PARAGRAPH: 'Paragraph',
-  RICH_TEXT: 'TiptapRichText',
-  IMAGE: 'ImageBlock',
-  COLUMNS: 'ColumnBlock'
+  HEADING: "Heading",
+  PARAGRAPH: "Paragraph",
+  RICH_TEXT: "TiptapRichText",
+  IMAGE: "ImageBlock",
+  COLUMNS: "ColumnBlock",
 };
 
 export default function ArticleRenderer({ article }: ArticleRendererProps) {
@@ -40,9 +40,9 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
   }
 
   // Extract content array from either the old Puck format or new CustomEditor format
-  const contentArray = Array.isArray(editorData) 
-    ? editorData 
-    : (editorData.content || []);
+  const contentArray = Array.isArray(editorData)
+    ? editorData
+    : editorData.content || [];
 
   const renderComponent = (component: any, index: number) => {
     const { type, props } = component;
@@ -76,17 +76,19 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
 
       case COMPONENT_TYPES.PARAGRAPH:
         return (
-          <p key={index} className="text-lg leading-relaxed mb-6 text-gray-700">
-            {props.text}
-          </p>
-        );
-
-      case COMPONENT_TYPES.RICH_TEXT:
-        return (
           <div 
             key={index}
             className="prose prose-lg max-w-none mb-6"
             dangerouslySetInnerHTML={{ __html: props.content || '' }}
+          />
+        );
+      
+      case COMPONENT_TYPES.RICH_TEXT:
+        return (
+          <div
+            key={index}
+            className="prose prose-lg max-w-none mb-6"
+            dangerouslySetInnerHTML={{ __html: props.content || "" }}
           />
         );
 
@@ -110,15 +112,22 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
 
       case COMPONENT_TYPES.COLUMNS:
         const columnCount = props.columnCount || 2;
-        const gridCols = columnCount === 2 ? 'grid-cols-2' : columnCount === 3 ? 'grid-cols-3' : 'grid-cols-4';
-        
+        const gridCols =
+          columnCount === 2
+            ? "grid-cols-2"
+            : columnCount === 3
+            ? "grid-cols-3"
+            : "grid-cols-4";
+
         return (
           <div key={index} className={`grid ${gridCols} gap-6 mb-8`}>
             {(props.columns || []).map((column: any, colIndex: number) => (
               <div key={colIndex} className="space-y-4">
-                {column.components && column.components.map((colComponent: any, colCompIndex: number) =>
-                  renderComponent(colComponent, colCompIndex)
-                )}
+                {column.components &&
+                  column.components.map(
+                    (colComponent: any, colCompIndex: number) =>
+                      renderComponent(colComponent, colCompIndex)
+                  )}
               </div>
             ))}
           </div>
@@ -134,7 +143,7 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
     <article className="max-w-4xl mx-auto px-6 py-2 bg-white">
       <a
         href="/articles"
-        className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+        className="block text-blue-600 hover:text-blue-800 font-medium transition-colors mb-6"
       >
         &larr; Back to Articles
       </a>
@@ -187,7 +196,6 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
 
       <footer className="mt-8 pt-4 border-t border-gray-200">
         <div className="flex justify-between items-center">
-          {/* Back to articles link removed as it's already at the top */}
         </div>
       </footer>
     </article>
