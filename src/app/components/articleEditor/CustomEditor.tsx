@@ -67,7 +67,6 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
       skipNextSyncRef.current = true;
       lastSyncedDataRef.current = currentComponentsStr;
       
-      // Include all metadata fields when calling onChange
       onChange({ 
         ...data,
         content: components 
@@ -127,7 +126,7 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
     setComponents(newComponents);
   };
 
-  // Drag handling (sidebar → canvas)
+  // Drag handling
   const handleSidebarDragStart = (e: React.DragEvent, componentType: string) => {
     e.dataTransfer.effectAllowed = 'copy';
     e.dataTransfer.setData('componentType', componentType);
@@ -162,10 +161,8 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
       root: data.root || { props: {} } 
     };
     
-    // Store both preview data and basic metadata
     sessionStorage.setItem('articlePreview', JSON.stringify(previewData));
 
-    // Use metadata from props with fallbacks to data prop, then defaults
     const previewMetadata = {
       title: metadata?.title || data.title || 'Article Preview',
       slug: metadata?.slug || data.slug || 'preview',
@@ -182,7 +179,7 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
     window.open(`/admin/articles/${targetSlug}/preview`, '_blank');
   };
 
-  // Save handler - FIXED
+  // Save handler
   const handleSave = () => {
     console.log('🔴 SAVE clicked - components:', components);
     const publishData = { 
@@ -194,10 +191,10 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
+    <div className="flex h-full bg-gray-50 relative">
+      {/* Sidebar - Changed from fixed to absolute */}
       <div
-        className={`fixed left-0 top-0 bg-white border-r h-screen transition-all duration-300 ease-in-out z-40 ${
+        className={`absolute left-0 top-0 bg-white border-r h-full transition-all duration-300 ease-in-out z-30 ${
           isSidebarCollapsed ? '-translate-x-full w-64' : 'translate-x-0 w-64'
         }`}
       >
@@ -228,8 +225,8 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
 
       {/* Main Content Area */}
       <div className={`flex-1 transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'ml-0' : 'ml-64'}`}>
-        {/* Sticky Toolbar */}
-        <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-gray-300 px-6 py-4 z-50 flex items-center justify-between shadow-md">
+        {/* Sticky Toolbar - Reduced z-index */}
+        <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-gray-300 px-6 py-4 z-20 flex items-center justify-between shadow-md">
           <button
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -273,14 +270,15 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
           </div>
         </div>
 
-        {/* Scrollable Canvas Below Toolbar */}
+        {/* Scrollable Canvas */}
         <div
-          className="relative h-[calc(100vh-72px)] overflow-y-auto"
+          className="relative overflow-y-auto"
+          style={{ height: 'calc(100% - 72px)' }}
           onDragOver={handleCanvasDragOver}
           onDragLeave={handleCanvasDragLeave}
           onDrop={handleCanvasDrop}
         >
-          <div className="max-w-screen mx-10 py-8 min-h-screen pt-4">
+          <div className="max-w-screen mx-10 py-8 min-h-full pt-4">
             {components.length === 0 ? (
               <div
                 className={`text-center py-16 border-2 border-dashed rounded-lg transition-colors ${
