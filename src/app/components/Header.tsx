@@ -191,6 +191,18 @@ export default function Navbar({
                   Get Featured
                 </Link>
               </div>
+
+              {/* Login button */}
+              <div className="px-3 mt-3">
+                <Link
+                  href="/admin/login"
+                  title="Login"
+                  className="w-full inline-flex items-center justify-center rounded-md bg-[var(--custom-blue)] text-white text-sm font-semibold px-4 py-2 transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Login
+                </Link>
+              </div>
             </nav>
           </div>
         )}
