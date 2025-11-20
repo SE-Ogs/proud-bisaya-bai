@@ -41,5 +41,23 @@ type LoginState = {
         return { error: error.message }
     }
 
-    redirect('/admin/dashboard')
+    // Check user role before redirecting
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (user) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+        if (profile?.role === 'admin') {
+            redirect('/admin/dashboard')
+        } else {
+            // Non-admin users should not access admin routes
+            redirect('/')
+        }
+    } else {
+        return { error: 'Failed to get user information' }
+    }
 }

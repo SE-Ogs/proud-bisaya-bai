@@ -1,6 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { redirect } from 'next/navigation'
 
 export async function updateSession(request: NextRequest) {
     let supabaseResponse = NextResponse.next({ request })
@@ -34,7 +33,7 @@ export async function updateSession(request: NextRequest) {
     if (request.nextUrl.pathname.startsWith('/admin') && !user) {
         const url = request.nextUrl.clone();
         url.pathname = '/admin/login';
-        return NextResponse.redirect(url);
+        return NextResponse.redirect(url, { status: 307 });
     }
 
     // Check if user is admin for admin routes
@@ -48,7 +47,7 @@ export async function updateSession(request: NextRequest) {
         if (profile?.role !== 'admin') {
         const url = request.nextUrl.clone();
         url.pathname = '/';
-        return NextResponse.redirect(url);
+        return NextResponse.redirect(url, { status: 307 });
         }
     }
 
