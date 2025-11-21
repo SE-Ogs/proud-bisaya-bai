@@ -1,10 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useActionState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { subscribeToNewsletter } from "@/app/api/newsletter/route";
 
 const Footer: React.FC = () => {
+  const [state, action, isPending] = useActionState(subscribeToNewsletter, null);
   return (
     <footer
       className="text-white mt-16 w-full"
@@ -20,26 +22,35 @@ const Footer: React.FC = () => {
               Subscribe to our newsletter and get updated to our hottest news
             </p>
 
-            <form
-              className="mt-4 flex"
-              onSubmit={(e) => {
-                e.preventDefault();
-                // TODO: handle newsletter subscribe
-              }}
-            >
-              <input
-                type="email"
-                placeholder="Enter your email address"
-                className="w-full min-w-0 rounded-l-md bg-white px-3 py-2 text-sm text-black outline-none placeholder:text-gray-500"
-                required
-              />
-              <button
-                type="submit"
-                className="rounded-r-md bg-[var(--custom-orange)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
-              >
-                Join
-              </button>
-            </form>
+            {/* If successful, show a success message instead of the form */}
+            {state?.success ? (
+              <div className="mt-4 p-3 bg-green-500/20 border border-green-500 rounded-md text-green-100 text-sm">
+                ✅ Success! Please check your email to confirm your subscription.
+              </div>
+            ) : (
+              <form className="mt-4 flex flex-col gap-2" action={action}>
+                <div className="flex">
+                  <input
+                    name="email"
+                    type="email"
+                    placeholder="Enter your email address"
+                    className="w-full min-w-0 rounded-l-md bg-white px-3 py-2 text-sm text-black outline-none placeholder:text-gray-500"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    disabled={isPending}
+                    className="rounded-r-md bg-[var(--custom-orange)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isPending ? 'Joining...' : 'Join'}
+                  </button>
+                </div>
+                {/* Error Message Display */}
+                {state?.error && (
+                  <p className="text-red-300 text-xs">{state.error}</p>
+                )}
+              </form>
+            )}
 
             {/* Social icons */}
             <div className="mt-5 flex items-center gap-4">
