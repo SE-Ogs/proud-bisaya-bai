@@ -150,6 +150,31 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
     }
   };
 
+  // Preview handler
+  const handlePreview = () => {
+    const previewData = { 
+      content: components, 
+      root: data.root || { props: {} } 
+    };
+    
+    sessionStorage.setItem('articlePreview', JSON.stringify(previewData));
+
+    const previewMetadata = {
+      title: metadata?.title || data.title || 'Article Preview',
+      slug: metadata?.slug || data.slug || 'preview',
+      author: metadata?.author || data.author || 'Author',
+      category: metadata?.category || data.category || 'General',
+      subcategory: metadata?.subcategory || data.subcategory || '',
+      thumbnail_url: metadata?.thumbnail_url || data.thumbnail_url || '',
+      created_at: metadata?.created_at || new Date().toISOString()
+    };
+
+    sessionStorage.setItem('articleMetadata', JSON.stringify(previewMetadata));
+
+    const targetSlug = encodeURIComponent(previewMetadata.slug?.trim() || 'preview');
+    window.open(`/admin/articles/${targetSlug}/preview`, '_blank');
+  };
+
   return (
     <div className="h-full flex flex-col overflow-hidden bg-gray-50">
       {/* Header */}
@@ -201,7 +226,7 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
             SEO
           </button>
           <button
-            onClick={() => console.log('Preview')}
+            onClick={handlePreview}
             className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 my-3 rounded-lg font-semibold transition-colors"
           >
             Preview
