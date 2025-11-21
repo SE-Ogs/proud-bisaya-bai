@@ -196,19 +196,19 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
         <div className="flex gap-2 flex-1 justify-end">
           <button
             onClick={() => console.log('SEO')}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 my-3 rounded-lg font-semibold transition-colors"
           >
             SEO
           </button>
           <button
             onClick={() => console.log('Preview')}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 my-3 rounded-lg font-semibold transition-colors"
           >
             Preview
           </button>
           <button
             onClick={() => onPublish({ content: components, root: data.root || { props: {} } })}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 my-3 rounded-lg font-semibold transition-colors"
           >
             Save
           </button>
