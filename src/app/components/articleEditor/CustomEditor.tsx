@@ -151,23 +151,80 @@ export function CustomEditor({ data, onChange, onPublish,isMetadataVisible = tru
   };
 
   return (
-    <div className="flex h-screen overflow-y-hidden bg-gray-50 pt-4">
-      {/* Main Canvas */}
-      <div className="flex-1 overflow-y-hidden top-64px">
+    <div className=" h-full overflow-hidden bg-gray-50">
+      {/* Left Sidebar - Components */}
+      <div 
+        className={`bg-white border-r flex-shrink-0 overflow-y-auto transition-all duration-300 ease-in-out ${
+          isSidebarCollapsed ? 'w-0' : 'w-85'
+        }`}
+        style={{ 
+          visibility: isSidebarCollapsed ? 'hidden' : 'visible'
+        }}
+      >
+        <div className="p-4 border-b border-gray-300">
+          <h2 className="text-lg font-bold text-gray-800">Components</h2>
+        </div>
+        <div className="p-4 space-y-2">
+          <button
+            draggable
+            onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.HEADING)}
+            onClick={() => addComponent(COMPONENT_TYPES.HEADING)}
+            onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
+            className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
+          >
+            <Type size={20} className="text-gray-600 flex-shrink-0" />
+            <span className="font-medium flex-1 ml-3">Heading</span>
+            <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
+          </button>
+          <button
+            draggable
+            onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.PARAGRAPH)}
+            onClick={() => addComponent(COMPONENT_TYPES.PARAGRAPH)}
+            onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
+            className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
+          >
+            <Type size={20} className="text-gray-600 flex-shrink-0" />
+            <span className="font-medium flex-1 ml-3">Paragraph</span>
+            <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
+          </button>
+          <button
+            draggable
+            onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.IMAGE)}
+            onClick={() => addComponent(COMPONENT_TYPES.IMAGE)}
+            onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
+            className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
+          >
+            <Image size={20} className="text-gray-600 flex-shrink-0" />
+            <span className="font-medium flex-1 ml-3">Image</span>
+            <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
+          </button>
+          <button
+            draggable
+            onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.COLUMNS)}
+            onClick={() => addComponent(COMPONENT_TYPES.COLUMNS)}
+            onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
+            className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
+          >
+            <Layout size={20} className="text-gray-600 flex-shrink-0" />
+            <span className="font-medium flex-1 ml-3">Columns</span>
+            <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white border-b border-gray-400 shrink-0 px-6 py-4 flex h-20 max-w-screen">
+       <div className='flex-1'>
+         <button
+           onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+           title={isSidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
+         >
+           <PanelLeft size={20} className="text-gray-600" />
+         </button>
+         </div>
+      {/* Main Canvas Area */}
+      <div className="flex-auto flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="bg-white border-b border-gray-400 fixed top-64px z-40 px-6 py-4 flex w-full">
-          <div className='col-span-1 flex-1'>
-            <button
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              title={isSidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
-            >
-              {isSidebarCollapsed ? (
-                <PanelLeft size={20} className="text-gray-600" />
-              ) : (
-                <PanelLeft size={20} className="text-gray-600" />
-              )}
-            </button>
           </div>
           <div className="flex gap-2 flex-1 justify-end">
             {onToggleMetadata && (
@@ -204,82 +261,14 @@ export function CustomEditor({ data, onChange, onPublish,isMetadataVisible = tru
           </div>
         </div>
 
-      <div className='flex-auto relative'>
-        {/* Left Sidebar - Components */}
+        {/* Canvas - Scrollable Area */}
         <div 
-            className={`fixed left-0 pt-16 bg-white border-r min-h-screen transition-all duration-300 ease-in-out ${
-              isSidebarCollapsed ? '-translate-x-full w-85' : 'translate-x-0 w-85'
-            }`}
-            style={{ 
-              visibility: isSidebarCollapsed ? 'hidden' : 'visible',
-              zIndex: 30
-            }}
-          >
-            <div className="p-4 border-b border-gray-300 mt-3">
-              <h2 className="text-lg font-bold text-gray-800">Components</h2>
-            </div>
-            <div className="p-4 space-y-2">
-              <button
-                draggable
-                onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.HEADING)}
-                onClick={() => addComponent(COMPONENT_TYPES.HEADING)}
-                onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
-                className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
-              >
-                <Type size={20} className="text-gray-600 flex-shrink-0" />
-                <span className="font-medium flex-1 ml-3">Heading</span>
-                <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
-              </button>
-              <button
-                draggable
-                onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.PARAGRAPH)}
-                onClick={() => addComponent(COMPONENT_TYPES.PARAGRAPH)}
-                onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
-                className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
-              >
-                <Type size={20} className="text-gray-600 flex-shrink-0" />
-                <span className="font-medium flex-1 ml-3">Paragraph</span>
-                <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
-              </button>
-              <button
-                draggable
-                onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.IMAGE)}
-                onClick={() => addComponent(COMPONENT_TYPES.IMAGE)}
-                onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
-                className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
-              >
-                <Image size={20} className="text-gray-600 flex-shrink-0" />
-                <span className="font-medium flex-1 ml-3">Image</span>
-                <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
-              </button>
-              <button
-                draggable
-                onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.COLUMNS)}
-                onClick={() => addComponent(COMPONENT_TYPES.COLUMNS)}
-                onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
-                className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
-              >
-                <Layout size={20} className="text-gray-600 flex-shrink-0" />
-                <span className="font-medium flex-1 ml-3">Columns</span>
-                <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
-              </button>
-            </div>
-          </div>
-
-      
-        {/* Canvas */}
-        <div 
-            className={`overflow-y-auto h-full transition-all duration-300 ease-in-out ${
-              isSidebarCollapsed ? 'ml-0' : 'ml-85'
-            }`}
-          >
-        <div 
-          className="max-w-screen mx-10 py-8 pt-28"
+          className="flex-1 overflow-y-auto"
           onDragOver={handleCanvasDragOver}
           onDragLeave={handleCanvasDragLeave}
           onDrop={handleCanvasDrop}
         >
-          <div className="">
+          <div className="max-w-screen mx-10 py-8">
             {components.length === 0 ? (
               <div className={`text-center py-16 border-2 border-dashed rounded-lg transition-colors ${
                 showCanvasDropZone ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
@@ -287,28 +276,25 @@ export function CustomEditor({ data, onChange, onPublish,isMetadataVisible = tru
                 <p className="text-lg text-gray-400">No components yet</p>
                 <p className="text-sm mt-2 text-gray-400">Drag components from the left sidebar or click to add</p>
               </div>
-             ) : (
-               components.map((component, index) => (
-                 <ComponentRenderer
-                   key={index}
-                   component={component}
-                   index={index}
-                   updateComponent={updateComponent}
-                   deleteComponent={deleteComponent}
-                   moveComponent={moveComponent}
-                   removeFromMainCanvas={(fromIndex) => {
-                     isUserActionRef.current = true;
-                     setComponents(prevComponents => prevComponents.filter((_, i) => i !== fromIndex));
-                   }}
-                   setComponentsDirect={setComponents}
-                 />
-               ))
-             )}
-            </div>
+            ) : (
+              components.map((component, index) => (
+                <ComponentRenderer
+                  key={index}
+                  component={component}
+                  index={index}
+                  updateComponent={updateComponent}
+                  deleteComponent={deleteComponent}
+                  moveComponent={moveComponent}
+                  removeFromMainCanvas={(fromIndex) => {
+                    isUserActionRef.current = true;
+                    setComponents(prevComponents => prevComponents.filter((_, i) => i !== fromIndex));
+                  }}
+                  setComponentsDirect={setComponents}
+                />
+              ))
+            )}
           </div>
         </div>
-        </div>
       </div>
-    </div>
   );
 }

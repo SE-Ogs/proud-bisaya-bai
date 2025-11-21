@@ -82,14 +82,12 @@ export default function ArticleContentPage() {
                     ? JSON.parse(article.content)
                     : article.content;
                 
-                // Ensure the parsed content matches CustomEditorData structure
                 if (parsedContent && Array.isArray(parsedContent.content)) {
                   setData({
                     content: parsedContent.content,
                     root: parsedContent.root || { props: {} }
                   });
                 } else if (Array.isArray(parsedContent)) {
-                  // Handle case where content is just an array
                   setData({
                     content: parsedContent,
                     root: { props: {} }
@@ -224,21 +222,22 @@ export default function ArticleContentPage() {
     }
 
     return (
-        <div className="h-screen flex flex-col overflow-y-hidden">
+        <div className="h-screen flex flex-col overflow-hidden fixed inset-0">
+            <div className="mt-10"></div>
             <AdminHeader/>
-            <div className="flex-1 flex flex-col overflow-y-hidden">
+            <div className="flex-1 flex flex-col overflow-hidden min-h-0">
                 {/* Metadata Header */}
-                <div className="bg-white border-b border-gray-200 flex-shrink-0 overflow-y-hidden">
+                <div className="bg-white border-b border-gray-200 flex-shrink-0">
                     {/* Collapsed State - Minimal Bar */}
                     {!isMetadataVisible && (
-                        <div className="h-12 flex items-center justify-center px-4 py-2 overflow-y-hidden">
+                        <div className="h-12 flex items-center justify-center px-4 py-2">
                             <span className="text-sm text-gray-500 font-medium">Metadata hidden</span>
                         </div>
                     )}
                     
                     {/* Expanded State */}
-                    <div className={`transition-all duration-300 ease-in-out overflow-y-hidden ${
-                        isMetadataVisible ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'
+                    <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                        isMetadataVisible ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                     }`}>
                         <div className="px-6 py-4">
                             <div className="max-w-4xl mx-auto">
@@ -292,8 +291,8 @@ export default function ArticleContentPage() {
                     </div>
                 </div>
 
-                {/* Editor */}
-                <div className="flex-1 overflow-y-hidden h-full">
+                {/* Editor - Takes remaining space */}
+                <div className="flex-1 overflow-hidden">
                     <CustomEditor
                         data={data}
                         onChange={setData}
