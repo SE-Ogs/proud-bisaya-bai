@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Type, Image, Layout, PanelLeft, GripVertical,  ChevronUp, ChevronDown } from 'lucide-react';
+import { Type, Image, Layout, PanelLeft, GripVertical, ChevronUp, ChevronDown, CornerUpLeft } from 'lucide-react';
 import { ComponentRenderer } from '@/app/components/articleEditor/ComponentsCustomEditor';
 import {
   COMPONENT_TYPES,
@@ -11,7 +11,7 @@ import {
   CustomEditorProps
 } from '@/app/components/articleEditor/PropsCustomEditor';
 
-export function CustomEditor({ data, onChange, onPublish,isMetadataVisible = true, onToggleMetadata, metadata  }: CustomEditorProps) {
+export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = true, onToggleMetadata, metadata }: CustomEditorProps) {
   const [components, setComponents] = useState<Component[]>(data.content || []);
   const [showCanvasDropZone, setShowCanvasDropZone] = useState(false);
   const isInitialMountRef = useRef(true);
@@ -98,7 +98,7 @@ export function CustomEditor({ data, onChange, onPublish,isMetadataVisible = tru
     setComponents(prevComponents => {
       const newComponents = [...prevComponents];
       const currentComponent = prevComponents[index];
-      newComponents[index] = { 
+      newComponents[index] = {
         ...currentComponent,
         type: currentComponent.type,
         props: { ...newProps }
@@ -141,138 +141,151 @@ export function CustomEditor({ data, onChange, onPublish,isMetadataVisible = tru
   const handleCanvasDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setShowCanvasDropZone(false);
-    
+
     const isNewComponent = e.dataTransfer.getData('isNewComponent') === 'true';
     const componentType = e.dataTransfer.getData('componentType');
-    
+
     if (isNewComponent && componentType) {
       addComponent(componentType);
     }
   };
 
   return (
-    <div className=" h-full overflow-hidden bg-gray-50">
-      {/* Left Sidebar - Components */}
-      <div 
-        className={`bg-white border-r flex-shrink-0 overflow-y-auto transition-all duration-300 ease-in-out ${
-          isSidebarCollapsed ? 'w-0' : 'w-85'
-        }`}
-        style={{ 
-          visibility: isSidebarCollapsed ? 'hidden' : 'visible'
-        }}
-      >
-        <div className="p-4 border-b border-gray-300">
-          <h2 className="text-lg font-bold text-gray-800">Components</h2>
+    <div className="h-full flex flex-col overflow-hidden bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-400 shrink-0 px-6 py-2 flex h-20 max-w-screen">
+        <div className='grow flex-row w-5xl flex'>
+          <a
+            href="/admin/dashboard"
+            className="px-3 hover:bg-gray-100 rounded-lg transition-colors inline-flex items-center"
+            title="Go back to Dashboard"
+          >
+            <CornerUpLeft size={20} className="text-gray-600" />
+          </a>
+          <button
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="px-3 hover:bg-gray-100 rounded-lg transition-colors"
+            title={isSidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
+          >
+            <PanelLeft size={20} className="text-gray-600" />
+          </button>
+
+          <div className='pl-4 flex items-center w-full'>
+            <div className='flex-col flex'>
+              <div className='text-lg/5 font-bold pb-1'>
+                {metadata?.title}sad dsa sad dsa das dsa sda asd sa dsa asd dsa das das sda dsa dsa  sda dsa dsa asd das 
+              </div>
+              <div className='text-xs'>
+                By {metadata?.author}  |  {metadata?.created_at && (
+                  <>
+                    <time dateTime={metadata.created_at}>
+                      {new Date(metadata.created_at).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </time>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="p-4 space-y-2">
+        <div className="flex-auto flex flex-col overflow-hidden">
+        </div>
+        <div className="flex gap-2 flex-1 justify-end">
           <button
-            draggable
-            onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.HEADING)}
-            onClick={() => addComponent(COMPONENT_TYPES.HEADING)}
-            onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
-            className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
+            onClick={() => console.log('SEO')}
+            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
           >
-            <Type size={20} className="text-gray-600 flex-shrink-0" />
-            <span className="font-medium flex-1 ml-3">Heading</span>
-            <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
+            SEO
           </button>
           <button
-            draggable
-            onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.PARAGRAPH)}
-            onClick={() => addComponent(COMPONENT_TYPES.PARAGRAPH)}
-            onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
-            className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
+            onClick={() => console.log('Preview')}
+            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
           >
-            <Type size={20} className="text-gray-600 flex-shrink-0" />
-            <span className="font-medium flex-1 ml-3">Paragraph</span>
-            <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
+            Preview
           </button>
           <button
-            draggable
-            onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.IMAGE)}
-            onClick={() => addComponent(COMPONENT_TYPES.IMAGE)}
-            onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
-            className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
+            onClick={() => onPublish({ content: components, root: data.root || { props: {} } })}
+            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
           >
-            <Image size={20} className="text-gray-600 flex-shrink-0" />
-            <span className="font-medium flex-1 ml-3">Image</span>
-            <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
-          </button>
-          <button
-            draggable
-            onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.COLUMNS)}
-            onClick={() => addComponent(COMPONENT_TYPES.COLUMNS)}
-            onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
-            className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
-          >
-            <Layout size={20} className="text-gray-600 flex-shrink-0" />
-            <span className="font-medium flex-1 ml-3">Columns</span>
-            <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
+            Save
           </button>
         </div>
       </div>
 
-      <div className="bg-white border-b border-gray-400 shrink-0 px-6 py-4 flex h-20 max-w-screen">
-       <div className='flex-1'>
-         <button
-           onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-           title={isSidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
-         >
-           <PanelLeft size={20} className="text-gray-600" />
-         </button>
-         </div>
-      {/* Main Canvas Area */}
-      <div className="flex-auto flex flex-col overflow-hidden">
-        {/* Header */}
+      <div className="flex flex-1 overflow-hidden min-h-0">
+        {/* Left Sidebar - Components */}
+        <div
+          className={`bg-white border-r flex-shrink-0 overflow-y-auto transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'w-0' : 'w-85'
+            }`}
+          style={{
+            visibility: isSidebarCollapsed ? 'hidden' : 'visible'
+          }}
+        >
+          <div className="p-4 border-b border-gray-300">
+            <h2 className="text-lg font-bold text-gray-800">Components</h2>
           </div>
-          <div className="flex gap-2 flex-1 justify-end">
-            {onToggleMetadata && (
-              <button
-                onClick={onToggleMetadata}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                title={isMetadataVisible ? 'Hide metadata' : 'Show metadata'}
-              >
-                {isMetadataVisible !== false ? (
-                  <ChevronUp size={20} className="text-gray-600" />
-                ) : (
-                  <ChevronDown size={20} className="text-gray-600" />
-                )}
-              </button>
-            )}
+          <div className="p-4 space-y-2">
             <button
-              onClick={() => console.log('SEO')}
-              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+              draggable
+              onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.HEADING)}
+              onClick={() => addComponent(COMPONENT_TYPES.HEADING)}
+              onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
+              className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
             >
-              SEO
+              <Type size={20} className="text-gray-600 flex-shrink-0" />
+              <span className="font-medium flex-1 ml-3">Heading</span>
+              <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
             </button>
             <button
-              onClick={() => console.log('Preview')}
-              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+              draggable
+              onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.PARAGRAPH)}
+              onClick={() => addComponent(COMPONENT_TYPES.PARAGRAPH)}
+              onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
+              className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
             >
-              Preview
+              <Type size={20} className="text-gray-600 flex-shrink-0" />
+              <span className="font-medium flex-1 ml-3">Paragraph</span>
+              <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
             </button>
             <button
-              onClick={() => onPublish({ content: components, root: data.root || { props: {} } })}
-              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+              draggable
+              onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.IMAGE)}
+              onClick={() => addComponent(COMPONENT_TYPES.IMAGE)}
+              onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
+              className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
             >
-              Create
+              <Image size={20} className="text-gray-600 flex-shrink-0" />
+              <span className="font-medium flex-1 ml-3">Image</span>
+              <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
+            </button>
+            <button
+              draggable
+              onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.COLUMNS)}
+              onClick={() => addComponent(COMPONENT_TYPES.COLUMNS)}
+              onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
+              className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
+            >
+              <Layout size={20} className="text-gray-600 flex-shrink-0" />
+              <span className="font-medium flex-1 ml-3">Columns</span>
+              <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
             </button>
           </div>
         </div>
-
         {/* Canvas - Scrollable Area */}
-        <div 
-          className="flex-1 overflow-y-auto"
-          onDragOver={handleCanvasDragOver}
-          onDragLeave={handleCanvasDragLeave}
-          onDrop={handleCanvasDrop}
-        >
-          <div className="max-w-screen mx-10 py-8">
+        <div className="flex-1 overflow-y-auto">
+          {/* Actual Canvas Area */}
+          <div 
+            className="max-w-screen mx-10 py-8"
+            onDragOver={handleCanvasDragOver}
+            onDragLeave={handleCanvasDragLeave}
+            onDrop={handleCanvasDrop}
+          >
             {components.length === 0 ? (
-              <div className={`text-center py-16 border-2 border-dashed rounded-lg transition-colors ${
-                showCanvasDropZone ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-              }`}>
+              <div className={`text-center py-16 border-2 border-dashed rounded-lg transition-colors ${showCanvasDropZone ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+                }`}>
                 <p className="text-lg text-gray-400">No components yet</p>
                 <p className="text-sm mt-2 text-gray-400">Drag components from the left sidebar or click to add</p>
               </div>
@@ -296,5 +309,6 @@ export function CustomEditor({ data, onChange, onPublish,isMetadataVisible = tru
           </div>
         </div>
       </div>
+    </div>
   );
 }
