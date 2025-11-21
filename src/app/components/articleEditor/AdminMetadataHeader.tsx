@@ -65,7 +65,7 @@ export function ArticleMetadataHeader({
 
   return (
     <>
-      <div className="bg-white">
+      <div className="bg-white overflow-y-hidden">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <button
             onClick={() => router.push("/admin/dashboard")}
