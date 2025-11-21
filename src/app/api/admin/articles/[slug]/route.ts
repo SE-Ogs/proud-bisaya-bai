@@ -8,6 +8,7 @@ export async function GET(
   { params }: { params: { slug: string } }
 ) {
   try {
+    const { slug } = await params;
     const supabase = await createClient();
     
     // Check if user is admin
@@ -34,7 +35,7 @@ export async function GET(
     const { data, error } = await supabase
       .from('articles')
       .select('*')
-      .eq('slug', params.slug)
+      .eq('slug', slug)
       .single();
 
     if (error) {

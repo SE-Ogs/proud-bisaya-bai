@@ -55,10 +55,11 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Check if the user is authenticated
+  // Use getUser() instead of getSession() for security
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
   // If the user is trying to access admin routes (except login/auth)
   if (request.nextUrl.pathname.startsWith("/admin")) {
@@ -67,16 +68,38 @@ export async function middleware(request: NextRequest) {
       request.nextUrl.pathname.startsWith("/admin/login") ||
       request.nextUrl.pathname.startsWith("/admin/auth")
     ) {
-      // If already logged in, redirect to admin dashboard
-      if (session) {
-        return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+      // If already logged in as admin, redirect to admin dashboard
+      if (user) {
+        // Check if user has admin role
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+
+        if (profile?.role === "admin") {
+          return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+        }
       }
       return response;
     }
 
-    // For all other admin routes, require authentication
-    if (!session) {
+    // For all other admin routes, require authentication AND admin role
+    if (!user || error) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+
+    // Check if user has admin role
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.role !== "admin") {
+      // User is authenticated but not an admin
+      // Redirect to home page or show unauthorized page
+      return NextResponse.redirect(new URL("/home", request.url));
     }
   }
 

@@ -89,14 +89,6 @@ export function ArticleMetadataHeader({
               </button>
             </div>
           </div>
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg mb-8">
-            <p className="text-sm text-blue-800">
-              <strong>💡 How to add images:</strong> Click "Upload Image" button
-              above, select your image, and the URL will be copied to your
-              clipboard. Then paste it into the Image Block's "Image URL" field
-              in the editor below.
-            </p>
-          </div>
           <input
             ref={fileInputRef}
             type="file"

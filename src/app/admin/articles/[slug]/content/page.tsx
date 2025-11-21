@@ -327,21 +327,6 @@ export default function ArticleContentPage() {
         <h1 className="text-2xl text-black font-bold">
           {isEdit ? "Edit" : "Create"} Content: {metadata.title}
         </h1>
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <strong>💡 How to add images:</strong> Click "Upload Image" button
-            below, select your image, and the URL will be copied to your
-            clipboard. Then paste it into the Image Block's "Image URL" field in
-            the editor.
-          </p>
-        </div>
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {uploading ? "Uploading..." : "📤 Upload Image"}
-        </button>
         <input
           ref={fileInputRef}
           type="file"
