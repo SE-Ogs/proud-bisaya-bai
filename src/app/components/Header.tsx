@@ -234,19 +234,28 @@ export default function Navbar({
                   Get Featured
                 </Link>
               </div>
-
-              {/* Auth button */}
-              <div className="px-3 mt-3">
+              {/* Auth buttons */}
+              <div className="px-3 mt-3 space-y-2">
                 {session ? (
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                    title="Logout"
-                    className="w-full inline-flex items-center justify-center rounded-md bg-red-600 text-white text-sm font-semibold px-4 py-2 transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95 disabled:opacity-70 disabled:hover:scale-100"
-                  >
-                    {isLoggingOut ? "Logging out..." : "Logout"}
-                  </button>
+                  <>
+                    <Link
+                      href="/admin"
+                      title="Admin Dashboard"
+                      className="w-full inline-flex items-center justify-center rounded-md bg-[var(--custom-blue)] text-white text-sm font-semibold px-4 py-2 transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      Admin Dashboard
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                      title="Logout"
+                      className="w-full inline-flex items-center justify-center rounded-md bg-red-600 text-white text-sm font-semibold px-4 py-2 transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95 disabled:opacity-70 disabled:hover:scale-100"
+                    >
+                      {isLoggingOut ? "Logging out..." : "Logout"}
+                    </button>
+                  </>
                 ) : (
                   <Link
                     href="/admin/login"
