@@ -173,7 +173,7 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
           <div className='pl-4 flex items-center w-full'>
             <div className='flex-col flex'>
               <div className='text-lg/5 font-bold pb-1'>
-                {metadata?.title}sad dsa sad dsa das dsa sda asd sa dsa asd dsa das das sda dsa dsa  sda dsa dsa asd das 
+                {metadata?.title}
               </div>
               <div className='text-xs'>
                 By {metadata?.author}  |  {metadata?.created_at && (
