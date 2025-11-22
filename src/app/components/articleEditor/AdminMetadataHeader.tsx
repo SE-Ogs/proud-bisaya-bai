@@ -17,10 +17,14 @@ interface ArticleMetadataHeaderProps {
   thumbnail: string;
   setThumbnail: (thumbnail: string) => void;
   availableSubcategories: string[];
+  uploading: boolean;
   uploadingThumbnail: boolean;
   onGenerateSlug: () => void;
+  onImageUploadClick: () => void;
   onThumbnailUploadClick: () => void;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
   thumbnailInputRef: React.RefObject<HTMLInputElement | null>;
+  onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onThumbnailUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   categorySlug: string;
   setCategorySlug: (slug: string) => void;
@@ -43,10 +47,14 @@ export function ArticleMetadataHeader({
   thumbnail,
   setThumbnail,
   availableSubcategories,
+  uploading,
   uploadingThumbnail,
   onGenerateSlug,
+  onImageUploadClick,
   onThumbnailUploadClick,
+  fileInputRef,
   thumbnailInputRef,
+  onImageUpload,
   onThumbnailUpload,
   categorySlug,
   setCategorySlug,
@@ -72,6 +80,13 @@ export function ArticleMetadataHeader({
               </h1>
             </div>
           </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={onImageUpload}
+            className="hidden"
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
