@@ -3,8 +3,9 @@ import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Search, X, Star, Bell, Pencil } from "lucide-react";
 import AdminHeader from "@/app/components/AdminHeader";
-import { getVideoEmbedUrl } from "@/lib/utils/videos";
+import { detectVideoPlatform, getVideoEmbedUrl } from "@/lib/utils/videos";
 import VideoCard from "@/app/components/VideoCard";
+import { platform } from "os";
 
 type Article = {
   id: string;
@@ -27,7 +28,7 @@ type Video = {
   id: string;
   title: string;
   url: string;
-  platform: "youtube" | "facebook";
+  platform: "youtube" | "facebook" | "tiktok";
   thumbnail_url?: string | null;
   isActive: boolean;
   created_at?: string;
@@ -170,8 +171,20 @@ export default function AdminDashboardPage() {
       return;
     }
 
-    if (videoForm.platform === "facebook" && !videoForm.thumbnail_url.trim()) {
-      alert("Please upload or paste a thumbnail URL for Facebook videos.");
+    const autoPlatform =
+      videoForm.platform || detectVideoPlatform(videoForm.url);
+    if (!autoPlatform) {
+      alert("Could not detect video platform. Please select one.");
+      return;
+    }
+
+    if (
+      (autoPlatform === "facebook" || autoPlatform === "tiktok") &&
+      !videoForm.thumbnail_url.trim()
+    ) {
+      alert(
+        `Please upload or paste a thumbnail URL for ${autoPlatform} videos.`
+      );
       return;
     }
 
@@ -181,11 +194,8 @@ export default function AdminDashboardPage() {
       const payload: Record<string, any> = {
         title: videoForm.title.trim(),
         url: videoForm.url.trim(),
+        platform: autoPlatform,
       };
-
-      if (videoForm.platform) {
-        payload.platform = videoForm.platform;
-      }
 
       if (videoForm.thumbnail_url.trim()) {
         payload.thumbnail_url = videoForm.thumbnail_url.trim();
@@ -923,7 +933,7 @@ export default function AdminDashboardPage() {
                       setVideoForm((prev) => ({ ...prev, url: e.target.value }))
                     }
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
-                    placeholder="https://youtube/... or https://facebook/..."
+                    placeholder="https://youtube/... https://facebook/... https://tiktok/..."
                     required
                   />
                 </div>
@@ -944,6 +954,7 @@ export default function AdminDashboardPage() {
                     <option value="">Auto-detect</option>
                     <option value="youtube">YouTube</option>
                     <option value="facebook">Facebook</option>
+                    <option value="tiktok">TikTok</option>
                   </select>
                 </div>
                 <div className="md:col-span-1">

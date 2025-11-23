@@ -1,4 +1,4 @@
-export type VideoPlatform = "youtube" | "facebook";
+export type VideoPlatform = "youtube" | "facebook" | "tiktok";
 
 const YOUTUBE_HOSTS = [
   "youtube.com",
@@ -6,6 +6,13 @@ const YOUTUBE_HOSTS = [
   "m.youtube.com",
   "youtu.be",
   "www.youtu.be",
+];
+
+const TIKTOK_HOSTS = [
+  "tiktok.com",
+  "www.tiktok.com",
+  "m.tiktok.com",
+  "vm.tiktok.com",
 ];
 
 export const normalizeUrl = (url: string) => {
@@ -36,6 +43,25 @@ export const getYoutubeVideoId = (url: string): string | null => {
   return null;
 };
 
+export const getTikTokVideoId = (url: string): string | null => {
+  const parsed = normalizeUrl(url);
+  if (!parsed) return null;
+
+  //handle vm.tiktok.com short links
+  if (parsed.hostname === "vm.tiktok.com") {
+    return parsed.pathname.split("/")[1] || null;
+  }
+
+  //standard tiktok URL format: tiktok.com/@username/video/1234567890
+  const path = parsed.pathname.replace(/^\/+/, "");
+  const videoMatch = path.match(/video\/(\d+)/);
+  if (videoMatch) {
+    return videoMatch[1];
+  }
+
+  return null;
+}
+
 export const detectVideoPlatform = (url: string): VideoPlatform | null => {
   const parsed = normalizeUrl(url);
   if (!parsed) return null;
@@ -50,12 +76,15 @@ export const detectVideoPlatform = (url: string): VideoPlatform | null => {
     return "facebook";
   }
 
+  if (TIKTOK_HOSTS.includes(host)) {
+    return "tiktok";
+  }
+
   return null;
 };
 
-// lib/utils/videos.ts
 export function getVideoEmbedUrl(
-  platform: 'youtube' | 'facebook',
+  platform: 'youtube' | 'facebook' | 'tiktok',
   url: string
 ): string | null {
   if (platform === 'youtube') {
@@ -82,6 +111,13 @@ export function getVideoEmbedUrl(
     )}&show_text=false`;
   }
 
+  if(platform === 'tiktok') {
+    const videoId = getTikTokVideoId(url);
+    if (!videoId) return null;
+    //tiktok embed url format
+    return `https://www.tiktok.com/embed/v2/${videoId}`;
+  }
+
   return null;
 }
 
@@ -95,7 +131,7 @@ export const getVideoThumbnailUrl = (
     return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
   }
 
-  // Facebook does not offer a simple thumbnail without API calls.
+  // Facebook and TikTok do not offer a simple thumbnail without API calls.
   // Return null so the UI can fall back to a generic background.
   return null;
 };

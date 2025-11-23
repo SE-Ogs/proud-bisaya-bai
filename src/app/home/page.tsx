@@ -122,8 +122,8 @@ const Home: React.FC = async () => {
       ...video,
       platform: (video.platform || "").toLowerCase(),
     }))
-    .filter(
-      (video) => video.platform === "youtube" || video.platform === "facebook"
+    .filter((video) =>
+      ["youtube", "facebook", "tiktok"].includes(video.platform)
     );
 
   return (
@@ -175,7 +175,7 @@ const Home: React.FC = async () => {
                   Watch the Latest Highlights
                 </h3>
                 <p className="mt-3 text-white/70 max-w-2xl mx-auto">
-                  Straight from Facebook and YouTube - curated stories,
+                  Straight from Facebook, Youtube, and TikTok - curated stories,
                   interviews, and moments from Proud Bisaya Bai.
                 </p>
               </div>
@@ -186,7 +186,10 @@ const Home: React.FC = async () => {
                     id: video.id,
                     title: video.title,
                     url: video.url,
-                    platform: video.platform as "youtube" | "facebook",
+                    platform: video.platform as
+                      | "youtube"
+                      | "facebook"
+                      | "tiktok",
                     created_at: video.created_at,
                     thumbnail_url: video.thumbnail_url,
                   }))}
@@ -198,7 +201,7 @@ const Home: React.FC = async () => {
 
         {/* Facebook Live Section */}
         {/* Comment out if not used :D */}
-        {/* <section className="bg-[var(--custom-blue)] py-12">
+        <section className="bg-[var(--custom-blue)] py-12">
           <div className="text-center container mx-auto px-4">
             <div className="text-center">
               <h3 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-2">
@@ -225,7 +228,7 @@ const Home: React.FC = async () => {
               </p>
             </div>
           </div>
-        </section> */}
+        </section>
 
         {/* Featured Stories */}
         <section className="bg-white py-12">

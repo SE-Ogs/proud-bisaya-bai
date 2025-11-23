@@ -9,7 +9,7 @@ type Video = {
   id: string;
   title: string;
   url: string;
-  platform: "youtube" | "facebook";
+  platform: "youtube" | "facebook" | "tiktok";
   created_at?: string;
   thumbnail_url?: string | null;
 };
@@ -70,7 +70,10 @@ export default function VideoCarousel({ videos }: VideoCarouselProps) {
               created_at={video.created_at}
               thumbnailUrl={video.thumbnail_url}
               onPlay={() => {
-                if (video.platform === "facebook") {
+                if (
+                  video.platform === "facebook" ||
+                  video.platform === "tiktok"
+                ) {
                   window.open(video.url, "_blank", "noopener,noreferrer");
                 } else {
                   setActiveVideo(video);
