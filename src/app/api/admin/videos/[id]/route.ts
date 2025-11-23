@@ -37,6 +37,7 @@ export async function PATCH(
 ) {
   try {
     const supabaseAdmin = await requireAdmin();
+    const { id } = await params;
     const body = await request.json();
     const updates: Record<string, any> = {};
 
@@ -79,7 +80,7 @@ export async function PATCH(
     const { data, error } = await supabaseAdmin
       .from("videos")
       .update(updates)
-      .eq("id", params.id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -99,10 +100,11 @@ export async function DELETE(
 ) {
   try {
     const supabaseAdmin = await requireAdmin();
+    const { id } = await params;
     const { error } = await supabaseAdmin
       .from("videos")
       .delete()
-      .eq("id", params.id);
+      .eq("id", id);
 
     if (error) throw error;
 
