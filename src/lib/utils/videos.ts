@@ -136,3 +136,8 @@ export const getVideoThumbnailUrl = (
   return null;
 };
 
+export function getFacebookEmbedUrl(normalUrl: string){
+  const encoded = encodeURIComponent(normalUrl.trim());
+  return `https://www.facebook.com/plugins/video.php?href=${encoded}&show_text=false`;
+}
+

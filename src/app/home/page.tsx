@@ -112,6 +112,32 @@ const Home: React.FC = async () => {
   }
   if (videosErr) console.error("Videos query failed:", videosErr);
 
+  let facebookLive: {
+    fb_url: string;
+    fb_embed_url: string;
+    is_active: boolean;
+  } | null = null;
+  let facebookLiveErr: any = null;
+
+  try {
+    const supabaseAdmin = createAdminClient();
+    const { data, error } = await supabaseAdmin
+      .from("facebook_live")
+      .select("fb_url, fb_embed_url, is_active")
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      facebookLiveErr = error;
+    } else {
+      facebookLive = data as any;
+    }
+  } catch (err) {
+    facebookLiveErr = err;
+  }
+  if (facebookLiveErr)
+    console.error("Facebook Live query failed:", facebookLiveErr);
+
   // Null-safe fallbacks
   const articlesData = articlesDataRaw ?? [];
   const breakingNews = (breakingNewsDataRaw ?? [])[0] ?? null;
@@ -199,36 +225,39 @@ const Home: React.FC = async () => {
           </section>
         )}
 
-        {/* Facebook Live Section */}
-        {/* Comment out if not used :D */}
-        <section className="bg-[var(--custom-blue)] py-12">
-          <div className="text-center container mx-auto px-4">
-            <div className="text-center">
-              <h3 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-2">
-                Watch Us Live!
-              </h3>
-              <div className="h-1.5 w-16 bg-[var(--custom-orange)] rounded-full mb-4 mx-auto" />
-            </div>
-            <div className="max-w-3xl mx-auto">
-              <div
-                className="relative w-full"
-                style={{ paddingBottom: "56.25%" }}
-              >
-                <iframe
-                  src="https://www.facebook.com/plugins/video.php?height=314&href=https%3A%2F%2Fwww.facebook.com%2FSparta%2Fvideos%2F680780428062150%2F&show_text=false&width=560&t=0"
-                  className="absolute top-0 left-0 w-full h-full rounded-lg shadow-lg"
-                  style={{ border: "none", overflow: "hidden" }}
-                  allowFullScreen={true}
-                  allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                ></iframe>
+        {/* Facebook Live Section (controlled from admin) */}
+        {facebookLive &&
+          facebookLive.is_active &&
+          facebookLive.fb_embed_url && (
+            <section className="bg-[var(--custom-blue)] py-12">
+              <div className="text-center container mx-auto px-4">
+                <div className="text-center">
+                  <h3 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-2">
+                    Watch Us Live!
+                  </h3>
+                  <div className="h-1.5 w-16 bg-[var(--custom-orange)] rounded-full mb-4 mx-auto" />
+                </div>
+                <div className="max-w-3xl mx-auto">
+                  <div
+                    className="relative w-full"
+                    style={{ paddingBottom: "56.25%" }}
+                  >
+                    <iframe
+                      src={facebookLive.fb_embed_url}
+                      className="absolute top-0 left-0 w-full h-full rounded-lg shadow-lg"
+                      style={{ border: "none", overflow: "hidden" }}
+                      allowFullScreen
+                      allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                    ></iframe>
+                  </div>
+                  <p className="mt-4 text-center text-white text-sm">
+                    Join us live on Facebook for the latest updates and
+                    exclusive content!
+                  </p>
+                </div>
               </div>
-              <p className="mt-4 text-center text-white text-sm">
-                Join us live on Facebook for the latest updates and exclusive
-                content!
-              </p>
-            </div>
-          </div>
-        </section>
+            </section>
+          )}
 
         {/* Featured Stories */}
         <section className="bg-white py-12">
