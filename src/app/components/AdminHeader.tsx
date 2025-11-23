@@ -34,7 +34,7 @@ export default function AdminHeader({
         <div className="px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img
-              src="/images/pbb_icon1.webp"
+              src="/images/pbb_hd_logo.webp"
               alt="Proud Bisaya Bai"
               width={64}
               height={64}
