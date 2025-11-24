@@ -3,8 +3,9 @@ import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Search, X, Star, Bell, Pencil } from "lucide-react";
 import AdminHeader from "@/app/components/AdminHeader";
-import { getVideoEmbedUrl } from "@/lib/utils/videos";
+import { detectVideoPlatform, getVideoEmbedUrl } from "@/lib/utils/videos";
 import VideoCard from "@/app/components/VideoCard";
+import { platform } from "os";
 
 type Article = {
   id: string;
@@ -27,11 +28,49 @@ type Video = {
   id: string;
   title: string;
   url: string;
-  platform: "youtube" | "facebook";
+  platform: "youtube" | "facebook" | "tiktok";
   thumbnail_url?: string | null;
   isActive: boolean;
   created_at?: string;
 };
+
+type FacebookLiveSettings = {
+  fb_url: string;
+  fb_embed_url: string;
+  is_active: boolean;
+};
+
+type ToggleSwitchProps = {
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (checked: boolean) => void;
+};
+
+function ToggleSwitch({ checked, disabled, onChange }: ToggleSwitchProps) {
+  return (
+    <button
+      type="button"
+      onClick={() => !disabled && onChange(!checked)}
+      disabled={disabled}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full border transition-colors ${
+        disabled
+          ? "bg-gray-200 border-gray-300 cursor-not-allowed opacity-60"
+          : checked
+          ? "bg-green-500 border-green-600"
+          : "bg-gray-300 border-gray-400"
+      }`}
+      aria-pressed={checked}
+      role="switch"
+      aria-checked={checked}
+    >
+      <span
+        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+          checked ? "translate-x-5" : "translate-x-1"
+        }`}
+      />
+    </button>
+  );
+}
 
 export default function AdminDashboardPage() {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -65,6 +104,14 @@ export default function AdminDashboardPage() {
   const [editingVideoLoading, setEditingVideoLoading] = useState(false);
   const [uploadingVideoThumbnail, setUploadingVideoThumbnail] = useState(false);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const [facebookLive, setFacebookLive] = useState<FacebookLiveSettings | null>(
+    null
+  );
+  const [facebookLiveLoading, setFacebookLiveLoading] = useState(false);
+  const [facebookLiveError, setFacebookLiveError] = useState<string | null>(
+    null
+  );
+  const [showFacebookLiveForm, setShowFacebookLiveForm] = useState(false);
 
   useEffect(() => {
     fetchArticles();
@@ -83,6 +130,7 @@ export default function AdminDashboardPage() {
     }
     if (activeTab !== "videos") {
       setShowVideoForm(false);
+      setShowFacebookLiveForm(false);
     }
   }, [activeTab, videosInitialized, videosLoading]);
 
@@ -148,6 +196,30 @@ export default function AdminDashboardPage() {
     }
   }
 
+  async function fetchFacebookLive() {
+    try {
+      setFacebookLiveLoading(true);
+      setFacebookLiveError(null);
+
+      const res = await fetch("/api/admin/facebook-live");
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+      const data = await res.json();
+
+      setFacebookLive({
+        fb_url: data.fb_url || "",
+        fb_embed_url: data.fb_embed_url || "",
+        is_active: Boolean(data.is_active),
+      });
+    } catch (err: any) {
+      setFacebookLiveError(
+        err.message || "Failed to load Facebook Live settings"
+      );
+    } finally {
+      setFacebookLiveLoading(false);
+    }
+  }
+
   const uploadVideoThumbnailImage = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append("file", file);
@@ -170,8 +242,20 @@ export default function AdminDashboardPage() {
       return;
     }
 
-    if (videoForm.platform === "facebook" && !videoForm.thumbnail_url.trim()) {
-      alert("Please upload or paste a thumbnail URL for Facebook videos.");
+    const autoPlatform =
+      videoForm.platform || detectVideoPlatform(videoForm.url);
+    if (!autoPlatform) {
+      alert("Could not detect video platform. Please select one.");
+      return;
+    }
+
+    if (
+      (autoPlatform === "facebook" || autoPlatform === "tiktok") &&
+      !videoForm.thumbnail_url.trim()
+    ) {
+      alert(
+        `Please upload or paste a thumbnail URL for ${autoPlatform} videos.`
+      );
       return;
     }
 
@@ -181,11 +265,8 @@ export default function AdminDashboardPage() {
       const payload: Record<string, any> = {
         title: videoForm.title.trim(),
         url: videoForm.url.trim(),
+        platform: autoPlatform,
       };
-
-      if (videoForm.platform) {
-        payload.platform = videoForm.platform;
-      }
 
       if (videoForm.thumbnail_url.trim()) {
         payload.thumbnail_url = videoForm.thumbnail_url.trim();
@@ -251,6 +332,98 @@ export default function AdminDashboardPage() {
       setVideos((prev) => prev.filter((video) => video.id !== id));
     } catch (err: any) {
       alert(err.message);
+    }
+  }
+
+  async function handleSaveFacebookLive(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!facebookLive) return;
+
+    const trimmedUrl = facebookLive.fb_url.trim();
+    if (!trimmedUrl) {
+      alert("Please paste a valid Facebook live URL.");
+      return;
+    }
+
+    try {
+      setFacebookLiveLoading(true);
+      setFacebookLiveError(null);
+
+      const res = await fetch("/api/admin/facebook-live", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fb_url: trimmedUrl,
+          is_active: facebookLive.is_active,
+        }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to save Facebook Live settings");
+      }
+
+      const saved = await res.json();
+
+      setFacebookLive({
+        fb_url: saved.fb_url,
+        fb_embed_url: saved.fb_embed_url,
+        is_active: Boolean(saved.is_active),
+      });
+
+      alert("Facebook Live settings saved!");
+    } catch (err: any) {
+      setFacebookLiveError(err.message);
+      alert(err.message);
+    } finally {
+      setFacebookLiveLoading(false);
+    }
+  }
+
+  async function handleToggleFacebookLive() {
+    if (!facebookLive) return;
+
+    const newActiveState = !facebookLive.is_active;
+
+    // If turning ON and we don't have data yet, fetch first
+    if (newActiveState && !facebookLive.fb_url) {
+      try {
+        await fetchFacebookLive();
+      } catch (err: any) {
+        alert("Failed to load Facebook Live settings");
+        return;
+      }
+    }
+
+    try {
+      setFacebookLiveLoading(true);
+      setFacebookLiveError(null);
+
+      const res = await fetch("/api/admin/facebook-live", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fb_url: facebookLive.fb_url || "",
+          is_active: newActiveState,
+        }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to update live status");
+      }
+
+      const saved = await res.json();
+      setFacebookLive({
+        fb_url: saved.fb_url,
+        fb_embed_url: saved.fb_embed_url,
+        is_active: Boolean(saved.is_active),
+      });
+    } catch (err: any) {
+      setFacebookLiveError(err.message);
+      alert(err.message);
+    } finally {
+      setFacebookLiveLoading(false);
     }
   }
 
@@ -383,6 +556,31 @@ export default function AdminDashboardPage() {
     } catch (err: any) {
       alert(err.message);
       fetchArticles();
+    }
+  }
+
+  async function handleDeleteArticle(slug: string) {
+    if (
+      !confirm(
+        "Permanently delete this archived article? This action cannot be undone."
+      )
+    )
+      return;
+
+    try {
+      const res = await fetch(`/api/admin/articles/${slug}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to delete article");
+      }
+
+      setArticles((prev) =>
+        prev.filter((article) => (article.slug ? article.slug !== slug : true))
+      );
+    } catch (err: any) {
+      alert(err.message);
     }
   }
 
@@ -713,16 +911,37 @@ export default function AdminDashboardPage() {
             </div>
             <div className="flex gap-3 px-6">
               {isVideosTab ? (
-                <button
-                  onClick={() => setShowVideoForm((prev) => !prev)}
-                  className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${
-                    showVideoForm
-                      ? "bg-gray-400 hover:bg-gray-500"
-                      : "bg-red-500 hover:bg-red-600"
-                  }`}
-                >
-                  {showVideoForm ? "Hide Form" : "Add Video"}
-                </button>
+                <div className="flex gap-3">
+                  {/* Add Video */}
+                  <button
+                    onClick={() => {
+                      setShowVideoForm((prev) => !prev);
+                      setShowFacebookLiveForm(false);
+                    }}
+                    className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${
+                      showVideoForm
+                        ? "bg-gray-400 hover:bg-gray-500"
+                        : "bg-red-500 hover:bg-red-600"
+                    }`}
+                  >
+                    {showVideoForm ? "Hide Form" : "Add Video"}
+                  </button>
+
+                  {/* Facebook Live */}
+                  <button
+                    onClick={() => {
+                      setShowFacebookLiveForm((prev) => !prev);
+                      setShowVideoForm(false);
+                    }}
+                    className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${
+                      showFacebookLiveForm
+                        ? "bg-gray-400 hover:bg-gray-500"
+                        : "bg-blue-500 hover:bg-blue-600"
+                    }`}
+                  >
+                    {showFacebookLiveForm ? "Hide" : "Facebook Live"}
+                  </button>
+                </div>
               ) : (
                 <>
                   <button
@@ -898,7 +1117,7 @@ export default function AdminDashboardPage() {
                       setVideoForm((prev) => ({ ...prev, url: e.target.value }))
                     }
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
-                    placeholder="https://youtube/... or https://facebook/..."
+                    placeholder="Youtube, Facebook, TikTok link"
                     required
                   />
                 </div>
@@ -919,6 +1138,7 @@ export default function AdminDashboardPage() {
                     <option value="">Auto-detect</option>
                     <option value="youtube">YouTube</option>
                     <option value="facebook">Facebook</option>
+                    <option value="tiktok">TikTok</option>
                   </select>
                 </div>
                 <div className="md:col-span-1">
@@ -985,6 +1205,82 @@ export default function AdminDashboardPage() {
                     className="inline-flex items-center rounded-lg bg-red-500 px-5 py-2 text-white font-semibold shadow hover:bg-red-600 disabled:cursor-not-allowed disabled:bg-red-300"
                   >
                     {videoFormLoading ? "Saving..." : "Add Video"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {isVideosTab && showFacebookLiveForm && (
+            <div className="border-b border-gray-200 bg-gray-50 p-6">
+              {facebookLiveError && (
+                <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {facebookLiveError}
+                </div>
+              )}
+
+              <form onSubmit={handleSaveFacebookLive} className="space-y-4">
+                <div className="grid md:grid-cols-3 gap-4 items-end">
+                  <div className="md:col-span-2">
+                    <label className="mb-1 block text-sm font-semibold text-gray-700">
+                      Facebook Live URL
+                    </label>
+                    <input
+                      type="url"
+                      value={facebookLive?.fb_url || ""}
+                      onChange={(e) =>
+                        setFacebookLive((prev) =>
+                          prev
+                            ? { ...prev, fb_url: e.target.value }
+                            : {
+                                fb_url: e.target.value,
+                                fb_embed_url: "",
+                                is_active: false,
+                              }
+                        )
+                      }
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
+                      placeholder="https://www.facebook.com/yourpage/live/..."
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Paste the normal Facebook live link here. The embed URL
+                      will be generated automatically.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <span className="text-sm font-semibold text-gray-700">
+                      Live Status
+                    </span>
+
+                    <div className="flex items-center gap-3">
+                      <ToggleSwitch
+                        checked={Boolean(facebookLive?.is_active)}
+                        disabled={facebookLiveLoading || !facebookLive?.fb_url}
+                        onChange={() => handleToggleFacebookLive()}
+                      />
+                      <span className="text-sm font-medium text-gray-800">
+                        {facebookLive?.is_active ? "Live is ON" : "Live is OFF"}
+                      </span>
+                    </div>
+
+                    <span className="text-xs text-gray-500">
+                      {facebookLive?.fb_url
+                        ? facebookLive?.is_active
+                          ? "The Facebook Live section is currently visible on the homepage."
+                          : "The Facebook Live section is currently hidden on the homepage."
+                        : "Enter and save a Facebook Live URL first, then you can turn it ON."}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={facebookLiveLoading}
+                    className="inline-flex items-center rounded-lg bg-red-500 px-5 py-2 text-white font-semibold shadow hover:bg-red-600 disabled:cursor-not-allowed disabled:bg-red-300"
+                  >
+                    {facebookLiveLoading ? "Saving..." : "Save Facebook Live"}
                   </button>
                 </div>
               </form>
@@ -1247,6 +1543,14 @@ export default function AdminDashboardPage() {
                               className="text-white font-bold px-10.5 py-2 rounded-lg bg-red-400 hover:bg-red-500 w-full"
                             >
                               Archive
+                            </button>
+                          )}
+                          {a.isArchived && (
+                            <button
+                              onClick={() => handleDeleteArticle(a.slug)}
+                              className="text-white font-bold px-10 py-2 rounded-lg bg-red-600 hover:bg-red-700 w-full"
+                            >
+                              Delete
                             </button>
                           )}
                         </div>

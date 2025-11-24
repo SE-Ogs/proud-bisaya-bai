@@ -93,6 +93,45 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
         );
 
       case COMPONENT_TYPES.IMAGE:
+        // Check if custom dimensions are set
+        const hasCustomDimensions = Boolean(props.width && props.height);
+        
+        console.log('Image props:', {
+          src: props.src,
+          width: props.width,
+          height: props.height,
+          hasCustomDimensions
+        });
+        
+        if (hasCustomDimensions) {
+          return (
+            <figure key={index} className="mb-8 flex justify-center">
+              {props.src && (
+                <div style={{ maxWidth: '100%', display: 'inline-block' }}>
+                  <img
+                    src={props.src}
+                    alt={props.alt || ""}
+                    width={props.width}
+                    height={props.height}
+                    className="rounded-xl shadow-lg"
+                    style={{ 
+                      display: 'block',
+                      maxWidth: '100%',
+                      height: 'auto',
+                      objectFit: 'contain'
+                    }}
+                  />
+                </div>
+              )}
+              {props.caption && (
+                <figcaption className="text-sm text-gray-600 mt-3 text-center italic">
+                  {props.caption}
+                </figcaption>
+              )}
+            </figure>
+          );
+        }
+        
         return (
           <figure key={index} className="mb-8">
             {props.src && (

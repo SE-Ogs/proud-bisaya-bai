@@ -63,9 +63,18 @@ export function ArticleMetadataHeader({
 }: ArticleMetadataHeaderProps) {
   const router = useRouter();
 
+  const handleSlugBlur = () => {
+    // Convert to valid slug format when user finishes typing
+    const cleanedSlug = articleSlug
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+    setArticleSlug(cleanedSlug);
+  };
+
   return (
     <>
-      <div className="bg-white">
+      <div className="bg-white overflow-y-hidden">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <button
             onClick={() => router.push("/admin/dashboard")}
@@ -79,23 +88,6 @@ export function ArticleMetadataHeader({
                 {slug ? "Edit Article" : "Create New Article"}
               </h1>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={onImageUploadClick}
-                disabled={uploading}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-md font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {uploading ? "Uploading..." : "Upload Image"}
-              </button>
-            </div>
-          </div>
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg mb-8">
-            <p className="text-sm text-blue-800">
-              <strong>💡 How to add images:</strong> Click "Upload Image" button
-              above, select your image, and the URL will be copied to your
-              clipboard. Then paste it into the Image Block's "Image URL" field
-              in the editor below.
-            </p>
           </div>
           <input
             ref={fileInputRef}
@@ -129,9 +121,9 @@ export function ArticleMetadataHeader({
                 type="text"
                 value={articleSlug}
                 onChange={(e) => setArticleSlug(e.target.value)}
+                onBlur={handleSlugBlur}
                 placeholder="article-slug"
-                disabled={!!slug}
-                className="w-full border border-gray-300 rounded-lg px-3 py-3 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-3 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
             </div>

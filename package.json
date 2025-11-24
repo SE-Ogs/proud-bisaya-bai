@@ -9,16 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@measured/puck": "^0.20.2",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.58.0",
-    "@tiptap/extension-link": "^3.7.2",
-    "@tiptap/extension-text-align": "^3.7.2",
-    "@tiptap/extension-underline": "^3.7.2",
     "@tiptap/react": "^3.7.2",
-    "@tiptap/starter-kit": "^3.7.2",
-    "@tohuhono/puck-rich-text": "^0.13.0",
+    "@vercel/speed-insights": "^1.2.0",
     "lucide-react": "^0.545.0",
     "next": "15.5.4",
     "react": "19.1.0",

@@ -37,7 +37,7 @@ const uploadImage = async (file: File): Promise<string> => {
   return data.url;
 };
 
-// Resizable Image Component
+// Resizable Image Component 
 interface ResizableImageProps {
   src: string;
   alt: string;
@@ -64,6 +64,9 @@ const ResizableImage: React.FC<ResizableImageProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const startPos = useRef({ x: 0, y: 0, width: 0, height: 0 });
+  
+  // Track the final dimensions to call onResize after resizing stops
+  const finalDimensions = useRef({ width: 0, height: 0 });
 
   // Load natural dimensions when image loads
   useEffect(() => {
@@ -89,6 +92,8 @@ const ResizableImage: React.FC<ResizableImageProps> = ({
     e.preventDefault();
     e.stopPropagation();
     
+    console.log('🔴 ResizableImage: handleMouseDown', handle);
+    
     setIsResizing(true);
     setResizeHandle(handle);
     
@@ -100,8 +105,6 @@ const ResizableImage: React.FC<ResizableImageProps> = ({
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!resizeHandle) return;
-
       const deltaX = e.clientX - startPos.current.x;
       const deltaY = e.clientY - startPos.current.y;
 
@@ -145,13 +148,19 @@ const ResizableImage: React.FC<ResizableImageProps> = ({
           break;
       }
 
+      // Store final dimensions
+      finalDimensions.current = { width: newWidth, height: newHeight };
       setDimensions({ width: newWidth, height: newHeight });
     };
 
     const handleMouseUp = () => {
+      console.log('🟢 ResizableImage: handleMouseUp - calling onResize with:', finalDimensions.current);
       setIsResizing(false);
       setResizeHandle(null);
-      onResize(dimensions.width, dimensions.height);
+      
+      // Call onResize with the final dimensions
+      onResize(finalDimensions.current.width, finalDimensions.current.height);
+      
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
@@ -162,13 +171,14 @@ const ResizableImage: React.FC<ResizableImageProps> = ({
 
   const ResizeHandle = ({ position, cursor }: { position: string; cursor: string }) => (
     <div
-      className={`absolute w-3 h-3 bg-blue-500 border-2 border-white rounded-full opacity-0 group-hover/resize:opacity-100 transition-opacity cursor-${cursor} z-10 ${
-        position.includes('n') ? '-top-1.5' : ''
-      } ${position.includes('s') ? '-bottom-1.5' : ''} ${
-        position.includes('e') ? '-right-1.5' : ''
-      } ${position.includes('w') ? '-left-1.5' : ''} ${
+      className={`absolute w-4 h-4 bg-blue-500 border-2 border-white rounded-full opacity-0 group-hover/resize:opacity-100 transition-opacity z-50 ${
+        position.includes('n') ? '-top-2' : ''
+      } ${position.includes('s') ? '-bottom-2' : ''} ${
+        position.includes('e') ? '-right-2' : ''
+      } ${position.includes('w') ? '-left-2' : ''} ${
         position === 'n' || position === 's' ? 'left-1/2 -translate-x-1/2' : ''
       } ${position === 'e' || position === 'w' ? 'top-1/2 -translate-y-1/2' : ''}`}
+      style={{ cursor }}
       onMouseDown={(e) => handleMouseDown(e, position)}
     />
   );
@@ -455,10 +465,8 @@ export const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({
         const currentComponents = (window as any).currentComponents || [];
         const componentToMove = currentComponents[fromIndex];
 
-        if (
-          componentToMove &&
-          componentToMove.type !== COMPONENT_TYPES.COLUMNS
-        ) {
+        // Allow ALL components including columns
+        if (componentToMove) {
           const componentCopy: Component = JSON.parse(
             JSON.stringify(componentToMove)
           );
@@ -499,6 +507,11 @@ export const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({
         return { content: "<p></p>" };
       case COMPONENT_TYPES.IMAGE:
         return { src: "", alt: "", caption: "" };
+      case COMPONENT_TYPES.COLUMNS:
+        return {
+          columnCount: 2,
+          columns: [{ components: [] }, { components: [] }],
+        };
       default:
         return {};
     }
@@ -515,13 +528,6 @@ export const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({
     }
     const newComponents = [...components];
     newComponents[compIndex] = { ...newComponents[compIndex], props: newProps };
-    updateColumn(newComponents);
-  };
-
-  const moveColumnComponent = (fromIndex: number, toIndex: number) => {
-    const newComponents = [...components];
-    const [movedComponent] = newComponents.splice(fromIndex, 1);
-    newComponents.splice(toIndex, 0, movedComponent);
     updateColumn(newComponents);
   };
 
@@ -587,11 +593,10 @@ export const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({
         return (
           <RichTextEditor
             content={comp.props.content || '<p>Type here...</p>'}
-            onChange={(html: string) =>
-              {
-                const { text, ...restProps } = comp.props;
-                updateColumnComponent(compIndex, { ...restProps, content: html });
-              }}
+            onChange={(html: string) => {
+              const { text, ...restProps } = comp.props;
+              updateColumnComponent(compIndex, { ...restProps, content: html });
+            }}
           />
         );
 
@@ -665,6 +670,70 @@ export const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({
               className="w-full p-2 text-sm border rounded"
               placeholder="Caption (optional)..."
             />
+          </div>
+        );
+
+      case COMPONENT_TYPES.COLUMNS:
+        const nestedColumnCount = comp.props.columnCount || 2;
+        const nestedGridCols =
+          nestedColumnCount === 2
+            ? "grid-cols-2"
+            : nestedColumnCount === 3
+            ? "grid-cols-3"
+            : "grid-cols-4";
+
+        return (
+          <div className="space-y-3 border-2 border-purple-200 rounded-lg p-3 bg-purple-50/30">
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-semibold text-purple-700">Nested Columns:</label>
+              <select
+                value={nestedColumnCount}
+                onChange={(e) => {
+                  const newCount = parseInt(e.target.value);
+                  const currentNestedColumns = comp.props.columns || [];
+                  const newNestedColumns = Array.from(
+                    { length: newCount },
+                    (_, i) => currentNestedColumns[i] || { components: [] }
+                  );
+                  updateColumnComponent(compIndex, {
+                    ...comp.props,
+                    columnCount: newCount,
+                    columns: newNestedColumns,
+                  });
+                }}
+                className="px-2 py-1 text-xs border rounded"
+              >
+                {[2, 3, 4].map((count) => (
+                  <option key={count} value={count}>
+                    {count} Columns
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className={`grid ${nestedGridCols} gap-2`}>
+              {(comp.props.columns || []).map((nestedCol, nestedColIndex) => (
+                <ColumnDropZone
+                  key={`nested-col-${compIndex}-${nestedColIndex}`}
+                  columnIndex={nestedColIndex}
+                  parentIndex={parentIndex}
+                  components={nestedCol.components || []}
+                  updateColumn={(newNestedComponents) => {
+                    const currentNestedColumns = comp.props.columns || [];
+                    const newNestedColumns = currentNestedColumns.map(
+                      (col: { components: Component[] }, idx: number) =>
+                        idx === nestedColIndex
+                          ? { components: [...newNestedComponents] }
+                          : { ...col, components: [...col.components] }
+                    );
+                    updateColumnComponent(compIndex, {
+                      ...comp.props,
+                      columns: newNestedColumns,
+                    });
+                  }}
+                  removeFromMainCanvas={removeFromMainCanvas}
+                />
+              ))}
+            </div>
           </div>
         );
 
@@ -753,53 +822,72 @@ export const ComponentRenderer: React.FC<ComponentRendererInternalProps> = ({
   };
 
   const handleDragOver = (e: React.DragEvent) => {
-    // Don't show drop indicators when editing text
-    if (isEditing) return;
-    
     e.preventDefault();
     e.stopPropagation();
 
+    // Check if it's a new component from sidebar or existing component
+    const isNewComponent = e.dataTransfer.types.includes('componenttype');
+    
+    // Get the component element bounds
     const rect = e.currentTarget.getBoundingClientRect();
-    const midpoint = rect.top + rect.height / 2;
+    
+    // More generous drop zone - 40% top, 40% bottom, 20% middle
+    const topZone = rect.top + (rect.height * 0.4);
+    const bottomZone = rect.bottom - (rect.height * 0.4);
 
-    if (e.clientY < midpoint) {
+    if (e.clientY < topZone) {
       setShowDropIndicator("top");
-      e.dataTransfer.dropEffect = "move";
-    } else {
+      e.dataTransfer.dropEffect = isNewComponent ? "copy" : "move";
+    } else if (e.clientY > bottomZone) {
       setShowDropIndicator("bottom");
-      e.dataTransfer.dropEffect = "move";
+      e.dataTransfer.dropEffect = isNewComponent ? "copy" : "move";
+    } else {
+      setShowDropIndicator(null);
     }
   };
 
-  const handleDragLeave = () => {
-    setShowDropIndicator(null);
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear if we're actually leaving the component
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (
+      e.clientX < rect.left ||
+      e.clientX > rect.right ||
+      e.clientY < rect.top ||
+      e.clientY > rect.bottom
+    ) {
+      setShowDropIndicator(null);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
-    // Don't allow drops when editing text
-    if (isEditing) return;
-    
     e.preventDefault();
     e.stopPropagation();
 
     const isNewComponent = e.dataTransfer.getData("isNewComponent") === "true";
+    const componentType = e.dataTransfer.getData("componentType");
+    const fromIndexStr = e.dataTransfer.getData("componentIndex");
+    
     const rect = e.currentTarget.getBoundingClientRect();
-    const midpoint = rect.top + rect.height / 2;
-    const dropPosition = e.clientY < midpoint ? index : index + 1;
+    const topZone = rect.top + (rect.height * 0.4);
+    const dropPosition = e.clientY < topZone ? index : index + 1;
 
-    if (isNewComponent) {
-      const componentType = e.dataTransfer.getData("componentType");
-      if (componentType) {
-        const newComponent: Component = {
-          type: componentType,
-          props: getDefaultPropsForDrop(componentType),
-        };
-        const newComponents = [...(window as any).currentComponents];
-        newComponents.splice(dropPosition, 0, newComponent);
-        (window as any).setComponentsFromDrop(newComponents);
-      }
-    } else {
-      const fromIndex = parseInt(e.dataTransfer.getData("componentIndex"));
+    if (isNewComponent && componentType) {
+      // Adding new component from sidebar
+      const newComponent: Component = {
+        type: componentType,
+        props: getDefaultPropsForDrop(componentType),
+      };
+
+      // Mark as user action
+      (window as any).__setUserAction?.();
+
+      const currentComponents = (window as any).currentComponents || [];
+      const newComponents = [...currentComponents];
+      newComponents.splice(dropPosition, 0, newComponent);
+      (window as any).setComponentsFromDrop(newComponents);
+    } else if (fromIndexStr) {
+      // Moving existing component
+      const fromIndex = parseInt(fromIndexStr);
       if (!isNaN(fromIndex) && fromIndex !== index) {
         let targetIndex = dropPosition;
         if (fromIndex < dropPosition) {
@@ -943,11 +1031,14 @@ export const ComponentRenderer: React.FC<ComponentRendererInternalProps> = ({
                 width={component.props.width}
                 height={component.props.height}
                 onResize={(width, height) => {
+                  console.log('🔵 onResize called in ComponentRenderer:', width, height);
+                  console.log('🟢 Calling updateComponent with new dimensions');
                   updateComponent(index, { 
                     ...component.props, 
                     width, 
                     height 
                   });
+                  console.log('🟢 updateComponent called successfully');
                 }}
                 onRemove={handleRemoveImage}
               />
@@ -1115,22 +1206,21 @@ export const ComponentRenderer: React.FC<ComponentRendererInternalProps> = ({
       className={`group relative bg-white rounded-lg p-4 mb-4 border-2 ${
         isEditing ? "border-blue-500" : "border-gray-200"
       } hover:border-gray-300 transition-colors`}
-      // Remove draggable from the main container - only the grip handle should be draggable
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       {showDropIndicator === "top" && (
-        <div className="absolute -top-1 left-0 right-0 h-1 bg-blue-500 rounded-full" />
+        <div className="absolute -top-1 left-0 right-0 h-2 bg-blue-500 rounded-full z-50" />
       )}
       {showDropIndicator === "bottom" && (
-        <div className="absolute -bottom-1 left-0 right-0 h-1 bg-blue-500 rounded-full" />
+        <div className="absolute -bottom-1 left-0 right-0 h-2 bg-blue-500 rounded-full z-50" />
       )}
       
       {/* Drag handle - only this element should be draggable */}
       <div 
         ref={dragHandleRef}
-        className="absolute -left-8 top-4 cursor-move opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute -left-8 top-4 cursor-move opacity-0 group-hover:opacity-100 transition-opacity z-10"
         draggable
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
@@ -1140,7 +1230,7 @@ export const ComponentRenderer: React.FC<ComponentRendererInternalProps> = ({
 
       <button
         onClick={() => deleteComponent(index)}
-        className="absolute -right-3 -top-3 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+        className="absolute -right-3 -top-3 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
       >
         <Trash2 size={16} />
       </button>
