@@ -99,6 +99,20 @@ const Footer: React.FC = () => {
                   className="hover:opacity-80 transition-opacity"
                 />
               </Link>
+              <Link
+                href="https://www.tiktok.com/@proudbisayabai"
+                aria-label="TikTok"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Image
+                  src="/images/tiktok_icon.svg"
+                  alt="TikTok"
+                  width={32}
+                  height={32}
+                  className="hover:opacity-80 transition-opacity"
+                />
+              </Link>
             </div>
           </div>
 
@@ -158,7 +172,7 @@ const Footer: React.FC = () => {
                   href="/about-us"
                   className="hover:text-[var(--custom-orange)] transition-colors"
                 >
-                  About Us
+                  Proud Bisaya Bai
                 </Link>
               </li>
               <li>
@@ -190,7 +204,7 @@ const Footer: React.FC = () => {
                   href="/contact-us"
                   className="hover:text-[var(--custom-orange)] transition-colors"
                 >
-                  Be Featured
+                  Get Featured
                 </Link>
               </li>
             </ul>
