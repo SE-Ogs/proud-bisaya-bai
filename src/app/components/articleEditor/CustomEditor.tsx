@@ -370,14 +370,11 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
                 
                 {/* Bottom drop zone */}
                 <div
-                  className={`h-32 mt-4 border-2 border-dashed rounded-lg transition-all ${
-                    showBottomDropZone ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-                  } flex items-center justify-center`}
+                  className={`h-auto mt-4 rounded-lg flex items-center justify-center`}
                   onDragOver={handleBottomDragOver}
                   onDragLeave={handleBottomDragLeave}
                   onDrop={handleBottomDrop}
                 >
-                  <p className="text-sm text-gray-400">Drop component here to add at the end</p>
                 </div>
               </>
             )}
