@@ -14,6 +14,7 @@ import {
 export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = true, onToggleMetadata, metadata }: CustomEditorProps) {
   const [components, setComponents] = useState<Component[]>(data.content || []);
   const [showCanvasDropZone, setShowCanvasDropZone] = useState(false);
+  const [showBottomDropZone, setShowBottomDropZone] = useState(false);
   const isInitialMountRef = useRef(true);
   const lastSyncedDataRef = useRef<string>(JSON.stringify(data.content || []));
   const isUserActionRef = useRef(false);
@@ -150,13 +151,52 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
     }
   };
 
+  // Bottom drop zone handlers
+  const handleBottomDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowBottomDropZone(true);
+  };
+
+  const handleBottomDragLeave = (e: React.DragEvent) => {
+    e.stopPropagation();
+    setShowBottomDropZone(false);
+  };
+
+  const handleBottomDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowBottomDropZone(false);
+
+    const isNewComponent = e.dataTransfer.getData('isNewComponent') === 'true';
+    const componentType = e.dataTransfer.getData('componentType');
+
+    if (isNewComponent && componentType) {
+      // Add to the end
+      isUserActionRef.current = true;
+      const newComponent: Component = {
+        type: componentType,
+        props: getDefaultProps(componentType)
+      };
+      setComponents([...components, newComponent]);
+    } else {
+      // Moving existing component to end
+      const fromIndex = parseInt(e.dataTransfer.getData('componentIndex'));
+      if (!isNaN(fromIndex)) {
+        moveComponent(fromIndex, components.length);
+      }
+    }
+  };
+
   // Preview handler
   const handlePreview = () => {
+    // Use the current components state (which has the latest dimensions)
     const previewData = { 
       content: components, 
       root: data.root || { props: {} } 
     };
     
+    console.log('Preview data:', JSON.stringify(previewData, null, 2));
     sessionStorage.setItem('articlePreview', JSON.stringify(previewData));
 
     const previewMetadata = {
@@ -257,7 +297,6 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
               draggable
               onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.HEADING)}
               onClick={() => addComponent(COMPONENT_TYPES.HEADING)}
-              onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
               className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
             >
               <Type size={20} className="text-gray-600 flex-shrink-0" />
@@ -268,7 +307,6 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
               draggable
               onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.PARAGRAPH)}
               onClick={() => addComponent(COMPONENT_TYPES.PARAGRAPH)}
-              onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
               className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
             >
               <Type size={20} className="text-gray-600 flex-shrink-0" />
@@ -279,7 +317,6 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
               draggable
               onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.IMAGE)}
               onClick={() => addComponent(COMPONENT_TYPES.IMAGE)}
-              onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
               className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
             >
               <Image size={20} className="text-gray-600 flex-shrink-0" />
@@ -290,7 +327,6 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
               draggable
               onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.COLUMNS)}
               onClick={() => addComponent(COMPONENT_TYPES.COLUMNS)}
-              onMouseDown={(e) => e.currentTarget.setAttribute('draggable', 'true')}
               className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
             >
               <Layout size={20} className="text-gray-600 flex-shrink-0" />
@@ -303,7 +339,7 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
         <div className="flex-1 overflow-y-auto">
           {/* Actual Canvas Area */}
           <div 
-            className="max-w-screen mx-10 py-8"
+            className="max-w-screen mx-10 py-8 min-h-full"
             onDragOver={handleCanvasDragOver}
             onDragLeave={handleCanvasDragLeave}
             onDrop={handleCanvasDrop}
@@ -315,21 +351,32 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
                 <p className="text-sm mt-2 text-gray-400">Drag components from the left sidebar or click to add</p>
               </div>
             ) : (
-              components.map((component, index) => (
-                <ComponentRenderer
-                  key={index}
-                  component={component}
-                  index={index}
-                  updateComponent={updateComponent}
-                  deleteComponent={deleteComponent}
-                  moveComponent={moveComponent}
-                  removeFromMainCanvas={(fromIndex) => {
-                    isUserActionRef.current = true;
-                    setComponents(prevComponents => prevComponents.filter((_, i) => i !== fromIndex));
-                  }}
-                  setComponentsDirect={setComponents}
-                />
-              ))
+              <>
+                {components.map((component, index) => (
+                  <ComponentRenderer
+                    key={index}
+                    component={component}
+                    index={index}
+                    updateComponent={updateComponent}
+                    deleteComponent={deleteComponent}
+                    moveComponent={moveComponent}
+                    removeFromMainCanvas={(fromIndex) => {
+                      isUserActionRef.current = true;
+                      setComponents(prevComponents => prevComponents.filter((_, i) => i !== fromIndex));
+                    }}
+                    setComponentsDirect={setComponents}
+                  />
+                ))}
+                
+                {/* Bottom drop zone */}
+                <div
+                  className={`h-auto mt-4 rounded-lg flex items-center justify-center`}
+                  onDragOver={handleBottomDragOver}
+                  onDragLeave={handleBottomDragLeave}
+                  onDrop={handleBottomDrop}
+                >
+                </div>
+              </>
             )}
           </div>
         </div>
