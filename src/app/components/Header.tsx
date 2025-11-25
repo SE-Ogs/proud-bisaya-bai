@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Session } from "@supabase/supabase-js";
@@ -23,6 +23,117 @@ const defaultItems: NavItem[] = [
   { label: "News and Entertainment", href: "/articles/news-and-entertainment" },
 ];
 
+// Subcategories for each category
+const subcategories: Record<string, { label: string; href: string }[]> = {
+  Destinations: [
+    {
+      label: "Cebu Highlights",
+      href: "/articles/destinations/cebu-highlights",
+    },
+    {
+      label: "Beaches & Islands",
+      href: "/articles/destinations/beaches-islands",
+    },
+    {
+      label: "Mountain Escapes",
+      href: "/articles/destinations/mountain-escapes",
+    },
+    {
+      label: "Heritage & History",
+      href: "/articles/destinations/heritage-history",
+    },
+    { label: "Hidden Gems", href: "/articles/destinations/hidden-gems" },
+    {
+      label: "Travel Itineraries",
+      href: "/articles/destinations/travel-itineraries",
+    },
+  ],
+  Stories: [
+    { label: "Life in Cebu", href: "/articles/stories/life-in-cebu" },
+    {
+      label: "Resilience & Recovery",
+      href: "/articles/stories/resilience-recovery",
+    },
+    { label: "Student Stories", href: "/articles/stories/student-stories" },
+    {
+      label: "Entrepreneur Journeys",
+      href: "/articles/stories/entrepreneur-journeys",
+    },
+    {
+      label: "Cultural Narratives",
+      href: "/articles/stories/cultural-narratives",
+    },
+    {
+      label: "Inspirational Profiles",
+      href: "/articles/stories/inspirational-profiles",
+    },
+  ],
+  Food: [
+    { label: "Cebu Favorites", href: "/articles/food/cebu-favorites" },
+    { label: "Street Food Finds", href: "/articles/food/street-food-finds" },
+    { label: "Café & Coffee Spots", href: "/articles/food/cafe-coffee-spots" },
+    { label: "Seafood Specials", href: "/articles/food/seafood-specials" },
+    {
+      label: "Sweet Treats & Desserts",
+      href: "/articles/food/sweet-treats-desserts",
+    },
+    { label: "Food Reviews", href: "/articles/food/food-reviews" },
+  ],
+  "Brands and Products": [
+    {
+      label: "Homegrown Brands",
+      href: "/articles/brands-and-products/homegrown-brands",
+    },
+    {
+      label: "Fashion & Apparel",
+      href: "/articles/brands-and-products/fashion-apparel",
+    },
+    {
+      label: "Tech & Gadgets",
+      href: "/articles/brands-and-products/tech-gadgets",
+    },
+    {
+      label: "Beauty & Wellness",
+      href: "/articles/brands-and-products/beauty-wellness",
+    },
+    {
+      label: "Food Products",
+      href: "/articles/brands-and-products/food-products",
+    },
+    {
+      label: "Eco-Friendly & Sustainable",
+      href: "/articles/brands-and-products/eco-friendly-sustainable",
+    },
+  ],
+  "News and Entertainment": [
+    {
+      label: "Breaking News Cebu",
+      href: "/articles/news-and-entertainment/breaking-news-cebu",
+    },
+    {
+      label: "Local Governance",
+      href: "/articles/news-and-entertainment/local-governance",
+    },
+    {
+      label: "Festivals & Events",
+      href: "/articles/news-and-entertainment/festivals-events",
+    },
+    {
+      label: "Entertainment Buzz",
+      href: "/articles/news-and-entertainment/entertainment-buzz",
+    },
+    {
+      label: "Music & Arts",
+      href: "/articles/news-and-entertainment/music-arts",
+    },
+    { label: "Sports", href: "/articles/news-and-entertainment/sports" },
+    {
+      label: "Campus News",
+      href: "/articles/news-and-entertainment/campus-news",
+    },
+  ],
+};
+
 export default function Navbar({
   items = defaultItems,
 }: {
@@ -31,6 +142,11 @@ export default function Navbar({
   const [isOpen, setIsOpen] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [openHeaderDropdown, setOpenHeaderDropdown] = useState<string | null>(
+    null
+  );
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
 
@@ -74,6 +190,22 @@ export default function Navbar({
     };
   }, [supabase]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setOpenHeaderDropdown(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
@@ -89,6 +221,14 @@ export default function Navbar({
     }
   };
 
+  const toggleDropdown = (label: string) => {
+    setOpenDropdown(openDropdown === label ? null : label);
+  };
+
+  const toggleHeaderDropdown = (label: string) => {
+    setOpenHeaderDropdown(openHeaderDropdown === label ? null : label);
+  };
+
   return (
     <>
       {/* Header */}
@@ -97,27 +237,89 @@ export default function Navbar({
           {/* Logo */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <Link href="/home" aria-label="Go to home" title="Home">
-              <img
-                src="/images/pbb_hd_logo.webp"
-                alt="Proud Bisaya Bai"
-                width={50}
-                height={50}
-                className="h-10 w-auto object-contain cursor-pointer"
-              />
+              <div className="h-10 w-10 md:h-12 md:w-12 rounded-full border-1 border-white flex items-center justify-center">
+                <img
+                  src="/images/pbb_hd_logo.webp"
+                  alt="Proud Bisaya Bai"
+                  width={50}
+                  height={50}
+                  className="h-8 w-8 md:h-10 md:w-10 object-contain cursor-pointer"
+                />
+              </div>
             </Link>
           </div>
 
           {/* Categories - visible on all screens */}
           <div className="flex items-center gap-2 flex-wrap flex-1 justify-center">
             {categoryItems.map((item) => (
-              <Link
+              <div
                 key={item.href}
-                href={item.href}
-                className="px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-[var(--custom-brown)] text-xs md:text-sm font-semibold transition-all hover:scale-105 whitespace-nowrap"
-                title={item.label}
+                className="relative"
+                ref={openHeaderDropdown === item.label ? dropdownRef : null}
               >
-                {item.label}
-              </Link>
+                {/* Pill container */}
+                <div className="flex items-center rounded-full border border-white/50 bg-white/10 px-3 py-1.5 text-xs md:text-sm text-white font-semibold tracking-wide uppercase hover:bg-white/20 transition whitespace-nowrap">
+                  {/* Label: hover underline + click to navigate */}
+                  <Link
+                    href={item.href}
+                    title={item.label}
+                    className="mr-1 md:mr-2 border-b-2 border-transparent hover:border-white transition-colors"
+                  >
+                    {item.label}
+                  </Link>
+
+                  {/* Arrow: click to toggle dropdown */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleHeaderDropdown(item.label);
+                    }}
+                    aria-label={
+                      openHeaderDropdown === item.label
+                        ? `Hide ${item.label} subcategories`
+                        : `Show ${item.label} subcategories`
+                    }
+                    className="flex items-center justify-center rounded-full hover:bg-white/20 p-0.5 md:p-1"
+                  >
+                    <svg
+                      className={`h-3 w-3 md:h-4 md:w-4 transition-transform ${
+                        openHeaderDropdown === item.label ? "rotate-180" : ""
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Dropdown menu */}
+                {subcategories[item.label] &&
+                  openHeaderDropdown === item.label && (
+                    <div className="absolute left-0 top-full mt-1 z-50 min-w-[220px]">
+                      <div className="bg-white rounded-lg shadow-xl border border-gray-200 py-2">
+                        {subcategories[item.label].map((sub) => (
+                          <Link
+                            key={sub.href}
+                            href={sub.href}
+                            className="block px-4 py-2 text-sm text-[var(--custom-brown)] hover:bg-[var(--custom-orange)]/10 transition-colors font-medium"
+                            title={sub.label}
+                            onClick={() => setOpenHeaderDropdown(null)}
+                          >
+                            {sub.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+              </div>
             ))}
           </div>
 
@@ -176,7 +378,7 @@ export default function Navbar({
           transition: "width 200ms ease",
           backgroundImage: "url('/images/pbb_hd_logo.webp')",
           backgroundSize: "contain",
-          backgroundPosition: "center",
+          backgroundPosition: "center 80%",
           backgroundRepeat: "no-repeat",
           backgroundColor: "white",
         }}
