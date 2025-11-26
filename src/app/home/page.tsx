@@ -7,6 +7,7 @@ import LatestUpdateCard from "@/app/components/LatestUpdateCard";
 import VideoCarousel from "@/app/components/VideoCarousel";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
+import BreakingNewsCarousel from "../components/BreakingNewsCarousel";
 
 const Home: React.FC = async () => {
   const stories = [
@@ -59,7 +60,7 @@ const Home: React.FC = async () => {
       .eq("isArchived", false)
       .eq("isBreakingNews", true)
       .order("created_at", { ascending: false })
-      .limit(1),
+      .limit(10),
 
     // Editor's Picks: up to 3
     supabase
@@ -140,7 +141,7 @@ const Home: React.FC = async () => {
 
   // Null-safe fallbacks
   const articlesData = articlesDataRaw ?? [];
-  const breakingNews = (breakingNewsDataRaw ?? [])[0] ?? null;
+  const breakingNews = breakingNewsDataRaw ?? [];
   const editorsPicksData = editorsPicksDataRaw ?? [];
   const newsEntertainmentData = newsEntertainmentDataRaw ?? [];
   const videosData = (videosDataRaw ?? [])
@@ -478,104 +479,12 @@ const Home: React.FC = async () => {
                 Breaking News
               </h2>
             </div>
-
-            {breakingNews ? (
-              <Link
-                href={`/articles/${breakingNews.category_slug}/${breakingNews.subcategory_slug}/${breakingNews.slug}`}
-                className="block rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] border-4 overflow-hidden group"
-                style={{ borderColor: "var(--custom-red)" }}
-              >
-                {/* Image Section */}
-                <div className="relative h-64 md:h-80 overflow-hidden">
-                  <img
-                    src={breakingNews.thumbnail_url || "/images/banner.webp"}
-                    alt={breakingNews.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  {/* Gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-
-                  {/* LIVE badge - positioned on image */}
-                  {/* <div className="absolute top-4 left-4">
-                    <span
-                      className="inline-flex items-center gap-2 text-white text-sm font-bold px-4 py-2 rounded-full shadow-lg uppercase"
-                      style={{ backgroundColor: "var(--custom-red)" }}
-                    >
-                      <span className="relative flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
-                      </span>
-                      Live
-                    </span>
-                  </div> */}
-
-                  {/* Time badge - positioned on image */}
-                  <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-lg">
-                    <p className="text-white font-bold text-lg">
-                      {new Date(breakingNews.created_at).toLocaleTimeString(
-                        [],
-                        {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        }
-                      )}
-                    </p>
-                    <p className="text-white/90 text-xs text-center">
-                      {new Date(breakingNews.created_at).toLocaleDateString(
-                        [],
-                        {
-                          month: "short",
-                          day: "numeric",
-                        }
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Content Section */}
-                <div
-                  className="p-6"
-                  style={{ backgroundColor: "var(--custom-red)" }}
-                >
-                  <h3 className="text-white font-bold text-2xl md:text-3xl leading-tight">
-                    {breakingNews.title}
-                  </h3>
-                  <p className="text-white/90 text-sm mt-2 flex items-center gap-2">
-                    <svg
-                      className="w-4 h-4"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    {(() => {
-                      const now = new Date();
-                      const postDate = new Date(breakingNews.created_at);
-                      const diffMs = now.getTime() - postDate.getTime();
-                      const diffMins = Math.floor(diffMs / 60000);
-                      const diffHours = Math.floor(diffMs / 3600000);
-                      const diffDays = Math.floor(diffMs / 86400000);
-
-                      if (diffMins < 1) return "Just now";
-                      if (diffMins < 60)
-                        return `${diffMins} minute${
-                          diffMins > 1 ? "s" : ""
-                        } ago`;
-                      if (diffHours < 24)
-                        return `${diffHours} hour${
-                          diffHours > 1 ? "s" : ""
-                        } ago`;
-                      if (diffDays === 1) return "1 day ago";
-                      return `${diffDays} days ago`;
-                    })()}
-                    {" • Click to read full story"}
-                  </p>
-                </div>
-              </Link>
+              
+            {breakingNews.length > 0 ? (
+              <BreakingNewsCarousel
+              newsItems={breakingNews}
+              autoPlayInterval = {6000}
+            />
             ) : (
               <div className="bg-gray-100 p-8 rounded-lg text-gray-500 text-center border-2 border-dashed border-gray-300">
                 <svg
