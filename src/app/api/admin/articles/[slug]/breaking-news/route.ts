@@ -16,7 +16,7 @@ export async function PATCH(
 
         const { data: profile, error: profileError } = await supabase
             .from('profiles')
-            .select('role')
+            .select('role') 
             .eq('id', user.id)
             .single();
 
@@ -33,7 +33,7 @@ export async function PATCH(
 
         const { data: article, error: articleError } = await supabase
             .from('articles')
-            .select('*')
+            .select('*')    
             .eq('slug', params.slug)
             .single();
 
@@ -49,45 +49,52 @@ export async function PATCH(
         }
 
         if (isBreakingNews) {
-            // when setting as breaking news, remove breaking news from all other articles first kay 1 ra ang max
-            const { error: updateError } = await supabase
+            // breaking news articles limited to 10
+            const { count, error: countError } = await supabase
                 .from('articles')
-                .update({
-                    isBreakingNews: false,
-                    updated_at: new Date().toISOString()
+                .select('*', {
+                    count: 'exact', 
+                    head:true  
                 })
-                .neq('slug', params.slug)
-                .eq('isBreakingNews', true);
+                .eq('isBreakingNews', true)
+                .eq('isPublished', true);
 
-            if (updateError) {
-                console.error('Clear breaking news error:', updateError);
+            if (countError) {
+                console.error('Count breaking news error:', countError);
                 return NextResponse.json({
-                    error: 'Failed to update existing breaking news'
+                    error: 'Failed to count breaking news'
                 }, { status: 500 });
             }
 
-            // Set current article as breaking news
-            const { data, error: setError } = await supabase
+            if((count ?? 0) >= 10) {
+                return NextResponse.json({
+                    error: 'Maximum of 10 articles'
+                }, { status: 400});
+            }
+
+            //set as breaking news
+            const { data: updatedArticle, error: updateError } = await supabase
                 .from('articles')
                 .update({
                     isBreakingNews: true,
                     updated_at: new Date().toISOString()
                 })
                 .eq('slug', params.slug)
-                .select()
                 .single();
-
-            if (setError) {
-                console.error('Set breaking news error:', setError);
-                return NextResponse.json({
-                    error: 'Failed to set breaking news'
-                }, { status: 500 });
+            
+            if(updateError) {
+                console.error('Update error: ', updateError);
+                return NextResponse.json(
+                    { error: 'Failed to set breaking news' },
+                    { status: 500 }
+                );
             }
 
-            return NextResponse.json(data);
+            return NextResponse.json(updatedArticle);
+
         } else {
             // When removing breaking news
-            const { data, error: setError } = await supabase
+            const { data: updatedArticle, error: updateError } = await supabase
                 .from('articles')
                 .update({
                     isBreakingNews: false,
@@ -97,14 +104,14 @@ export async function PATCH(
                 .select()
                 .single();
 
-            if (setError) {
-                console.error('Remove breaking news error:', setError);
-                return NextResponse.json({
+            if (updateError) {
+                console.error('Remove breaking news error:', updateError);
+                return NextResponse.json({  
                     error: 'Failed to update breaking news'
                 }, { status: 500 });
             }
 
-            return NextResponse.json(data);
+            return NextResponse.json(updatedArticle);
         }
     } catch (error: any) {
         console.error('Breaking news route error:', error);
