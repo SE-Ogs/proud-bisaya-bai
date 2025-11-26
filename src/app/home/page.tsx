@@ -201,6 +201,7 @@ const Home: React.FC = async () => {
                 <h3 className="mt-2 text-3xl font-extrabold">
                   Watch the Latest Highlights
                 </h3>
+                <div className="h-1.5 w-16 bg-[var(--custom-orange)] rounded-full my-2 mb-4 mx-auto" />
                 <p className="mt-3 text-white/70 max-w-2xl mx-auto">
                   Straight from Facebook, Youtube, and TikTok - curated stories,
                   interviews, and moments from Proud Bisaya Bai.
