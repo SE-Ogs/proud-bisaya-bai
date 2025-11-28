@@ -1,9 +1,28 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import Footer from "@/app/components/Footer";
 import Header from "../components/Header";
 
 export default function ContactUsPage() {
+  useEffect(() => {
+    // Handle smooth scroll to our-services section when hash is present
+    const handleScroll = () => {
+      if (window.location.hash === "#our-services") {
+        const element = document.getElementById("our-services");
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+    };
+
+    // Try scrolling immediately
+    handleScroll();
+
+    // Also try after a short delay in case the page is still loading
+    const timeout = setTimeout(handleScroll, 300);
+
+    return () => clearTimeout(timeout);
+  }, []);
   const packages = [
     {
       name: "Media & Content Creation",
@@ -83,7 +102,7 @@ export default function ContactUsPage() {
       </section>
 
       {/* Our Services (has grayish background) */}
-      <section className="relative mt-16 bg-gradient-to-b from-gray-50 via-white to-gray-100 py-16">
+      <section id="our-services" className="relative mt-16 bg-gradient-to-b from-gray-50 via-white to-gray-100 py-16">
         <div className="mx-auto max-w-6xl px-6 text-center">
           {/* Section Title */}
           <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">

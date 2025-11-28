@@ -36,7 +36,7 @@ export async function GET() {
     const supabaseAdmin = await requireAdmin();
     const { data, error } = await supabaseAdmin
       .from("videos")
-      .select("id, title, url, platform, thumbnail_url, isActive, created_at")
+      .select("id, title, url, platform, thumbnail_url, isFeatured, created_at")
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   try {
     const supabaseAdmin = await requireAdmin();
     const body = await request.json();
-    const { title, url, platform, isActive = true, thumbnail_url } = body;
+    const { title, url, platform, isFeatured = false, thumbnail_url } = body;
 
     if (!title?.trim() || !url?.trim()) {
       return NextResponse.json(
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
         url: url.trim(),
         platform: resolvedPlatform,
         thumbnail_url: thumbnail_url?.trim() || null,
-        isActive: Boolean(isActive),
+        isFeatured: Boolean(isFeatured),
       })
     .select()
     .single();

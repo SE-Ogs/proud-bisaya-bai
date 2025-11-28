@@ -177,7 +177,7 @@ const Footer: React.FC = () => {
               </li>
               <li>
                 <Link
-                  href="/contact-us"
+                  href="/contact-us#our-services"
                   className="hover:text-[var(--custom-orange)] transition-colors"
                 >
                   Hire Us
