@@ -43,6 +43,39 @@ export default function VideoCarousel({ videos }: VideoCarouselProps) {
     };
   }, [activeVideo]);
 
+  // Center videos when content width is less than container width
+  useEffect(() => {
+    if (!scrollRef.current || videos.length === 0) return;
+    const container = scrollRef.current;
+
+    const updateCentering = () => {
+      const contentWidth = container.scrollWidth;
+      const containerWidth = container.clientWidth;
+
+      if (contentWidth < containerWidth) {
+        // Content fits - center it by adding padding
+        const padding = (containerWidth - contentWidth) / 2;
+        container.style.paddingLeft = `${padding}px`;
+        container.style.paddingRight = `${padding}px`;
+      } else {
+        // Content overflows - remove padding and allow scrolling
+        container.style.paddingLeft = "0";
+        container.style.paddingRight = "0";
+      }
+    };
+
+    // Use a small timeout to ensure layout is complete
+    const timeoutId = setTimeout(updateCentering, 100);
+
+    // Also handle window resize
+    window.addEventListener("resize", updateCentering);
+
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener("resize", updateCentering);
+    };
+  }, [videos]);
+
   return (
     <div className="relative">
       <button
@@ -55,7 +88,7 @@ export default function VideoCarousel({ videos }: VideoCarouselProps) {
       </button>
       <div
         ref={scrollRef}
-        className="flex gap-6 overflow-x-auto pb-6 scrollbar-hide scroll-smooth snap-x snap-mandatory"
+        className="flex gap-6 overflow-x-auto pb-6 scrollbar-hide scroll-smooth snap-x snap-mandatory justify-center"
       >
         {videos.map((video) => (
           <div

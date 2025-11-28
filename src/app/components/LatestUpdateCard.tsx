@@ -33,7 +33,7 @@ const LatestUpdateCard: React.FC<LatestUpdateCardProps> = ({
   });
 
   return (
-    <div className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-[var(--custom-orange)] h-[400px] flex flex-col">
+    <div className="group bg-gray-200 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-300 hover:border-[var(--custom-orange)] h-[400px] flex flex-col">
       {/* Image Section - Fixed height */}
       <div className="relative h-48 overflow-hidden flex-shrink-0">
         <img
@@ -90,7 +90,7 @@ const LatestUpdateCard: React.FC<LatestUpdateCardProps> = ({
 
           {/* Author */}
           {author && (
-            <div className="flex items-center gap-2 text-sm text-gray-500">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
               <svg
                 className="w-4 h-4 flex-shrink-0"
                 fill="currentColor"

@@ -3,9 +3,10 @@ import { NextResponse } from 'next/server';
 
 export async function PATCH(
     request: Request,
-    { params }: { params: { slug: string } }
+    { params }: { params: Promise<{ slug: string }> }
 ) {
     try {
+        const { slug } = await params;
         const supabase = await createClient();
 
         // Admin authentication
@@ -34,7 +35,7 @@ export async function PATCH(
         const { data: article, error: articleError } = await supabase
             .from('articles')
             .select('*')
-            .eq('slug', params.slug)
+            .eq('slug', slug)
             .single();
 
         if (articleError || !article) {
@@ -49,23 +50,6 @@ export async function PATCH(
         }
 
         if (isBreakingNews) {
-            // when setting as breaking news, remove breaking news from all other articles first kay 1 ra ang max
-            const { error: updateError } = await supabase
-                .from('articles')
-                .update({
-                    isBreakingNews: false,
-                    updated_at: new Date().toISOString()
-                })
-                .neq('slug', params.slug)
-                .eq('isBreakingNews', true);
-
-            if (updateError) {
-                console.error('Clear breaking news error:', updateError);
-                return NextResponse.json({
-                    error: 'Failed to update existing breaking news'
-                }, { status: 500 });
-            }
-
             // Set current article as breaking news
             const { data, error: setError } = await supabase
                 .from('articles')
@@ -73,7 +57,7 @@ export async function PATCH(
                     isBreakingNews: true,
                     updated_at: new Date().toISOString()
                 })
-                .eq('slug', params.slug)
+                .eq('slug', slug)
                 .select()
                 .single();
 
@@ -93,7 +77,7 @@ export async function PATCH(
                     isBreakingNews: false,
                     updated_at: new Date().toISOString()
                 })
-                .eq('slug', params.slug)
+                .eq('slug', slug)
                 .select()
                 .single();
 

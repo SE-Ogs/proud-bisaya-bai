@@ -7,6 +7,7 @@ interface BreakingNewsItem {
     title: string;
     slug: string;
     created_at: string;
+    author?: string | null;
     category_slug: string;
     subcategory_slug: string;
     thumbnail_url: string | null;
@@ -189,21 +190,57 @@ return (
           <h3 className="text-white font-bold text-2xl md:text-3xl leading-tight">
             {currentNews.title}
           </h3>
-          <p className="text-white/90 text-sm mt-2 flex items-center gap-2">
-            <svg
-              className="w-4 h-4"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                clipRule="evenodd"
-              />
-            </svg>
-            {getTimeAgo(currentNews.created_at)}
-            {" • Click to read full story"}
-          </p>
+          <div className="text-white/90 text-sm mt-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <svg
+                className="w-4 h-4 flex-shrink-0"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span className="font-medium">
+                {new Date(currentNews.created_at).toLocaleDateString("en-PH", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
+              <span className="text-white/60">•</span>
+              <span className="font-medium">
+                {new Date(currentNews.created_at).toLocaleTimeString("en-PH", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  timeZone: "Asia/Manila",
+                })}
+              </span>
+            </div>
+            {currentNews.author && (
+              <div className="flex items-center gap-2">
+                <svg
+                  className="w-4 h-4 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>
+                  By <span className="font-medium">{currentNews.author}</span>
+                </span>
+              </div>
+            )}
+            <p className="text-white/80 text-xs mt-2 italic">
+              Click to read full story
+            </p>
+          </div>
         </div>
       </Link>
 

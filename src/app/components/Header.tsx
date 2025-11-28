@@ -346,9 +346,6 @@ export default function Navbar({
                 d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z"
               />
             </svg>
-            <span className="flex items-center gap-1">
-              <span>SEARCH</span>
-            </span>
           </button>
 
           {/* Burger button - always visible */}
@@ -361,8 +358,8 @@ export default function Navbar({
             <img
               src="/images/burger_brown.webp"
               alt={isOpen ? "Close menu" : "Open menu"}
-              width={30}
-              height={30}
+              width={35}
+              height={35}
               className="cursor-pointer"
             />
           </button>

@@ -54,7 +54,7 @@ const Home: React.FC = async () => {
     supabase
       .from("articles")
       .select(
-        "title, slug, created_at, category_slug, subcategory_slug, thumbnail_url"
+        "title, slug, created_at, author, category_slug, subcategory_slug, thumbnail_url"
       )
       .eq("isPublished", true)
       .eq("isArchived", false)
@@ -99,10 +99,9 @@ const Home: React.FC = async () => {
     const supabaseAdmin = createAdminClient();
     const { data, error } = await supabaseAdmin
       .from("videos")
-      .select("id, title, url, platform, thumbnail_url, isActive, created_at")
-      .eq("isActive", true)
-      .order("created_at", { ascending: false })
-      .limit(6);
+      .select("id, title, url, platform, thumbnail_url, isFeatured, created_at")
+      .eq("isFeatured", true)
+      .order("created_at", { ascending: false });
     if (error) {
       videosErr = error;
     } else {
@@ -189,6 +188,57 @@ const Home: React.FC = async () => {
             </Link>
           </div>
         </div>
+
+        {/* Breaking News */}
+        <section className="bg-white py-8">
+          <div className="max-w-5xl mx-auto px-4">
+            <div className="flex items-center justify-center gap-3 mb-5">
+              {/* Pulsing red dot */}
+              <div className="relative h-5 w-5">
+                <span
+                  className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                  style={{ backgroundColor: "var(--custom-red)" }}
+                />
+                <span
+                  className="relative inline-flex h-full w-full rounded-full"
+                  style={{ backgroundColor: "var(--custom-red)" }}
+                />
+              </div>
+
+              <h2
+                className="text-2xl md:text-3xl font-extrabold tracking-tight"
+                style={{ color: "var(--custom-red)" }}
+              >
+                Breaking News
+              </h2>
+            </div>
+
+            {breakingNews.length > 0 ? (
+              <BreakingNewsCarousel
+                newsItems={breakingNews}
+                // autoPlayInterval={6000}
+              />
+            ) : (
+              <div className="bg-gray-100 p-8 rounded-lg text-gray-500 text-center border-2 border-dashed border-gray-300">
+                <svg
+                  className="w-12 h-12 mx-auto mb-3 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+                  />
+                </svg>
+                <p className="font-semibold">No breaking news at the moment.</p>
+                <p className="text-sm mt-1">Check back soon for updates</p>
+              </div>
+            )}
+          </div>
+        </section>
 
         {/* Videos Section */}
         {videosData.length > 0 && (
@@ -366,7 +416,7 @@ const Home: React.FC = async () => {
 
                       {/* Meta Information */}
                       <div className="space-y-2 pt-3 border-t border-gray-100">
-                        {/* Date with icon */}
+                        {/* Date and Time with icon */}
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <svg
                             className="w-4 h-4 flex-shrink-0 text-gray-400"
@@ -375,7 +425,7 @@ const Home: React.FC = async () => {
                           >
                             <path
                               fillRule="evenodd"
-                              d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
                               clipRule="evenodd"
                             />
                           </svg>
@@ -386,6 +436,17 @@ const Home: React.FC = async () => {
                                 year: "numeric",
                                 month: "short",
                                 day: "numeric",
+                              }
+                            )}
+                          </span>
+                          <span className="text-gray-400">•</span>
+                          <span className="font-medium">
+                            {new Date(article.created_at).toLocaleTimeString(
+                              "en-PH",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                timeZone: "Asia/Manila",
                               }
                             )}
                           </span>
@@ -456,71 +517,17 @@ const Home: React.FC = async () => {
           </div>
         </section>
 
-        {/* Breaking News */}
-        <section className="bg-white py-8">
-          <div className="max-w-5xl mx-auto px-4">
-            <div className="flex items-center justify-center gap-3 mb-5">
-              {/* Pulsing red dot */}
-              <div className="relative h-5 w-5">
-                <span
-                  className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-                  style={{ backgroundColor: "var(--custom-red)" }}
-                />
-                <span
-                  className="relative inline-flex h-full w-full rounded-full"
-                  style={{ backgroundColor: "var(--custom-red)" }}
-                />
-              </div>
-
-              <h2
-                className="text-2xl md:text-3xl font-extrabold tracking-tight"
-                style={{ color: "var(--custom-red)" }}
-              >
-                Breaking News
-              </h2>
-            </div>
-              
-            {breakingNews.length > 0 ? (
-              <BreakingNewsCarousel
-              newsItems={breakingNews}
-              autoPlayInterval = {6000}
-            />
-            ) : (
-              <div className="bg-gray-100 p-8 rounded-lg text-gray-500 text-center border-2 border-dashed border-gray-300">
-                <svg
-                  className="w-12 h-12 mx-auto mb-3 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-                  />
-                </svg>
-                <p className="font-semibold">No breaking news at the moment.</p>
-                <p className="text-sm mt-1">Check back soon for updates</p>
-              </div>
-            )}
-          </div>
-        </section>
-
         {/* Latest News and Entertainment + Editor's Picks with side ads */}
-        <section
-          className="py-8"
-          style={{ backgroundColor: "var(--custom-blue)" }}
-        >
+        <section className="py-8" style={{ backgroundColor: "white" }}>
           <div className="max-w-screen-xl mx-auto px-4 lg:px-0">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Left Ad (desktop only) */}
               <aside className="hidden lg:block lg:col-span-2">
                 <div className="sticky top-24">
-                  <div className="w-full h-[750px] bg-white/85 border border-white/70 rounded-lg flex items-center justify-center shadow-sm">
-                    <span className="text-gray-800 font-semibold">ADS</span>
+                  <div className="w-full h-[750px] bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center">
+                    <span className="text-gray-600 font-semibold">ADS</span>
                   </div>
-                  <p className="mt-2 text-xs text-white/90 text-center">
+                  <p className="mt-2 text-xs text-gray-500 text-center">
                     Sponsored by _____
                   </p>
                 </div>
@@ -533,7 +540,7 @@ const Home: React.FC = async () => {
                   <div className="flex flex-col">
                     {/* Header with fixed height so columns align */}
                     <div className="min-h-[88px] flex flex-col justify-end mb-2">
-                      <h3 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                      <h3 className="text-2xl md:text-3xl font-extrabold text-black tracking-tight">
                         Karon: Latest News and Entertainment
                       </h3>
                       <div className="h-1.5 w-16 bg-[var(--custom-orange)] rounded-full mt-2" />
@@ -570,7 +577,7 @@ const Home: React.FC = async () => {
                   <div className="flex flex-col">
                     {/* Header with the SAME fixed height */}
                     <div className="min-h-[88px] flex flex-col justify-end mb-2">
-                      <h3 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                      <h3 className="text-2xl md:text-3xl font-extrabold text-black tracking-tight">
                         Editor&apos;s Picks
                       </h3>
                       <div className="h-1.5 w-16 bg-[var(--custom-orange)] rounded-full mt-2" />
@@ -608,10 +615,10 @@ const Home: React.FC = async () => {
               {/* Right Ad (desktop only) */}
               <aside className="hidden lg:block lg:col-span-2">
                 <div className="sticky top-24">
-                  <div className="w-full h-[750px] bg-white/85 border border-white/70 rounded-lg flex items-center justify-center shadow-sm">
-                    <span className="text-gray-800 font-semibold">ADS</span>
+                  <div className="w-full h-[750px] bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center">
+                    <span className="text-gray-600 font-semibold">ADS</span>
                   </div>
-                  <p className="mt-2 text-xs text-white/90 text-center">
+                  <p className="mt-2 text-xs text-gray-500 text-center">
                     Sponsored by _____
                   </p>
                 </div>
@@ -619,6 +626,8 @@ const Home: React.FC = async () => {
             </div>
           </div>
         </section>
+
+        <div className="h-px w-full bg-gray-200 my-8"></div>
 
         {/* Our Partners Section */}
         <section className="bg-white py-12">

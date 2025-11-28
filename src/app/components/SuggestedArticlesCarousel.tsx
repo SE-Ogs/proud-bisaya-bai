@@ -21,45 +21,6 @@ interface SuggestedArticlesCarouselProps {
   currentArticleId?: string;
 }
 
-// Calculate read time based on content
-// function calculateReadTime(content: any): number {
-//   if (!content) return 4; // Default 4 minutes
-
-//   let textLength = 0;
-
-//   try {
-//     const contentData =
-//       typeof content === "string" ? JSON.parse(content) : content;
-//     const contentArray = Array.isArray(contentData)
-//       ? contentData
-//       : contentData.content || [];
-
-//     // Extract text from all components
-//     contentArray.forEach((component: any) => {
-//       if (component.props) {
-//         if (component.props.text) {
-//           textLength += component.props.text.length;
-//         }
-//         if (component.props.content) {
-//           // For rich text, estimate text length (remove HTML tags)
-//           const textOnly = component.props.content.replace(/<[^>]*>/g, "");
-//           textLength += textOnly.length;
-//         }
-//       }
-//     });
-//   } catch (e) {
-//     // If parsing fails, default to 4 minutes
-//     return 4;
-//   }
-
-//   // Average reading speed: 200 words per minute
-//   // Average word length: 5 characters
-//   const words = textLength / 5;
-//   const minutes = Math.ceil(words / 200);
-
-//   return Math.max(1, Math.min(minutes, 10)); // Between 1 and 10 minutes
-// }
-
 export default function SuggestedArticlesCarousel({
   articles,
   currentArticleId,
@@ -72,10 +33,10 @@ export default function SuggestedArticlesCarousel({
   const [containerWidth, setContainerWidth] = useState(0);
   const [scrollWidth, setScrollWidth] = useState(0);
 
-  // Drag-to-scroll state
-  const [isDown, setIsDown] = useState(false);
+  // Simple drag-to-scroll state
+  const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
-  const [scrollLeftStart, setScrollLeftStart] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
 
   // Filter out current article
   const filteredArticles = articles.filter(
@@ -103,7 +64,9 @@ export default function SuggestedArticlesCarousel({
     updateScrollState();
     const container = scrollContainerRef.current;
     if (container) {
-      container.addEventListener("scroll", updateScrollState);
+      container.addEventListener("scroll", updateScrollState, {
+        passive: true,
+      });
       window.addEventListener("resize", updateScrollState);
     }
     return () => {
@@ -114,78 +77,43 @@ export default function SuggestedArticlesCarousel({
     };
   }, [articles]);
 
-  // Drag-to-scroll handlers
+  // Simple drag-to-scroll handlers - direct and responsive
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!scrollContainerRef.current) return;
-    setIsDown(true);
+    setIsDragging(true);
     const container = scrollContainerRef.current;
     setStartX(e.pageX - container.offsetLeft);
-    setScrollLeftStart(container.scrollLeft);
-    document.body.style.cursor = "grabbing";
-    document.body.style.userSelect = "none";
+    setScrollLeft(container.scrollLeft);
+    container.style.cursor = "grabbing";
+    container.style.userSelect = "none";
   };
 
   const handleMouseLeave = () => {
-    setIsDown(false);
-    document.body.style.cursor = "default";
-    document.body.style.userSelect = "";
+    setIsDragging(false);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.style.cursor = "grab";
+      scrollContainerRef.current.style.userSelect = "";
+    }
   };
 
   const handleMouseUp = () => {
-    setIsDown(false);
-    document.body.style.cursor = "default";
-    document.body.style.userSelect = "";
+    setIsDragging(false);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.style.cursor = "grab";
+      scrollContainerRef.current.style.userSelect = "";
+    }
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDown || !scrollContainerRef.current) return;
+    if (!isDragging || !scrollContainerRef.current) return;
     e.preventDefault();
     const container = scrollContainerRef.current;
     const x = e.pageX - container.offsetLeft;
-    const walk = x - startX;
-    container.scrollLeft = scrollLeftStart - walk;
+    const walk = (x - startX) * 1.5; // Slight multiplier for better feel
+    container.scrollLeft = scrollLeft - walk;
   };
 
-  // const scroll = (direction: "left" | "right") => {
-  //   if (!scrollContainerRef.current) return;
-
-  //   const container = scrollContainerRef.current;
-  //   // Scroll by one card width (230px) + gap (16px) = 246px
-  //   const cardWidth = 230;
-  //   const gap = 16;
-  //   const scrollAmount = cardWidth + gap;
-  //   const targetScroll =
-  //     container.scrollLeft +
-  //     (direction === "left" ? -scrollAmount : scrollAmount);
-
-  //   // Fast smooth scroll with custom duration
-  //   const startScroll = container.scrollLeft;
-  //   const distance = targetScroll - startScroll;
-  //   const duration = 300; // 300ms for faster scrolling
-  //   let startTime: number | null = null;
-
-  //   const animateScroll = (currentTime: number) => {
-  //     if (startTime === null) startTime = currentTime;
-  //     const timeElapsed = currentTime - startTime;
-  //     const progress = Math.min(timeElapsed / duration, 1);
-
-  //     // Easing function for smooth acceleration/deceleration
-  //     const ease =
-  //       progress < 0.5
-  //         ? 2 * progress * progress
-  //         : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-
-  //     container.scrollLeft = startScroll + distance * ease;
-
-  //     if (progress < 1) {
-  //       requestAnimationFrame(animateScroll);
-  //     }
-  //   };
-
-  //   requestAnimationFrame(animateScroll);
-  // };
-
-  // Handle scrollbar click to scroll with snapping to cards
+  // Handle scrollbar click - use native smooth scrolling
   const handleScrollbarClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!scrollContainerRef.current) return;
 
@@ -196,42 +124,16 @@ export default function SuggestedArticlesCarousel({
 
     const container = scrollContainerRef.current;
     const maxScroll = container.scrollWidth - container.clientWidth;
-    const targetScroll = percentage * maxScroll;
+    const targetScroll = Math.max(
+      0,
+      Math.min(maxScroll, percentage * maxScroll)
+    );
 
-    // Calculate card width + gap for snapping
-    const cardWidth = 230;
-    const gap = 16;
-    const cardWithGap = cardWidth + gap;
-
-    // Snap to nearest card position
-    const snappedScroll = Math.round(targetScroll / cardWithGap) * cardWithGap;
-    const finalScroll = Math.min(Math.max(0, snappedScroll), maxScroll);
-
-    // Fast smooth scroll for scrollbar clicks
-    const startScroll = container.scrollLeft;
-    const distance = finalScroll - startScroll;
-    const duration = 400; // 400ms for scrollbar clicks
-    let startTime: number | null = null;
-
-    const animateScroll = (currentTime: number) => {
-      if (startTime === null) startTime = currentTime;
-      const timeElapsed = currentTime - startTime;
-      const progress = Math.min(timeElapsed / duration, 1);
-
-      // Easing function for smooth acceleration/deceleration
-      const ease =
-        progress < 0.5
-          ? 2 * progress * progress
-          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-
-      container.scrollLeft = startScroll + distance * ease;
-
-      if (progress < 1) {
-        requestAnimationFrame(animateScroll);
-      }
-    };
-
-    requestAnimationFrame(animateScroll);
+    // Use native smooth scrolling
+    container.scrollTo({
+      left: targetScroll,
+      behavior: "smooth",
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -260,7 +162,6 @@ export default function SuggestedArticlesCarousel({
   }
 
   // Calculate scrollbar thumb width and position
-  // Thumb width represents visible portion of content
   const thumbWidth =
     scrollWidth > 0 ? (containerWidth / scrollWidth) * 100 : 100;
   const thumbPosition =
@@ -273,44 +174,21 @@ export default function SuggestedArticlesCarousel({
       </h2>
 
       <div className="relative flex justify-center">
-        {/* Navigation Arrows - Commented out */}
-        {/* <button
-          onClick={() => scroll("left")}
-          disabled={!canScrollLeft}
-          className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-3 shadow-xl hover:bg-gray-100 transition-all border-2 border-gray-200 ${
-            canScrollLeft ? "opacity-100" : "opacity-30 cursor-not-allowed"
-          }`}
-          aria-label="Scroll left"
-        >
-          <ChevronLeft className="w-6 h-6 text-gray-800" />
-        </button>
-
-        <button
-          onClick={() => scroll("right")}
-          disabled={!canScrollRight}
-          className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-3 shadow-xl hover:bg-gray-100 transition-all border-2 border-gray-200 ${
-            canScrollRight ? "opacity-100" : "opacity-30 cursor-not-allowed"
-          }`}
-          aria-label="Scroll right"
-        >
-          <ChevronRight className="w-6 h-6 text-gray-800" />
-        </button> */}
-
         {/* Carousel Container - Limited to show 3 cards at a time */}
         <div
           className="overflow-hidden mx-auto"
           style={{
-            maxWidth: "calc(3 * (230px + 16px) - 16px)", // 3 cards: 230px each + 16px gap between
+            maxWidth: "calc(3 * (230px + 16px) - 16px)",
           }}
         >
           <div
             ref={scrollContainerRef}
-            className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4 cursor-grab active:cursor-grabbing"
+            className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 cursor-grab active:cursor-grabbing"
             style={{
               scrollbarWidth: "none",
               msOverflowStyle: "none",
-              scrollSnapType: "x mandatory",
-              userSelect: "none",
+              scrollBehavior: "smooth",
+              WebkitOverflowScrolling: "touch",
             }}
             onMouseDown={handleMouseDown}
             onMouseLeave={handleMouseLeave}
@@ -319,7 +197,6 @@ export default function SuggestedArticlesCarousel({
           >
             {filteredArticles.map((article) => {
               const href = `/articles/${article.category_slug}/${article.subcategory_slug}/${article.slug}`;
-              // const readTime = calculateReadTime(article.content);
               const formattedDate = formatDate(article.created_at);
               const authorName = article.author || "Unknown";
 
@@ -328,7 +205,6 @@ export default function SuggestedArticlesCarousel({
                   key={article.id}
                   href={href}
                   className="flex-shrink-0 w-[230px] rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 group"
-                  style={{ scrollSnapAlign: "start" }}
                 >
                   <div className="relative h-[300px] overflow-hidden">
                     <img
@@ -390,7 +266,7 @@ export default function SuggestedArticlesCarousel({
           onClick={handleScrollbarClick}
         >
           <div
-            className="h-full rounded-full transition-all duration-300 absolute cursor-pointer hover:opacity-80"
+            className="h-full rounded-full transition-all duration-200 absolute cursor-pointer hover:opacity-80"
             style={{
               width: `${Math.max(10, Math.min(thumbWidth, 100))}%`,
               left: `${thumbPosition}%`,

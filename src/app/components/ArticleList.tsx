@@ -88,10 +88,12 @@ export default function ArticleList({ articles }: { articles: ArticleCard[] }) {
                     />
                   </svg>
                   <span className="font-medium">
-                    {new Date(article.created_at).toLocaleDateString("en-PH", {
+                    {new Date(article.created_at).toLocaleString("en-PH", {
                       year: "numeric",
                       month: "short",
                       day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
                     })}
                   </span>
                 </div>
