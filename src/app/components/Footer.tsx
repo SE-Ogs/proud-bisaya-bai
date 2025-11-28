@@ -11,11 +11,11 @@ const Footer: React.FC = () => {
       style={{ backgroundColor: "var(--custom-blue)" }}
     >
       {/* Top section - full width edge-to-edge */}
-      <div className="w-full px-4 py-12 md:px-8 lg:px-16">
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+      <div className="max-w-screen-xl mx-auto w-full px-4 py-12 md:px-8 lg:px-16">
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-2 items-start">
           {/* Newsletter */}
           <div>
-            <h3 className="text-2xl font-bold text-white">Newsletter</h3>
+            <h3 className="text-2xl font-bold text-[var(--custom-orange)]">Newsletter</h3>
             <p className="mt-1 text-sm text-white/90">
               Subscribe to our newsletter and get updated to our hottest news
             </p>
@@ -30,95 +30,38 @@ const Footer: React.FC = () => {
               <input
                 type="email"
                 placeholder="Enter your email address"
-                className="w-full min-w-0 rounded-l-md bg-white px-3 py-2 text-sm text-black outline-none placeholder:text-gray-500"
+                className="w-full min-w-0 rounded-l-md bg-white px-3 py-3 text-sm text-black outline-none placeholder:text-gray-500"
                 required
               />
               <button
                 type="submit"
-                className="rounded-r-md bg-[var(--custom-orange)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+                className="rounded-r-md bg-[var(--custom-orange)] px-5 py-2 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
               >
                 Join
               </button>
             </form>
 
             {/* Social icons */}
-            <div className="mt-5 flex items-center gap-4">
-              <Link
-                href="https://www.facebook.com/proudbisayabai"
-                aria-label="Facebook"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Image
-                  src="/images/fb_svg.webp"
-                  alt="Facebook"
-                  width={32}
-                  height={32}
-                  className="hover:opacity-80 transition-opacity"
-                />
-              </Link>
-              <Link
-                href="https://www.instagram.com/proudbisayabai"
-                aria-label="Instagram"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Image
-                  src="/images/ig_svg.webp"
-                  alt="Instagram"
-                  width={32}
-                  height={32}
-                  className="hover:opacity-80 transition-opacity"
-                />
-              </Link>
-              <Link
-                href="https://x.com/Proudbisayabai"
-                aria-label="Twitter/X"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Image
-                  src="/images/twitter_svg.webp"
-                  alt="Twitter/X"
-                  width={32}
-                  height={32}
-                  className="hover:opacity-80 transition-opacity"
-                />
-              </Link>
-              <Link
-                href="https://www.youtube.com/channel/UCfVuNpZ2yr3OsVVkYojUsUg"
-                aria-label="YouTube"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Image
-                  src="/images/yt_svg.webp"
-                  alt="YouTube"
-                  width={32}
-                  height={32}
-                  className="hover:opacity-80 transition-opacity"
-                />
-              </Link>
-              <Link
-                href="https://www.tiktok.com/@proudbisayabai"
-                aria-label="TikTok"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Image
-                  src="/images/tiktok_icon.svg"
-                  alt="TikTok"
-                  width={32}
-                  height={32}
-                  className="hover:opacity-80 transition-opacity"
-                />
-              </Link>
+            <div className="mt-5 flex items-center gap-3">
+              {[
+                { href: 'https://www.facebook.com/proudbisayabai', src: '/images/fb_svg.webp', alt: 'Facebook' },
+                { href: 'https://www.instagram.com/proudbisayabai', src: '/images/ig_svg.webp', alt: 'Instagram' },
+                { href: 'https://x.com/Proudbisayabai', src: '/images/twitter_svg.webp', alt: 'Twitter' },
+                { href: 'https://www.youtube.com/channel/UCfVuNpZ2yr3OsVVkYojUsUg', src: '/images/yt_svg.webp', alt: 'YouTube' },
+                { href: 'https://www.tiktok.com/@proudbisayabai', src: '/images/tiktok_icon.svg', alt: 'TikTok' },
+              ].map((s) => (
+                <Link key={s.href} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.alt}>
+                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
+                    <Image src={s.src} alt={s.alt} width={18} height={18} />
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
 
           {/* Blogs */}
-          <div className="md:mx-auto">
-            <h3 className="text-2xl font-bold text-white">Blogs</h3>
+          <div>
+            <h3 className="text-2xl font-bold text-[var(--custom-orange)]">Blogs</h3>
             <ul className="mt-3 space-y-2 text-white/90">
               <li>
                 <Link
@@ -164,8 +107,8 @@ const Footer: React.FC = () => {
           </div>
 
           {/* About */}
-          <div className="md:ml-auto">
-            <h3 className="text-2xl font-bold text-white">About</h3>
+          <div>
+            <h3 className="text-2xl font-bold text-[var(--custom-orange)]">About</h3>
             <ul className="mt-3 space-y-2 text-white/90">
               <li>
                 <Link
@@ -209,7 +152,25 @@ const Footer: React.FC = () => {
               </li>
             </ul>
           </div>
+
+          {/*Contact Us*/}
+          <div>
+            <h3 className="text-2xl font-bold text-[var(--custom-orange)]">Contact Us</h3>
+            <div className="mt-3 space-y-3 text-white/90">
+              <div className="flex items-start gap-3">
+                <a href="mailto:proudbisayabai@gmail.com" className="hover:text-white">proudbisayabai@gmail.com</a>
+              </div>
+              <div className="flex items-start gap-3">
+                <a href="tel:+639123456789" className="hover:text-white">+63 912 345 6789</a>
+              </div>
+              <div className="flex items-start gap-3">
+                <span>Cebu City, Philippines</span>
+              </div>
+            </div>
+          </div>
         </div>
+
+        
 
         {/* Divider */}
         <div className="mt-8 h-px w-full bg-white/30" />
