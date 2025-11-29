@@ -11,7 +11,7 @@ type NavItem = {
 const defaultItems: NavItem[] = [
   { label: "Dashboard", href: "/admin/dashboard" },
   { label: "Articles", href: "/articles" },
-  { label: "Content", href: "/admin/content" },
+  { label: "Content Editor", href: "/admin/content" },
   { label: "Back to Landing Page", href: "/home" },
 ];
 

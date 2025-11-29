@@ -118,6 +118,8 @@ export default function AdminDashboardPage() {
     null
   );
   const [showFacebookLiveForm, setShowFacebookLiveForm] = useState(false);
+  const isVideosTab = activeTab === "videos";
+  const isArticlesTab = !isVideosTab;
 
   useEffect(() => {
     fetchArticles();
@@ -817,8 +819,6 @@ export default function AdminDashboardPage() {
     return true;
   };
 
-  const isVideosTab = activeTab === "videos";
-
   const filteredArticles = articles.filter((article) => {
     if (!matchesActiveTab(article)) {
       return false;
@@ -1044,7 +1044,7 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Filter Panel */}
-          {!isVideosTab && showFilters && (
+          {isArticlesTab && showFilters && (
             <div className="border-b border-gray-200 bg-gray-50 p-6">
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div>

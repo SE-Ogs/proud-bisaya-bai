@@ -1,0 +1,45 @@
+[
+  {
+    "id": "media-content-creation",
+    "title": "Media & Content Creation",
+    "description": "Crafting authentic visuals and stories that spark engagement.",
+    "features": [
+      "Video, Photography, and Graphic Design",
+      "Social Media Management",
+      "Vlogs and Short-Form Content (Reels, Tiktok, YouTube Shorts)",
+      "Branding and Visual Storytelling"
+    ]
+  },
+  {
+    "id": "promotions-digital-marketing",
+    "title": "Promotions & Digital Marketing",
+    "description": "Building visibility through creative online campaigns.",
+    "features": [
+      "Local Business Features",
+      "Tourism and Cultural Campaigns",
+      "Influencer Collaborations",
+      "Online Giveaways and Product Launches"
+    ]
+  },
+  {
+    "id": "events-coverage",
+    "title": "Events & Coverage",
+    "description": "Bringing your moments to life with energy and precision.",
+    "features": [
+      "Event Hosting (Onsite and Online)",
+      "Coverage of Festivals, Launches, and Ceremonies",
+      "Press and Media Kit Preparation"
+    ]
+  },
+  {
+    "id": "photography-videography",
+    "title": "Photography & Videography",
+    "description": "Capturing your brand story through vibrant visuals.",
+    "features": [
+      "Lifestyle and Portrait Sessions",
+      "Product Photography",
+      "Aerial Drone Coverage",
+      "Editorial and Conceptual Shots"
+    ]
+  }
+]
