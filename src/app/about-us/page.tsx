@@ -1,9 +1,48 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Footer from "@/app/components/Footer";
 import Header from "@/app/components/Header";
+import type { AboutContent } from "@/types/about";
+import { DEFAULT_ABOUT_CONTENT } from "@/data/aboutDefaults";
 
 export default function AboutUs() {
+  const [about, setAbout] = useState<AboutContent>(DEFAULT_ABOUT_CONTENT);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadAbout() {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await fetch("/api/about");
+        if (!res.ok) {
+          throw new Error(`Failed to fetch About Us: ${res.status}`);
+        }
+        const data = await res.json();
+        const content = data?.about ?? data;
+        if (isMounted && content) {
+          setAbout(content);
+        }
+      } catch (err: any) {
+        console.error("Unable to load About Us content", err);
+        if (isMounted) {
+          setAbout(DEFAULT_ABOUT_CONTENT);
+          setError("Showing default About Us content.");
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    loadAbout();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
   return (
     <div className="relative min-h-screen">
       {/* Background Image */}
@@ -30,29 +69,29 @@ export default function AboutUs() {
                   About us
                 </h1>
 
-                <p className="text-lg mb-6 max-w-xl">
-                  <span className="font-bold">Proud Bisaya Bai</span> is a
-                  Cebu-based media and creative agency dedicated to amplifying
-                  authentic Bisaya stories.
-                </p>
+                {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
 
-                <p className="text-lg mb-8 max-w-xl">
-                  We specialize in producing impactful content and campaigns
-                  that highlight culture, creativity, and community, serving
-                  clients across the country.
-                </p>
-
-                <p className="text-lg leading-relaxed">
-                  Proud Bisaya Bai was founded on July 22, 2020. The ultimate
-                  Bisaya lifestyle and culture blog celebrates, promotes, and
-                  preserves Bisaya culture through compelling content on travel,
-                  food, events, entertainment, and news. What started as a
-                  humble platform has grown into a vibrant site powered by a
-                  dynamic team of 16 young, creative individuals. We cover more
-                  than just Cebu, exploring and amplifying stories from all over
-                  the Philippines where Bisaya thrives, with the goal of uniting
-                  communities and inspiring pride in our heritage.
-                </p>
+                {loading ? (
+                  <p className="text-lg text-gray-600">Loading About Us...</p>
+                ) : (
+                  about.body
+                    .split(/\n{2,}/)
+                    .filter((para) => para.trim().length > 0)
+                    .map((para, idx) => (
+                      <p
+                        key={idx}
+                        className={`text-lg max-w-xl ${
+                          idx === 0
+                            ? "mb-6"
+                            : idx === 1
+                            ? "mb-8"
+                            : "leading-relaxed"
+                        }`}
+                      >
+                        {para}
+                      </p>
+                    ))
+                )}
               </div>
 
               {/* Image */}
@@ -75,14 +114,17 @@ export default function AboutUs() {
             </h2>
 
             <div className="space-y-4">
-              <div className="flex justify-between items-center text-xl font-medium border-b border-gray-300 pb-2">
-                <span>Best Cebu Blogs</span>
-                <span className="text-gray-600 font-normal">2023 - 2024</span>
-              </div>
-              <div className="flex justify-between items-center text-xl font-medium  pb-2">
-                <span>Best Cebu Travel Blog</span>
-                <span className="text-gray-600 font-normal">2023</span>
-              </div>
+              {about.awards.map((award) => (
+                <div
+                  key={award.id}
+                  className="flex justify-between items-center text-xl font-medium border-b border-gray-300 pb-2"
+                >
+                  <span>{award.title}</span>
+                  <span className="text-gray-600 font-normal">
+                    {award.years}
+                  </span>
+                </div>
+              ))}
             </div>
           </section>
 
