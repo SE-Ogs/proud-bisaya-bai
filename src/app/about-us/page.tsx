@@ -2,11 +2,18 @@
 import React, { useEffect, useState } from "react";
 import Footer from "@/app/components/Footer";
 import Header from "@/app/components/Header";
-import type { AboutContent } from "@/types/about";
-import { DEFAULT_ABOUT_CONTENT } from "@/data/aboutDefaults";
 
 export default function AboutUs() {
-  const [about, setAbout] = useState<AboutContent>(DEFAULT_ABOUT_CONTENT);
+  const [description, setDescription] = useState("");
+  const [teamMembers, setTeamMembers] = useState<
+    Array<{
+      id: string;
+      photo_url: string | null;
+      name: string;
+      company_title: string | null;
+      display_order: number;
+    }>
+  >([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,20 +24,31 @@ export default function AboutUs() {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch("/api/about");
-        if (!res.ok) {
-          throw new Error(`Failed to fetch About Us: ${res.status}`);
+
+        const [contentRes, teamRes] = await Promise.all([
+          fetch("/api/about-us-content"),
+          fetch("/api/team-members"),
+        ]);
+
+        if (!contentRes.ok) {
+          throw new Error(`Failed to fetch About Us: ${contentRes.status}`);
         }
-        const data = await res.json();
-        const content = data?.about ?? data;
-        if (isMounted && content) {
-          setAbout(content);
+
+        const contentData = await contentRes.json();
+        if (isMounted) {
+          setDescription(contentData?.description || "");
+        }
+
+        if (teamRes.ok) {
+          const teamData = await teamRes.json();
+          if (isMounted) {
+            setTeamMembers(Array.isArray(teamData) ? teamData : []);
+          }
         }
       } catch (err: any) {
         console.error("Unable to load About Us content", err);
         if (isMounted) {
-          setAbout(DEFAULT_ABOUT_CONTENT);
-          setError("Showing default About Us content.");
+          setError("Unable to load About Us content.");
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -62,9 +80,9 @@ export default function AboutUs() {
         <div className="max-w-6xl mx-auto p-4 sm:p-8 font-sans">
           {/* About Us Section */}
           <section className="mt-10 mb-16">
-            <div className="flex flex-col lg:flex-row lg:space-x-12">
+            <div>
               {/* Text Content */}
-              <div className="lg:w-2/3">
+              <div>
                 <h1 className="text-5xl sm:text-7xl font-extrabold mb-8 relative inline-block">
                   About us
                 </h1>
@@ -73,58 +91,13 @@ export default function AboutUs() {
 
                 {loading ? (
                   <p className="text-lg text-gray-600">Loading About Us...</p>
-                ) : (
-                  about.body
-                    .split(/\n{2,}/)
-                    .filter((para) => para.trim().length > 0)
-                    .map((para, idx) => (
-                      <p
-                        key={idx}
-                        className={`text-lg max-w-xl ${
-                          idx === 0
-                            ? "mb-6"
-                            : idx === 1
-                            ? "mb-8"
-                            : "leading-relaxed"
-                        }`}
-                      >
-                        {para}
-                      </p>
-                    ))
-                )}
+                ) : description ? (
+                  <div
+                    className="prose prose-lg max-w-none text-lg leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: description }}
+                  />
+                ) : null}
               </div>
-
-              {/* Image */}
-              <div className="lg:w-1/3 mt-8 lg:mt-0">
-                <img
-                  src="/images/founder_img.webp"
-                  alt="Founder image"
-                  className="w-full bg-gray-300 rounded-lg overflow-hidden shadow-xl"
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* --- */}
-
-          {/* Awards and Recognition Section */}
-          <section className="mb-16 pt-8">
-            <h2 className="text-4xl sm:text-5xl font-extrabold mb-8 relative inline-block">
-              Awards and Recognition
-            </h2>
-
-            <div className="space-y-4">
-              {about.awards.map((award) => (
-                <div
-                  key={award.id}
-                  className="flex justify-between items-center text-xl font-medium border-b border-gray-300 pb-2"
-                >
-                  <span>{award.title}</span>
-                  <span className="text-gray-600 font-normal">
-                    {award.years}
-                  </span>
-                </div>
-              ))}
             </div>
           </section>
 
@@ -160,6 +133,44 @@ export default function AboutUs() {
               </div>
             </div>
           </section>
+
+          {/* --- */}
+          <span className="block border-t-3 border-gray-300 my-8"></span>
+
+          {/* Team Members Section */}
+          {teamMembers.length > 0 && (
+            <section className="mb-16 pt-8">
+              <h2 className="text-4xl sm:text-5xl font-extrabold mb-8 relative inline-block">
+                Meet the Team!
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {teamMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    className="text-center p-4 rounded-lg border-2 border-[var(--custom-orange)] bg-white"
+                  >
+                    {member.photo_url ? (
+                      <img
+                        src={member.photo_url}
+                        alt={member.name}
+                        className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
+                      />
+                    ) : (
+                      <div className="w-32 h-32 rounded-full mx-auto mb-4 bg-gray-200 flex items-center justify-center text-gray-400">
+                        No Photo
+                      </div>
+                    )}
+                    <h3 className="text-xl font-bold text-black mb-1">
+                      {member.name}
+                    </h3>
+                    {member.company_title && (
+                      <p className="text-gray-600">{member.company_title}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
         <Footer />
       </div>
