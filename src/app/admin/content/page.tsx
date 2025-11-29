@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { X } from "lucide-react";
 
 import AdminHeader from "@/app/components/AdminHeader";
 import { DEFAULT_SERVICE_CARDS } from "@/data/servicesDefaults";
 import type { ServiceCard } from "@/types/services";
-import type { AboutContent } from "@/types/about";
-import { DEFAULT_ABOUT_CONTENT } from "@/data/aboutDefaults";
+import { RichTextEditor } from "@/app/components/articleEditor/ComponentsCustomEditor";
 
 export default function AdminContentPage() {
   const [activeTab, setActiveTab] = useState<"services" | "about">("services");
@@ -19,12 +18,36 @@ export default function AdminContentPage() {
   const [servicesError, setServicesError] = useState<string | null>(null);
   const [servicesSuccess, setServicesSuccess] = useState<string | null>(null);
   const [servicesInitialized, setServicesInitialized] = useState(false);
-  const [about, setAbout] = useState<AboutContent>(DEFAULT_ABOUT_CONTENT);
+  const [aboutDescription, setAboutDescription] = useState("");
   const [aboutLoading, setAboutLoading] = useState(false);
   const [aboutSaving, setAboutSaving] = useState(false);
   const [aboutError, setAboutError] = useState<string | null>(null);
   const [aboutSuccess, setAboutSuccess] = useState<string | null>(null);
   const [aboutInitialized, setAboutInitialized] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<
+    Array<{
+      id: string;
+      photo_url: string | null;
+      name: string;
+      company_title: string | null;
+      display_order: number;
+      created_at?: string;
+      updated_at?: string;
+    }>
+  >([]);
+  const [teamMembersLoading, setTeamMembersLoading] = useState(false);
+  const [teamMembersSaving, setTeamMembersSaving] = useState(false);
+  const [teamMembersError, setTeamMembersError] = useState<string | null>(null);
+  const [teamMembersSuccess, setTeamMembersSuccess] = useState<string | null>(
+    null
+  );
+  const [teamMembersInitialized, setTeamMembersInitialized] = useState(false);
+  const [uploadingImageFor, setUploadingImageFor] = useState<string | null>(
+    null
+  );
+  const teamMemberFileInputRefs = useRef<{
+    [key: string]: HTMLInputElement | null;
+  }>({});
 
   useEffect(() => {
     if (!servicesInitialized && !servicesLoading) {
@@ -166,108 +189,105 @@ export default function AdminContentPage() {
     fetchServiceCards(true);
   }
 
-  async function fetchAbout(showSuccessMessage = false) {
+  async function fetchAboutContent(showSuccessMessage = false) {
     try {
       setAboutLoading(true);
       setAboutError(null);
-      const res = await fetch("/api/about");
+      const res = await fetch("/api/admin/about-us-content");
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
 
       const data = await res.json();
-      const content = data?.about ?? data;
-
-      setAbout(content || DEFAULT_ABOUT_CONTENT);
-      setAboutSuccess(
-        showSuccessMessage ? "About Us content reloaded from file." : null
-      );
+      const description = data?.description || "";
+      // If description is plain text (no HTML tags), convert to HTML paragraphs
+      let htmlDescription = "";
+      if (description) {
+        if (!description.includes("<") && !description.includes(">")) {
+          // Plain text - convert to HTML paragraphs
+          htmlDescription = description
+            .split(/\n{2,}/)
+            .filter((para: string) => para.trim().length > 0)
+            .map((para: string) => `<p>${para.trim()}</p>`)
+            .join("");
+        } else {
+          // Already HTML
+          htmlDescription = description;
+        }
+      } else {
+        // Empty - use placeholder
+        htmlDescription = "<p>Start typing...</p>";
+      }
+      setAboutDescription(htmlDescription);
+      setAboutSuccess(showSuccessMessage ? "About Us content reloaded." : null);
     } catch (error: any) {
       console.error("Failed to load About Us content", error);
-      setAbout(DEFAULT_ABOUT_CONTENT);
-      setAboutError(
-        error?.message || "Failed to load About Us. Showing defaults."
-      );
+      setAboutDescription("");
+      setAboutError(error?.message || "Failed to load About Us content.");
     } finally {
       setAboutLoading(false);
       setAboutInitialized(true);
     }
   }
 
+  async function fetchTeamMembers(showSuccessMessage = false) {
+    try {
+      setTeamMembersLoading(true);
+      setTeamMembersError(null);
+      const res = await fetch("/api/admin/team-members");
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      setTeamMembers(Array.isArray(data) ? data : []);
+      setTeamMembersSuccess(
+        showSuccessMessage ? "Team members reloaded." : null
+      );
+    } catch (error: any) {
+      console.error("Failed to load team members", error);
+      setTeamMembers([]);
+      setTeamMembersError(error?.message || "Failed to load team members.");
+    } finally {
+      setTeamMembersLoading(false);
+      setTeamMembersInitialized(true);
+    }
+  }
+
   useEffect(() => {
     if (activeTab === "about" && !aboutInitialized && !aboutLoading) {
-      fetchAbout();
+      fetchAboutContent();
     }
-  }, [activeTab, aboutInitialized, aboutLoading]);
+    if (
+      activeTab === "about" &&
+      !teamMembersInitialized &&
+      !teamMembersLoading
+    ) {
+      fetchTeamMembers();
+    }
+  }, [
+    activeTab,
+    aboutInitialized,
+    aboutLoading,
+    teamMembersInitialized,
+    teamMembersLoading,
+  ]);
 
-  function handleAboutBodyChange(value: string) {
-    setAbout((prev) => ({ ...prev, body: value }));
+  function handleAboutDescriptionChange(value: string) {
+    setAboutDescription(value);
     setAboutSuccess(null);
   }
 
-  function handleAboutAwardChange(
-    id: string,
-    field: "title" | "years",
-    value: string
-  ) {
-    setAbout((prev) => ({
-      ...prev,
-      awards: prev.awards.map((award) =>
-        award.id === id ? { ...award, [field]: value } : award
-      ),
-    }));
-    setAboutSuccess(null);
-  }
-
-  function handleAddAward() {
-    setAbout((prev) => ({
-      ...prev,
-      awards: [
-        ...prev.awards,
-        {
-          id: `award-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          title: "New Award",
-          years: "",
-        },
-      ],
-    }));
-    setAboutSuccess(null);
-  }
-
-  function handleRemoveAward(id: string) {
-    setAbout((prev) => ({
-      ...prev,
-      awards: prev.awards.filter((award) => award.id !== id),
-    }));
-    setAboutSuccess(null);
-  }
-
-  async function handleSaveAbout() {
+  async function handleSaveAboutDescription() {
     try {
       setAboutSaving(true);
       setAboutError(null);
       setAboutSuccess(null);
 
-      const trimmedBody = about.body.trim();
-      const cleanedAwards = about.awards.map((award, index) => ({
-        id:
-          typeof award.id === "string" && award.id.trim().length > 0
-            ? award.id.trim()
-            : `award-${index + 1}`,
-        title: award.title.trim() || "Untitled Award",
-        years: award.years.trim() || "Year not set",
-      }));
-
-      const payload: AboutContent = {
-        id: about.id || DEFAULT_ABOUT_CONTENT.id,
-        body: trimmedBody || DEFAULT_ABOUT_CONTENT.body,
-        awards: cleanedAwards,
-      };
-
-      const res = await fetch("/api/about", {
+      const res = await fetch("/api/admin/about-us-content", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ about: payload }),
+        body: JSON.stringify({ description: aboutDescription }),
       });
 
       const responseBody = await res.json().catch(() => ({}));
@@ -278,9 +298,7 @@ export default function AdminContentPage() {
         );
       }
 
-      const saved = responseBody?.about ?? payload;
-      setAbout(saved);
-      setAboutSuccess("About Us content updated successfully.");
+      setAboutSuccess("About Us description updated successfully.");
     } catch (error: any) {
       console.error("Failed to save About Us", error);
       setAboutError(error?.message || "Failed to save About Us content.");
@@ -289,8 +307,192 @@ export default function AdminContentPage() {
     }
   }
 
-  function handleReloadAboutFromDisk() {
-    fetchAbout(true);
+  function handleTeamMemberFieldChange(
+    id: string,
+    field: "name" | "company_title" | "photo_url" | "display_order",
+    value: string | number
+  ) {
+    setTeamMembers((prev) => {
+      const updated = prev.map((member) =>
+        member.id === id ? { ...member, [field]: value } : member
+      );
+
+      // Check for duplicate display_order if field is display_order
+      if (field === "display_order" && typeof value === "number") {
+        const duplicates = updated.filter(
+          (m) => m.id !== id && m.display_order === value
+        );
+        if (duplicates.length > 0) {
+          setTeamMembersError(
+            `Display order ${value} is already used by another team member. Please use a unique number.`
+          );
+        } else {
+          setTeamMembersError(null);
+        }
+      }
+
+      return updated;
+    });
+    setTeamMembersSuccess(null);
+  }
+
+  async function handleAddTeamMember() {
+    try {
+      setTeamMembersSaving(true);
+      setTeamMembersError(null);
+      const maxOrder =
+        teamMembers.length > 0
+          ? Math.max(...teamMembers.map((m) => m.display_order))
+          : -1;
+
+      const res = await fetch("/api/admin/team-members", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "New Team Member",
+          company_title: "",
+          photo_url: "",
+          display_order: maxOrder + 1,
+        }),
+      });
+
+      const responseBody = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(responseBody.error || "Failed to add team member.");
+      }
+
+      setTeamMembers((prev) =>
+        [...prev, responseBody].sort(
+          (a, b) => a.display_order - b.display_order
+        )
+      );
+      setTeamMembersSuccess("Team member added successfully.");
+    } catch (error: any) {
+      console.error("Failed to add team member", error);
+      setTeamMembersError(error?.message || "Failed to add team member.");
+    } finally {
+      setTeamMembersSaving(false);
+    }
+  }
+
+  async function handleSaveTeamMember(memberId: string) {
+    const member = teamMembers.find((m) => m.id === memberId);
+    if (!member) return;
+
+    // Check for duplicate display_order before saving
+    const duplicate = teamMembers.find(
+      (m) => m.id !== memberId && m.display_order === member.display_order
+    );
+    if (duplicate) {
+      setTeamMembersError(
+        `Cannot save: Display order ${member.display_order} is already used by "${duplicate.name}". Please use a unique number.`
+      );
+      return;
+    }
+
+    try {
+      setTeamMembersSaving(true);
+      setTeamMembersError(null);
+
+      const res = await fetch("/api/admin/team-members", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: member.id,
+          name: member.name.trim(),
+          company_title: member.company_title?.trim() || "",
+          photo_url: member.photo_url?.trim() || "",
+          display_order: member.display_order,
+        }),
+      });
+
+      const responseBody = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(responseBody.error || "Failed to save team member.");
+      }
+
+      setTeamMembers((prev) =>
+        prev
+          .map((m) => (m.id === memberId ? responseBody : m))
+          .sort((a, b) => a.display_order - b.display_order)
+      );
+      setTeamMembersSuccess("Team member updated successfully.");
+    } catch (error: any) {
+      console.error("Failed to save team member", error);
+      setTeamMembersError(error?.message || "Failed to save team member.");
+    } finally {
+      setTeamMembersSaving(false);
+    }
+  }
+
+  async function handleDeleteTeamMember(id: string) {
+    if (!confirm("Delete this team member?")) return;
+
+    try {
+      setTeamMembersSaving(true);
+      setTeamMembersError(null);
+
+      const res = await fetch(`/api/admin/team-members?id=${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const responseBody = await res.json().catch(() => ({}));
+        throw new Error(responseBody.error || "Failed to delete team member.");
+      }
+
+      setTeamMembers((prev) => prev.filter((m) => m.id !== id));
+      setTeamMembersSuccess("Team member deleted successfully.");
+    } catch (error: any) {
+      console.error("Failed to delete team member", error);
+      setTeamMembersError(error?.message || "Failed to delete team member.");
+    } finally {
+      setTeamMembersSaving(false);
+    }
+  }
+
+  const uploadImage = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch("/api/admin/upload-image", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Image upload failed");
+
+    return data.url;
+  };
+
+  const handleTeamMemberImageUpload = async (
+    memberId: string,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImageFor(memberId);
+    try {
+      const imageUrl = await uploadImage(file);
+      handleTeamMemberFieldChange(memberId, "photo_url", imageUrl);
+      setTeamMembersSuccess("Image uploaded successfully!");
+    } catch (error: any) {
+      setTeamMembersError(`Upload failed: ${error.message}`);
+    } finally {
+      setUploadingImageFor(null);
+      if (teamMemberFileInputRefs.current[memberId]) {
+        teamMemberFileInputRefs.current[memberId]!.value = "";
+      }
+    }
+  };
+
+  function handleReloadAbout() {
+    fetchAboutContent(true);
+    fetchTeamMembers(true);
   }
 
   return (
@@ -510,33 +712,35 @@ export default function AdminContentPage() {
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">About Us</h2>
                   <p className="text-sm text-gray-600">
-                    Edit the static copy for your About Us section.
+                    Edit the About Us description and manage team members.
                   </p>
                 </div>
                 <div className="flex gap-3">
                   <button
-                    onClick={handleReloadAboutFromDisk}
+                    onClick={handleReloadAbout}
                     className="flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-70"
-                    disabled={aboutLoading}
+                    disabled={aboutLoading || teamMembersLoading}
                   >
-                    {aboutLoading ? "Refreshing..." : "Refresh"}
+                    {aboutLoading || teamMembersLoading
+                      ? "Refreshing..."
+                      : "Refresh"}
                   </button>
                 </div>
               </div>
 
-              {aboutError && (
+              {(aboutError || teamMembersError) && (
                 <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                  {aboutError}
+                  {aboutError || teamMembersError}
                 </div>
               )}
 
-              {aboutSuccess && (
+              {(aboutSuccess || teamMembersSuccess) && (
                 <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                  {aboutSuccess}
+                  {aboutSuccess || teamMembersSuccess}
                 </div>
               )}
 
-              {aboutLoading ? (
+              {aboutLoading || teamMembersLoading ? (
                 <div className="rounded-lg border border-gray-200 bg-white p-8 text-center text-gray-600">
                   Loading About Us content...
                 </div>
@@ -545,17 +749,27 @@ export default function AdminContentPage() {
                   <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
                     <div>
                       <label className="mb-1 block text-sm font-semibold text-gray-700">
-                        Main About Us Copy
+                        About Us Description
                       </label>
                       <p className="mb-2 text-xs text-gray-500">
                         This text appears in the About Us section on your site.
+                        Use the toolbar to format text (bold, italic,
+                        underline).
                       </p>
-                      <textarea
-                        rows={10}
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
-                        value={about.body}
-                        onChange={(e) => handleAboutBodyChange(e.target.value)}
+                      <RichTextEditor
+                        content={aboutDescription || "<p>Start typing...</p>"}
+                        onChange={(html) => handleAboutDescriptionChange(html)}
                       />
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleSaveAboutDescription}
+                        className="rounded-lg bg-red-500 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-red-600 disabled:cursor-not-allowed disabled:bg-red-300"
+                        disabled={aboutSaving || aboutLoading}
+                      >
+                        {aboutSaving ? "Saving..." : "Save Description"}
+                      </button>
                     </div>
                   </div>
 
@@ -563,108 +777,177 @@ export default function AdminContentPage() {
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <h3 className="text-lg font-bold text-gray-900">
-                          Awards and Recognition
+                          Team Members
                         </h3>
                         <p className="text-xs text-gray-500 mb-2">
-                          Update the list of awards shown under your About Us
-                          section.
+                          Manage team members shown on the About Us page.
                         </p>
                       </div>
                       <button
                         type="button"
-                        onClick={handleAddAward}
+                        onClick={handleAddTeamMember}
                         className="flex items-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:bg-red-300"
-                        disabled={aboutLoading || aboutSaving}
+                        disabled={teamMembersLoading || teamMembersSaving}
                       >
-                        Add Award
+                        Add Team Member
                       </button>
                     </div>
 
                     <div className="space-y-4">
-                      {about.awards.map((award) => (
-                        <div
-                          key={award.id}
-                          className="grid gap-3 md:grid-cols-[2fr,1fr,auto] items-start"
-                        >
-                          <div>
-                            <label className="mb-1 block text-sm font-semibold text-gray-700">
-                              Award Title
-                            </label>
-                            <input
-                              type="text"
-                              value={award.title}
-                              onChange={(e) =>
-                                handleAboutAwardChange(
-                                  award.id,
-                                  "title",
-                                  e.target.value
-                                )
-                              }
-                              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
-                            />
+                      {teamMembers.length === 0 ? (
+                        <p className="text-sm text-gray-500 text-center py-4">
+                          No team members yet. Add one to get started.
+                        </p>
+                      ) : (
+                        teamMembers.map((member) => (
+                          <div
+                            key={member.id}
+                            className="grid gap-4 md:grid-cols-[auto,1fr,1fr,auto,auto] items-start p-4 border border-gray-200 rounded-lg"
+                          >
+                            <div className="flex flex-col items-center gap-2">
+                              {member.photo_url ? (
+                                <img
+                                  src={member.photo_url}
+                                  alt={member.name}
+                                  className="w-16 h-16 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs">
+                                  No Photo
+                                </div>
+                              )}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                ref={(el) => {
+                                  teamMemberFileInputRefs.current[member.id] =
+                                    el;
+                                }}
+                                onChange={(e) =>
+                                  handleTeamMemberImageUpload(member.id, e)
+                                }
+                                className="hidden"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  teamMemberFileInputRefs.current[
+                                    member.id
+                                  ]?.click()
+                                }
+                                disabled={uploadingImageFor === member.id}
+                                className="w-full text-xs rounded-lg bg-blue-500 px-2 py-1 text-white hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors"
+                              >
+                                {uploadingImageFor === member.id
+                                  ? "Uploading..."
+                                  : "Upload Image"}
+                              </button>
+                              <input
+                                type="text"
+                                placeholder="Photo URL"
+                                value={member.photo_url || ""}
+                                onChange={(e) =>
+                                  handleTeamMemberFieldChange(
+                                    member.id,
+                                    "photo_url",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full text-xs rounded border border-gray-300 px-2 py-1"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-sm font-semibold text-gray-700">
+                                Name
+                              </label>
+                              <input
+                                type="text"
+                                value={member.name}
+                                onChange={(e) =>
+                                  handleTeamMemberFieldChange(
+                                    member.id,
+                                    "name",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-sm font-semibold text-gray-700">
+                                Company Title
+                              </label>
+                              <input
+                                type="text"
+                                value={member.company_title || ""}
+                                onChange={(e) =>
+                                  handleTeamMemberFieldChange(
+                                    member.id,
+                                    "company_title",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-sm font-semibold text-gray-700">
+                                Display Order
+                              </label>
+                              <input
+                                type="number"
+                                value={member.display_order}
+                                onChange={(e) =>
+                                  handleTeamMemberFieldChange(
+                                    member.id,
+                                    "display_order",
+                                    parseInt(e.target.value) || 0
+                                  )
+                                }
+                                className={`w-full rounded-lg border px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 ${
+                                  teamMembers.some(
+                                    (m) =>
+                                      m.id !== member.id &&
+                                      m.display_order === member.display_order
+                                  )
+                                    ? "border-red-500 focus:border-red-500 focus:ring-red-200 bg-red-50"
+                                    : "border-gray-300 focus:border-red-500 focus:ring-red-200"
+                                }`}
+                              />
+                              {teamMembers.some(
+                                (m) =>
+                                  m.id !== member.id &&
+                                  m.display_order === member.display_order
+                              ) && (
+                                <p className="mt-1 text-xs text-red-600">
+                                  This display order is already used by another
+                                  team member.
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex flex-col gap-2 pt-6">
+                              <button
+                                type="button"
+                                onClick={() => handleSaveTeamMember(member.id)}
+                                className="rounded-lg bg-green-500 px-3 py-1 text-xs font-semibold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-green-300"
+                                disabled={teamMembersSaving}
+                              >
+                                Save
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleDeleteTeamMember(member.id)
+                                }
+                                className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                              >
+                                <X className="h-3 w-3" />
+                                Delete
+                              </button>
+                            </div>
                           </div>
-                          <div>
-                            <label className="mb-1 block text-sm font-semibold text-gray-700">
-                              Years
-                            </label>
-                            <input
-                              type="text"
-                              value={award.years}
-                              onChange={(e) =>
-                                handleAboutAwardChange(
-                                  award.id,
-                                  "years",
-                                  e.target.value
-                                )
-                              }
-                              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
-                            />
-                          </div>
-                          <div className="pt-6 flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveAward(award.id)}
-                              className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-xs font-medium ${
-                                about.awards.length <= 1
-                                  ? "cursor-not-allowed border-gray-200 text-gray-400"
-                                  : "border-red-200 text-red-600 hover:bg-red-50"
-                              }`}
-                              disabled={about.awards.length <= 1}
-                            >
-                              <X className="h-3 w-3" />
-                              Remove
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-xs text-gray-500">
-                      About Us content is saved to{" "}
-                      <code className="font-mono text-[11px] text-gray-600">
-                        data/about.json
-                      </code>
-                      .
-                    </p>
-                    <div className="flex gap-3">
-                      <button
-                        type="button"
-                        onClick={handleReloadAboutFromDisk}
-                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70"
-                        disabled={aboutLoading || aboutSaving}
-                      >
-                        Discard Changes
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleSaveAbout}
-                        className="rounded-lg bg-red-500 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-red-600 disabled:cursor-not-allowed disabled:bg-red-300"
-                        disabled={aboutSaving || aboutLoading}
-                      >
-                        {aboutSaving ? "Saving..." : "Save Changes"}
-                      </button>
+                        ))
+                      )}
                     </div>
                   </div>
                 </>
