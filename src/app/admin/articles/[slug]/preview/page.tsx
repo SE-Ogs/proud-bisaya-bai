@@ -26,7 +26,8 @@ export default function PreviewPage() {
         author: 'Author',
         category: 'General', // Make sure category is included
         subcategory: '',
-        thumbnail_url: ''
+        thumbnail_url: '',
+        reading_time: '',
       });
     } catch (error) {
       console.error('Error parsing preview data:', error);
@@ -72,9 +73,9 @@ export default function PreviewPage() {
     category: metadata?.category || 'General', // This is the required field
     subcategory: metadata?.subcategory || '',
     thumbnail_url: metadata?.thumbnail_url || '',
+    reading_time: metadata?.reading_time || '',
     content: JSON.stringify(previewData),
     created_at: new Date().toISOString(),
-    // Include any other required fields from your Article type
     updated_at: new Date().toISOString(),
     published_at: new Date().toISOString(),
     status: 'published',

@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { title, slug, content, author, category, subcategory, thumbnail_url, category_slug, subcategory_slug } = body;
+    const { title, slug, content, author, category, subcategory, thumbnail_url, category_slug, subcategory_slug, reading_time } = body;
 
     // Validate category and subcategory
     if (!CATEGORIES[category as keyof typeof CATEGORIES]) {
@@ -87,6 +87,7 @@ export async function POST(request: Request) {
         status: 'Pending',
         category_slug,
         subcategory_slug,
+        reading_time,
       })
       .select()
       .single();

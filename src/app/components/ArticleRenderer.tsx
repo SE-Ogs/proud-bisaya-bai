@@ -12,6 +12,7 @@ type Article = {
   thumbnail_url?: string;
   content: string;
   created_at: string;
+  reading_time: string;
 };
 
 interface ArticleRendererProps {
@@ -195,6 +196,10 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
           />
         )}
 
+        <h1 className="text-5xl font-bold mb-4 text-gray-900">
+          {article.title}
+        </h1>
+
         <div className="flex flex-wrap gap-2 mb-4">
           <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
             {article.category}
@@ -205,11 +210,6 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
             </span>
           )}
         </div>
-
-        <h1 className="text-5xl font-bold mb-4 text-gray-900">
-          {article.title}
-        </h1>
-
         <div className="flex items-center gap-4 text-gray-600">
           <span className="font-medium">By {article.author}</span>
           <span>&bull;</span>
@@ -220,6 +220,8 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
               day: "numeric",
             })}
           </time>
+          <span>&bull;</span>
+          <span>~{article.reading_time} minutes read</span>
         </div>
       </header>
 
