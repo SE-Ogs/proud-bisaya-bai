@@ -5,7 +5,7 @@ import { Search, X, Star, Bell, Pencil } from "lucide-react";
 import AdminHeader from "@/app/components/AdminHeader";
 import { detectVideoPlatform, getVideoEmbedUrl } from "@/lib/utils/videos";
 import VideoCard from "@/app/components/VideoCard";
-import { platform } from "os";
+import HeroBannerAdmin from "@/app/components/HeroBannerAdmin";
 
 type Article = {
   id: string;
@@ -118,15 +118,18 @@ export default function AdminDashboardPage() {
     null
   );
   const [showFacebookLiveForm, setShowFacebookLiveForm] = useState(false);
+  
+  // Helper to check if current tab is hero-banner
+  const isHeroBannerTab = activeTab === "hero-banner";
   const isVideosTab = activeTab === "videos";
-  const isArticlesTab = !isVideosTab;
+  const isArticlesTab = !isVideosTab && !isHeroBannerTab;
 
   useEffect(() => {
     fetchArticles();
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = "hidden";
+    
     return () => {
       document.body.style.overflow = "unset";
     };
@@ -917,30 +920,34 @@ export default function AdminDashboardPage() {
     );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8 overflow-hidden">
+    <div className={`min-h-screen bg-gray-50 p-8 ${isHeroBannerTab ? "" : "overflow-hidden"}`}>
       <AdminHeader />
       <div className="max-w-8xl mx-auto">
         <div className="bg-white rounded-lg shadow-sm p-5 mb-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-900">Articles</h1>
-            <div className="relative w-96 text-gray-600">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black-500 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search by title, author, category..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="text-black w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {isHeroBannerTab ? "Hero Banner" : "Articles"}
+            </h1>
+            {!isHeroBannerTab && (
+              <div className="relative w-96 text-gray-600">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black-500 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search by title, author, category..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="text-black w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-sm">
@@ -986,61 +993,73 @@ export default function AdminDashboardPage() {
               >
                 Videos
               </button>
+              {/* NEW: Hero Banner Tab */}
+              <button
+                onClick={() => setActiveTab("hero-banner")}
+                className={`py-4 font-medium border-b-2 transition-colors ${
+                  activeTab === "hero-banner"
+                    ? "border-red-500 text-red-600"
+                    : "border-transparent text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Hero Banner
+              </button>
             </div>
-            <div className="flex gap-3 px-6">
-              {isVideosTab ? (
-                <div className="flex gap-3">
-                  {/* Add Video */}
-                  <button
-                    onClick={() => {
-                      setShowVideoForm((prev) => !prev);
-                      setShowFacebookLiveForm(false);
-                    }}
-                    className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${
-                      showVideoForm
-                        ? "bg-gray-400 hover:bg-gray-500"
-                        : "bg-red-500 hover:bg-red-600"
-                    }`}
-                  >
-                    {showVideoForm ? "Hide Form" : "Add Video"}
-                  </button>
 
-                  {/* Facebook Live */}
-                  <button
-                    onClick={() => {
-                      setShowFacebookLiveForm((prev) => !prev);
-                      setShowVideoForm(false);
-                    }}
-                    className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${
-                      showFacebookLiveForm
-                        ? "bg-gray-400 hover:bg-gray-500"
-                        : "bg-blue-500 hover:bg-blue-600"
-                    }`}
-                  >
-                    {showFacebookLiveForm ? "Hide" : "Facebook Live"}
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setShowFilters(!showFilters)}
-                    className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${
-                      hasActiveFilters
-                        ? "bg-red-500 hover:bg-red-600"
-                        : "bg-gray-400 hover:bg-gray-500"
-                    }`}
-                  >
-                    Filter {activeFilterCount > 0 && `(${activeFilterCount})`}
-                  </button>
-                  <Link
-                    href="/admin/articles/new/metadata"
-                    className="bg-red-500 flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors hover:bg-red-600 active:bg-red-700"
-                  >
-                    Add Article
-                  </Link>
-                </>
-              )}
-            </div>
+            {/* Action buttons - hide for hero banner tab */}
+            {!isHeroBannerTab && (
+              <div className="flex gap-3 px-6">
+                {isVideosTab ? (
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        setShowVideoForm((prev) => !prev);
+                        setShowFacebookLiveForm(false);
+                      }}
+                      className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${
+                        showVideoForm
+                          ? "bg-gray-400 hover:bg-gray-500"
+                          : "bg-red-500 hover:bg-red-600"
+                      }`}
+                    >
+                      {showVideoForm ? "Hide Form" : "Add Video"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowFacebookLiveForm((prev) => !prev);
+                        setShowVideoForm(false);
+                      }}
+                      className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${
+                        showFacebookLiveForm
+                          ? "bg-gray-400 hover:bg-gray-500"
+                          : "bg-blue-500 hover:bg-blue-600"
+                      }`}
+                    >
+                      {showFacebookLiveForm ? "Hide" : "Facebook Live"}
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setShowFilters(!showFilters)}
+                      className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${
+                        hasActiveFilters
+                          ? "bg-red-500 hover:bg-red-600"
+                          : "bg-gray-400 hover:bg-gray-500"
+                      }`}
+                    >
+                      Filter {activeFilterCount > 0 && `(${activeFilterCount})`}
+                    </button>
+                    <Link
+                      href="/admin/articles/new/metadata"
+                      className="bg-red-500 flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors hover:bg-red-600 active:bg-red-700"
+                    >
+                      Add Article
+                    </Link>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Filter Panel */}
@@ -1370,8 +1389,15 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
+          {/* NEW: Hero Banner Content */}
+          {isHeroBannerTab && (
+            <div className="p-6">
+              <HeroBannerAdmin />
+            </div>
+          )}
+
           {/* Results count */}
-          {!isVideosTab && (
+          {!isVideosTab && !isHeroBannerTab && (
             <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
               <p className="text-sm text-gray-600">
                 Showing{" "}
@@ -1390,7 +1416,7 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
-          {!isVideosTab && articleValidationError && (
+          {!isVideosTab && !isHeroBannerTab && articleValidationError && (
             <div className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 font-semibold">
               <div className="flex items-center gap-2">
                 <svg
@@ -1409,7 +1435,7 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
-          {!isVideosTab && filteredArticles.length === 0 ? (
+          {isArticlesTab && filteredArticles.length === 0 ? (
             <div className="bg-white rounded-lg p-12 text-center">
               <p className="text-gray-600 mb-4">
                 {hasActiveFilters
@@ -1425,8 +1451,8 @@ export default function AdminDashboardPage() {
                 </button>
               )}
             </div>
-          ) : !isVideosTab ? (
-            <div className="max-h-[calc(100vh-350px)] overflow-y-auto">
+          ) : isArticlesTab ? (
+            <div className={`${isHeroBannerTab ? "" : "max-h-[calc(100vh-350px)] overflow-y-auto"}`}>
               <table className="min-w-full table-fixed">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
@@ -1672,7 +1698,7 @@ export default function AdminDashboardPage() {
                 </tbody>
               </table>
             </div>
-          ) : (
+          ) : isVideosTab ? (
             <div className="p-6">
               {videosError && (
                 <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -1718,7 +1744,7 @@ export default function AdminDashboardPage() {
                       videos
                     </p>
                   </div>
-                  <div className="max-h-[calc(100vh-350px)] overflow-y-auto">
+                  <div className={`${isHeroBannerTab ? "" : "max-h-[calc(100vh-350px)] overflow-y-auto"}`}>
                     <table className="min-w-full table-fixed">
                       <thead className="bg-gray-50 sticky top-0 z-10">
                         <tr>
@@ -1894,7 +1920,7 @@ export default function AdminDashboardPage() {
                 </>
               )}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
