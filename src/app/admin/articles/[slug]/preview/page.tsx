@@ -84,9 +84,9 @@ export default function PreviewPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 -mt-16">
       <div className="bg-yellow-100 border-b-2 border-yellow-400 p-4 text-center sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
+        <div className="max-w-3xl mx-auto flex justify-between items-center">
           <p className="text-yellow-900 font-semibold">
             🔍 Preview Mode - This is how your article will look when published
           </p>
