@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { ChevronUpIcon } from 'lucide-react';
 
 type Article = {
   id: string;
@@ -29,6 +30,20 @@ const COMPONENT_TYPES = {
 };
 
 export default function ArticleRenderer({ article }: ArticleRendererProps) {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 200);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   let editorData;
   try {
     editorData =
@@ -79,7 +94,7 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
         return (
           <div 
             key={index}
-            className="prose prose-lg max-w-none mb-6"
+            className="max-w-none mb-6"
             dangerouslySetInnerHTML={{ __html: props.content || '' }}
           />
         );
@@ -88,7 +103,7 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
         return (
           <div
             key={index}
-            className="prose prose-lg max-w-none mb-6"
+            className="max-w-none mb-6"
             dangerouslySetInnerHTML={{ __html: props.content || "" }}
           />
         );
@@ -106,7 +121,7 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
         
         if (hasCustomDimensions) {
           return (
-            <figure key={index} className="mb-8 flex justify-center">
+            <figure key={index} className="mb-8 flex flex-col items-center">
               {props.src && (
                 <div style={{ maxWidth: '100%', display: 'inline-block' }}>
                   <img
@@ -114,7 +129,7 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
                     alt={props.alt || ""}
                     width={props.width}
                     height={props.height}
-                    className="rounded-xl shadow-lg"
+                    className="rounded-xl"
                     style={{ 
                       display: 'block',
                       maxWidth: '100%',
@@ -139,7 +154,7 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
               <img
                 src={props.src}
                 alt={props.alt || ""}
-                className="w-full rounded-xl object-cover shadow-lg"
+                className="w-full rounded-xl object-cover"
               />
             )}
             {props.caption && (
@@ -179,15 +194,28 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
     }
   };
 
+  const handleScrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+
   return (
-    <article className="max-w-4xl mx-auto px-6 py-2 bg-white">
-      <a
-        href="/articles"
-        className="block text-blue-600 hover:text-blue-800 font-medium transition-colors mb-6"
-      >
-        &larr; Back to Articles
-      </a>
-      <header className="mb-12">
+    <article className="max-w-3xl mx-auto px-6 py-2 bg-gray-50">
+      {mounted && (
+        <div className="fixed bottom-0 right-4 pb-6">
+          <button 
+            className={`shadow-xl rounded-full px-2 py-2 bg-white transition-all hover:scale-105 ${
+              isScrolled ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            }`}
+            onClick={ handleScrollToTop }
+          >
+            <ChevronUpIcon
+              className="h-10 w-10 text-[var(--custom-orange)] cursor-pointer"
+            />
+          </button>
+        </div>
+      )}
+      <header className="mb-12 mt-10">
         {article.thumbnail_url && (
           <img
             src={article.thumbnail_url}
@@ -225,7 +253,7 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
         </div>
       </header>
 
-      <div className="prose prose-lg max-w-none">
+      <div className="max-w-none">
         {contentArray.length > 0 ? (
           contentArray.map((component: any, index: number) =>
             renderComponent(component, index)
