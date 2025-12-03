@@ -7,7 +7,7 @@ import Link from "next/link";
 const Footer: React.FC = () => {
   return (
     <footer
-      className="text-white mt-16 w-full"
+      className="text-white mt-16 w-full h-dvh"
       style={{ backgroundColor: "var(--custom-blue)" }}
     >
       {/* Top section - full width edge-to-edge */}
