@@ -32,12 +32,13 @@ const Home: React.FC = async () => {
 
   const supabase = await createClient();
 
-  // Run all queries in parallel
+  // Run all queries in parallel - ADDED hero_banner query
   const [
     { data: articlesDataRaw, error: articlesErr },
     { data: breakingNewsDataRaw, error: breakingErr },
     { data: editorsPicksDataRaw, error: editorsErr },
     { data: newsEntertainmentDataRaw, error: newsErr },
+    { data: heroBannerDataRaw, error: heroBannerErr }, // NEW: Fetch hero banner
   ] = await Promise.all([
     // All Articles (for the grid)
     supabase
@@ -85,6 +86,14 @@ const Home: React.FC = async () => {
       .eq("category_slug", "news-and-entertainment")
       .order("created_at", { ascending: false })
       .limit(3),
+
+    // NEW: Hero Banner - fetch active banner
+    supabase
+      .from("hero_banner")
+      .select("image_url")
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   // Optional: basic error logging (server console)
@@ -92,6 +101,7 @@ const Home: React.FC = async () => {
   if (breakingErr) console.error("Breaking news query failed:", breakingErr);
   if (editorsErr) console.error("Editors picks query failed:", editorsErr);
   if (newsErr) console.error("News & Entertainment query failed:", newsErr);
+  if (heroBannerErr) console.error("Hero banner query failed:", heroBannerErr); // NEW: Log error
 
   let videosDataRaw: any[] = [];
   let videosErr: any = null;
@@ -152,6 +162,9 @@ const Home: React.FC = async () => {
       ["youtube", "facebook", "tiktok"].includes(video.platform)
     );
 
+  // NEW: Get hero banner image with fallback to default
+  const heroBannerImageUrl = heroBannerDataRaw?.image_url || "/images/banner.webp";
+
   return (
     <div>
       <Head>
@@ -166,10 +179,10 @@ const Home: React.FC = async () => {
         {/* Header */}
         <Header />
 
-        {/* Hero Banner */}
+        {/* Hero Banner - UPDATED: Now uses dynamic image from database */}
         <div
           className="relative h-screen bg-cover bg-center"
-          style={{ backgroundImage: "url('/images/banner.webp')" }}
+          style={{ backgroundImage: `url('${heroBannerImageUrl}')` }}
         >
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-4">
@@ -214,10 +227,7 @@ const Home: React.FC = async () => {
             </div>
 
             {breakingNews.length > 0 ? (
-              <BreakingNewsCarousel
-                newsItems={breakingNews}
-                // autoPlayInterval={6000}
-              />
+              <BreakingNewsCarousel newsItems={breakingNews} />
             ) : (
               <div className="bg-gray-100 p-8 rounded-lg text-gray-500 text-center border-2 border-dashed border-gray-300">
                 <svg
