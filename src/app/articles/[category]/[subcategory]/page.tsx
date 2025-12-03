@@ -1,11 +1,10 @@
 import React from "react";
-import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import Header from "@/app/components/Header";
 import Footer from "@/app/components/Footer";
-import ArticleList from "@/app/components/ArticleList";
+import SubcategoryPageContent from "./SubcategoryPageContent";
 
-type Props = { params: { category: string; subcategory: string } };
+type Props = { params: Promise<{ category: string; subcategory: string }> };
 
 const titleize = (slug: string) =>
   slug
@@ -14,7 +13,7 @@ const titleize = (slug: string) =>
     .join(" ");
 /*  */
 export default async function SubcategoryPage({ params }: Props) {
-  const { category, subcategory } = params;
+  const { category, subcategory } = await params;
   const supabase = await createClient();
 
   // 1) Build the subcategory chips (prefer name if available; else titleize slug)
@@ -72,74 +71,18 @@ export default async function SubcategoryPage({ params }: Props) {
   return (
     <div>
       <Header />
-      <main className="bg-gray-100 py-12 min-h-screen">
+      <main className="bg-gray-50 py-12 min-h-screen">
         <div className="max-w-6xl mx-auto px-4">
-          {/* Back to Articles */}
-          <div className="mb-6">
-            <Link
-              href="/articles"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-900 hover:bg-gray-50 transition-colors"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16l-4-4m0 0l4-4m-4 4h18"
-                />
-              </svg>
-              <span>Back to Articles</span>
-            </Link>
-          </div>
-          <h1 className="text-3xl font-bold mb-6 text-black">{title}</h1>
-
-          {/* Subcategory chips */}
-          {!subcatErr && subcategories.length > 0 && (
-            <div className="mb-8">
-              <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">
-                Subcategories
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Link
-                  href={makeSubcatHref(undefined)}
-                  className={`px-3 py-1 rounded-full border text-sm shadow ${"bg-white text-black border-gray-200 hover:bg-gray-50"}`}
-                >
-                  All
-                </Link>
-
-                {subcategories.map((s) => {
-                  const isActive = s.slug === subcategory;
-                  return (
-                    <Link
-                      key={s.slug}
-                      href={makeSubcatHref(s.slug)}
-                      className={`px-3 py-1 rounded-full border text-sm shadow ${
-                        isActive
-                          ? "bg-black text-white border-black"
-                          : "bg-white text-black border-gray-200 hover:bg-gray-50"
-                      }`}
-                    >
-                      {s.label}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           {error && <p className="text-red-600">Failed to load subcategory.</p>}
 
-          {!articlesData?.length && !error ? (
-            <p className="text-gray-600">
-              No articles found in this subcategory.
-            </p>
-          ) : (
-            <ArticleList articles={articlesData} />
+          {!subcatErr && (
+            <SubcategoryPageContent
+              articles={articlesData}
+              title={title}
+              subcategories={subcategories}
+              category={category}
+              subcategory={subcategory}
+            />
           )}
         </div>
       </main>

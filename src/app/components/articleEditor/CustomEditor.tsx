@@ -206,7 +206,8 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
       category: metadata?.category || data.category || 'General',
       subcategory: metadata?.subcategory || data.subcategory || '',
       thumbnail_url: metadata?.thumbnail_url || data.thumbnail_url || '',
-      created_at: metadata?.created_at || new Date().toISOString()
+      created_at: metadata?.created_at || new Date().toISOString(),
+      reading_time: metadata?.reading_time || data.reading_time || '',
     };
 
     sessionStorage.setItem('articleMetadata', JSON.stringify(previewMetadata));
@@ -220,6 +221,7 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
       {/* Header */}
       <div className="bg-white border-b border-gray-400 shrink-0 px-6 py-2 flex h-20 max-w-screen">
         <div className='grow flex-row w-5xl flex'>
+          {/* TODO: Change route to back instead of dashboard */}
           <a
             href="/admin/dashboard"
             className="px-3 hover:bg-gray-100 rounded-lg transition-colors inline-flex items-center"

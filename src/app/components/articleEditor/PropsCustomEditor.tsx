@@ -37,6 +37,7 @@ export interface CustomEditorData {
   category?: string;
   subcategory?: string;
   thumbnail_url?: string;
+  reading_time?: string;
 }
 
 export interface RichTextEditorProps {
@@ -84,5 +85,6 @@ export interface CustomEditorProps {
     subcategory?: string;
     thumbnail_url?: string;
     created_at?: string;
+    reading_time: string;
   };
 }

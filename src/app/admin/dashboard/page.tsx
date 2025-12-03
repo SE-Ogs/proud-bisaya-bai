@@ -5,7 +5,7 @@ import { Search, X, Star, Bell, Pencil } from "lucide-react";
 import AdminHeader from "@/app/components/AdminHeader";
 import { detectVideoPlatform, getVideoEmbedUrl } from "@/lib/utils/videos";
 import VideoCard from "@/app/components/VideoCard";
-import { platform } from "os";
+import HeroBannerAdmin from "@/app/components/HeroBannerAdmin";
 
 type Article = {
   id: string;
@@ -30,7 +30,7 @@ type Video = {
   url: string;
   platform: "youtube" | "facebook" | "tiktok";
   thumbnail_url?: string | null;
-  isActive: boolean;
+  isFeatured?: boolean;
   created_at?: string;
 };
 
@@ -91,6 +91,12 @@ export default function AdminDashboardPage() {
   const [videosLoading, setVideosLoading] = useState(false);
   const [videosError, setVideosError] = useState<string | null>(null);
   const [videosInitialized, setVideosInitialized] = useState(false);
+  const [videoValidationError, setVideoValidationError] = useState<
+    string | null
+  >(null);
+  const [articleValidationError, setArticleValidationError] = useState<
+    string | null
+  >(null);
   const [videoForm, setVideoForm] = useState({
     title: "",
     url: "",
@@ -112,13 +118,18 @@ export default function AdminDashboardPage() {
     null
   );
   const [showFacebookLiveForm, setShowFacebookLiveForm] = useState(false);
+  
+  // Helper to check if current tab is hero-banner
+  const isHeroBannerTab = activeTab === "hero-banner";
+  const isVideosTab = activeTab === "videos";
+  const isArticlesTab = !isVideosTab && !isHeroBannerTab;
 
   useEffect(() => {
     fetchArticles();
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = "hidden";
+    
     return () => {
       document.body.style.overflow = "unset";
     };
@@ -235,10 +246,25 @@ export default function AdminDashboardPage() {
     return data.url;
   };
 
+  const countWords = (text: string): number => {
+    return text
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0).length;
+  };
+
   async function handleCreateVideo(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!videoForm.title.trim() || !videoForm.url.trim()) {
       alert("Please provide both title and URL.");
+      return;
+    }
+
+    const wordCount = countWords(videoForm.title);
+    if (wordCount > 50) {
+      alert(
+        `Video title must be 50 words or less. Current: ${wordCount} words.`
+      );
       return;
     }
 
@@ -296,11 +322,19 @@ export default function AdminDashboardPage() {
   }
 
   async function handleToggleVideoActive(video: Video) {
+    // Clear any previous validation errors
+    setVideoValidationError(null);
+  }
+
+  async function handleToggleVideoFeatured(video: Video) {
+    // Clear any previous validation errors
+    setVideoValidationError(null);
+
     try {
       const res = await fetch(`/api/admin/videos/${video.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: !video.isActive }),
+        body: JSON.stringify({ isFeatured: !video.isFeatured }),
       });
 
       if (!res.ok) {
@@ -312,8 +346,9 @@ export default function AdminDashboardPage() {
       setVideos((prev) =>
         prev.map((item) => (item.id === video.id ? updated : item))
       );
+      setVideoValidationError(null);
     } catch (err: any) {
-      alert(err.message);
+      setVideoValidationError(err.message);
     }
   }
 
@@ -464,6 +499,14 @@ export default function AdminDashboardPage() {
       alert("Title is required.");
       return;
     }
+
+    const wordCount = countWords(editingVideoTitle);
+    if (wordCount > 50) {
+      alert(
+        `Video title must be 50 words or less. Current: ${wordCount} words.`
+      );
+      return;
+    }
     try {
       setEditingVideoLoading(true);
       const res = await fetch(`/api/admin/videos/${editingVideoId}`, {
@@ -609,6 +652,24 @@ export default function AdminDashboardPage() {
   ) {
     const newStatus = !currentStatus;
 
+    // Clear any previous validation errors
+    setArticleValidationError(null);
+
+    // If trying to favorite, check if there are already 3 favorited posts
+    if (newStatus) {
+      const currentFavoritedCount = articles.filter(
+        (a) => a.isEditorsPick && a.slug !== slug
+      ).length;
+
+      // Check if adding this one would exceed the limit of 3
+      if (currentFavoritedCount >= 3) {
+        setArticleValidationError(
+          "Cannot favorite this post. You can only have a maximum of 3 favorited posts. Please remove a favorited post first before favoriting this one."
+        );
+        return;
+      }
+    }
+
     // Optimistic update
     updateArticleInState(slug, { isEditorsPick: newStatus });
 
@@ -636,8 +697,11 @@ export default function AdminDashboardPage() {
           updated_at: data.updated_at,
         });
       }
+      setArticleValidationError(null);
     } catch (err: any) {
-      alert(err.message);
+      // Revert optimistic update on error
+      updateArticleInState(slug, { isEditorsPick: currentStatus });
+      setArticleValidationError(err.message);
       // Revert on error
       updateArticleInState(slug, { isEditorsPick: currentStatus });
     }
@@ -648,6 +712,24 @@ export default function AdminDashboardPage() {
     currentStatus: boolean = false
   ) {
     const newStatus = !currentStatus;
+
+    // Clear any previous validation errors
+    setArticleValidationError(null);
+
+    // If trying to mark as breaking news, check if there are already 10 breaking news posts
+    if (newStatus) {
+      const currentBreakingNewsCount = articles.filter(
+        (a) => a.isBreakingNews && a.slug !== slug
+      ).length;
+
+      // Check if adding this one would exceed the limit of 10
+      if (currentBreakingNewsCount >= 10) {
+        setArticleValidationError(
+          "Cannot mark this post as breaking news. You can only have a maximum of 10 breaking news posts. Please remove a breaking news post first before marking this one as breaking news."
+        );
+        return;
+      }
+    }
 
     // Optimistic update
     updateArticleInState(slug, { isBreakingNews: newStatus });
@@ -675,10 +757,11 @@ export default function AdminDashboardPage() {
           updated_at: data.updated_at,
         });
       }
+      setArticleValidationError(null);
     } catch (err: any) {
-      alert(err.message);
       // Revert on error
       updateArticleInState(slug, { isBreakingNews: currentStatus });
+      setArticleValidationError(err.message);
     }
   }
 
@@ -738,8 +821,6 @@ export default function AdminDashboardPage() {
     }
     return true;
   };
-
-  const isVideosTab = activeTab === "videos";
 
   const filteredArticles = articles.filter((article) => {
     if (!matchesActiveTab(article)) {
@@ -839,30 +920,34 @@ export default function AdminDashboardPage() {
     );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8 overflow-hidden">
+    <div className={`min-h-screen bg-gray-50 p-8 ${isHeroBannerTab ? "" : "overflow-hidden"}`}>
       <AdminHeader />
       <div className="max-w-8xl mx-auto">
         <div className="bg-white rounded-lg shadow-sm p-5 mb-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-900">Articles</h1>
-            <div className="relative w-96 text-gray-600">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black-500 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search by title, author, category..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="text-black w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {isHeroBannerTab ? "Hero Banner" : "Articles"}
+            </h1>
+            {!isHeroBannerTab && (
+              <div className="relative w-96 text-gray-600">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black-500 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search by title, author, category..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="text-black w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-sm">
@@ -908,65 +993,77 @@ export default function AdminDashboardPage() {
               >
                 Videos
               </button>
+              {/* NEW: Hero Banner Tab */}
+              <button
+                onClick={() => setActiveTab("hero-banner")}
+                className={`py-4 font-medium border-b-2 transition-colors ${
+                  activeTab === "hero-banner"
+                    ? "border-red-500 text-red-600"
+                    : "border-transparent text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Hero Banner
+              </button>
             </div>
-            <div className="flex gap-3 px-6">
-              {isVideosTab ? (
-                <div className="flex gap-3">
-                  {/* Add Video */}
-                  <button
-                    onClick={() => {
-                      setShowVideoForm((prev) => !prev);
-                      setShowFacebookLiveForm(false);
-                    }}
-                    className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${
-                      showVideoForm
-                        ? "bg-gray-400 hover:bg-gray-500"
-                        : "bg-red-500 hover:bg-red-600"
-                    }`}
-                  >
-                    {showVideoForm ? "Hide Form" : "Add Video"}
-                  </button>
 
-                  {/* Facebook Live */}
-                  <button
-                    onClick={() => {
-                      setShowFacebookLiveForm((prev) => !prev);
-                      setShowVideoForm(false);
-                    }}
-                    className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${
-                      showFacebookLiveForm
-                        ? "bg-gray-400 hover:bg-gray-500"
-                        : "bg-blue-500 hover:bg-blue-600"
-                    }`}
-                  >
-                    {showFacebookLiveForm ? "Hide" : "Facebook Live"}
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setShowFilters(!showFilters)}
-                    className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${
-                      hasActiveFilters
-                        ? "bg-red-500 hover:bg-red-600"
-                        : "bg-gray-400 hover:bg-gray-500"
-                    }`}
-                  >
-                    Filter {activeFilterCount > 0 && `(${activeFilterCount})`}
-                  </button>
-                  <Link
-                    href="/admin/articles/new/metadata"
-                    className="bg-red-500 flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors hover:bg-red-600 active:bg-red-700"
-                  >
-                    Add Article
-                  </Link>
-                </>
-              )}
-            </div>
+            {/* Action buttons - hide for hero banner tab */}
+            {!isHeroBannerTab && (
+              <div className="flex gap-3 px-6">
+                {isVideosTab ? (
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        setShowVideoForm((prev) => !prev);
+                        setShowFacebookLiveForm(false);
+                      }}
+                      className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${
+                        showVideoForm
+                          ? "bg-gray-400 hover:bg-gray-500"
+                          : "bg-red-500 hover:bg-red-600"
+                      }`}
+                    >
+                      {showVideoForm ? "Hide Form" : "Add Video"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowFacebookLiveForm((prev) => !prev);
+                        setShowVideoForm(false);
+                      }}
+                      className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${
+                        showFacebookLiveForm
+                          ? "bg-gray-400 hover:bg-gray-500"
+                          : "bg-blue-500 hover:bg-blue-600"
+                      }`}
+                    >
+                      {showFacebookLiveForm ? "Hide" : "Facebook Live"}
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setShowFilters(!showFilters)}
+                      className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${
+                        hasActiveFilters
+                          ? "bg-red-500 hover:bg-red-600"
+                          : "bg-gray-400 hover:bg-gray-500"
+                      }`}
+                    >
+                      Filter {activeFilterCount > 0 && `(${activeFilterCount})`}
+                    </button>
+                    <Link
+                      href="/admin/articles/new/metadata"
+                      className="bg-red-500 flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors hover:bg-red-600 active:bg-red-700"
+                    >
+                      Add Article
+                    </Link>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Filter Panel */}
-          {!isVideosTab && showFilters && (
+          {isArticlesTab && showFilters && (
             <div className="border-b border-gray-200 bg-gray-50 p-6">
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div>
@@ -1092,19 +1189,24 @@ export default function AdminDashboardPage() {
                   <label className="mb-1 block text-sm font-semibold text-gray-700">
                     Title
                   </label>
-                  <input
-                    type="text"
-                    value={videoForm.title}
-                    onChange={(e) =>
-                      setVideoForm((prev) => ({
-                        ...prev,
-                        title: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
-                    placeholder="Enter video title"
-                    required
-                  />
+                  <div>
+                    <input
+                      type="text"
+                      value={videoForm.title}
+                      onChange={(e) =>
+                        setVideoForm((prev) => ({
+                          ...prev,
+                          title: e.target.value,
+                        }))
+                      }
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
+                      placeholder="Enter video title"
+                      required
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      {countWords(videoForm.title)}/50 words
+                    </p>
+                  </div>
                 </div>
                 <div className="md:col-span-1">
                   <label className="mb-1 block text-sm font-semibold text-gray-700">
@@ -1287,8 +1389,15 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
+          {/* NEW: Hero Banner Content */}
+          {isHeroBannerTab && (
+            <div className="p-6">
+              <HeroBannerAdmin />
+            </div>
+          )}
+
           {/* Results count */}
-          {!isVideosTab && (
+          {!isVideosTab && !isHeroBannerTab && (
             <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
               <p className="text-sm text-gray-600">
                 Showing{" "}
@@ -1307,7 +1416,26 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
-          {!isVideosTab && filteredArticles.length === 0 ? (
+          {!isVideosTab && !isHeroBannerTab && articleValidationError && (
+            <div className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 font-semibold">
+              <div className="flex items-center gap-2">
+                <svg
+                  className="w-5 h-5 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>{articleValidationError}</span>
+              </div>
+            </div>
+          )}
+
+          {isArticlesTab && filteredArticles.length === 0 ? (
             <div className="bg-white rounded-lg p-12 text-center">
               <p className="text-gray-600 mb-4">
                 {hasActiveFilters
@@ -1323,8 +1451,8 @@ export default function AdminDashboardPage() {
                 </button>
               )}
             </div>
-          ) : !isVideosTab ? (
-            <div className="max-h-[calc(100vh-350px)] overflow-y-auto">
+          ) : isArticlesTab ? (
+            <div className={`${isHeroBannerTab ? "" : "max-h-[calc(100vh-350px)] overflow-y-auto"}`}>
               <table className="min-w-full table-fixed">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
@@ -1343,9 +1471,11 @@ export default function AdminDashboardPage() {
                     <th className="w-1/6 px-4 py-3 font-bold text-gray-900 text-center align-middle bg-gray-50">
                       Category
                     </th>
-                    <th className="w-1/6 px-4 py-3 font-bold text-gray-900 text-center align-middle bg-gray-50">
-                      Quick Actions
-                    </th>
+                    {activeTab !== "pending" && activeTab !== "archived" && (
+                      <th className="w-1/6 px-4 py-3 font-bold text-gray-900 text-center align-middle bg-gray-50">
+                        Quick Actions
+                      </th>
+                    )}
                     <th className="w-1/6 px-4 py-3 font-bold text-gray-900 text-center align-middle bg-gray-50">
                       Actions
                     </th>
@@ -1410,90 +1540,98 @@ export default function AdminDashboardPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 text-center align-middle border-b border-gray-200">
-                        <div className="flex flex-col gap-2 items-center">
-                          {/* Favorite / Editor's Picks */}
-                          <div className="relative group w-full max-w-[140px]">
-                            <button
-                              onClick={() =>
-                                handleToggleEditorsPick(a.slug, a.isEditorsPick)
-                              }
-                              className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 w-full ${
-                                a.isEditorsPick
-                                  ? "bg-yellow-50 border-yellow-300 text-yellow-700 shadow-sm"
-                                  : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
-                              }`}
-                              aria-label={
-                                a.isEditorsPick
-                                  ? "Remove from favorites"
-                                  : "Add to favorites"
-                              }
-                            >
-                              <Star
-                                size={18}
-                                className={
+                      {activeTab !== "pending" && activeTab !== "archived" && (
+                        <td className="px-4 py-3 text-sm text-gray-900 text-center align-middle border-b border-gray-200">
+                          <div className="flex flex-col gap-2 items-center">
+                            {/* Favorite / Editor's Picks */}
+                            <div className="relative group w-full max-w-[140px]">
+                              <button
+                                onClick={() =>
+                                  handleToggleEditorsPick(
+                                    a.slug,
+                                    a.isEditorsPick
+                                  )
+                                }
+                                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 w-full ${
                                   a.isEditorsPick
-                                    ? "text-yellow-500 fill-current"
-                                    : "text-gray-400"
+                                    ? "bg-yellow-50 border-yellow-300 text-yellow-700 shadow-sm"
+                                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                                }`}
+                                aria-label={
+                                  a.isEditorsPick
+                                    ? "Remove from favorites"
+                                    : "Add to favorites"
                                 }
-                                fill={a.isEditorsPick ? "currentColor" : "none"}
-                              />
-                              <span className="text-sm font-medium">
-                                {a.isEditorsPick ? "Favorited" : "Favorite"}
-                              </span>
-                            </button>
+                              >
+                                <Star
+                                  size={18}
+                                  className={
+                                    a.isEditorsPick
+                                      ? "text-yellow-500 fill-current"
+                                      : "text-gray-400"
+                                  }
+                                  fill={
+                                    a.isEditorsPick ? "currentColor" : "none"
+                                  }
+                                />
+                                <span className="text-sm font-medium">
+                                  {a.isEditorsPick ? "Favorited" : "Favorite"}
+                                </span>
+                              </button>
 
-                            {/* Tooltip for Editor's Picks */}
-                            <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-10 z-20 hidden w-max max-w-xs rounded-md bg-black px-2 py-1 text-xs text-white shadow-lg group-hover:block">
-                              For Editor&apos;s Picks: only pick a maximum of 3
-                              <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-black" />
+                              {/* Tooltip for Editor's Picks */}
+                              <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-10 z-20 hidden w-max max-w-xs rounded-md bg-black px-2 py-1 text-xs text-white shadow-lg group-hover:block">
+                                For Editor&apos;s Picks: only pick a maximum of
+                                3
+                                <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-black" />
+                              </div>
+                            </div>
+
+                            {/* Breaking News */}
+                            <div className="relative group w-full max-w-[140px]">
+                              <button
+                                onClick={() =>
+                                  handleToggleBreakingNews(
+                                    a.slug,
+                                    a.isBreakingNews
+                                  )
+                                }
+                                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 w-full ${
+                                  a.isBreakingNews
+                                    ? "bg-red-50 border-red-300 text-red-700 shadow-sm"
+                                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                                }`}
+                                aria-label={
+                                  a.isBreakingNews
+                                    ? "Mark as normal news"
+                                    : "Mark as breaking news"
+                                }
+                              >
+                                <Bell
+                                  size={18}
+                                  className={
+                                    a.isBreakingNews
+                                      ? "text-red-500 fill-current"
+                                      : "text-gray-400"
+                                  }
+                                  fill={
+                                    a.isBreakingNews ? "currentColor" : "none"
+                                  }
+                                />
+                                <span className="text-sm font-medium">
+                                  {a.isBreakingNews ? "Breaking!" : "Breaking"}
+                                </span>
+                              </button>
+
+                              {/* Tooltip for Breaking News */}
+                              <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-10 z-20 hidden w-max max-w-xs rounded-md bg-black px-2 py-1 text-xs text-white shadow-lg group-hover:block">
+                                For Breaking News: only pick a maximum of 10
+                                <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-black" />
+                              </div>
                             </div>
                           </div>
-
-                          {/* Breaking News */}
-                          <div className="relative group w-full max-w-[140px]">
-                            <button
-                              onClick={() =>
-                                handleToggleBreakingNews(
-                                  a.slug,
-                                  a.isBreakingNews
-                                )
-                              }
-                              className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 w-full ${
-                                a.isBreakingNews
-                                  ? "bg-red-50 border-red-300 text-red-700 shadow-sm"
-                                  : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
-                              }`}
-                              aria-label={
-                                a.isBreakingNews
-                                  ? "Mark as normal news"
-                                  : "Mark as breaking news"
-                              }
-                            >
-                              <Bell
-                                size={18}
-                                className={
-                                  a.isBreakingNews
-                                    ? "text-red-500 fill-current"
-                                    : "text-gray-400"
-                                }
-                                fill={
-                                  a.isBreakingNews ? "currentColor" : "none"
-                                }
-                              />
-                              <span className="text-sm font-medium">
-                                {a.isBreakingNews ? "Breaking!" : "Breaking"}
-                              </span>
-                            </button>
-
-                            {/* Tooltip for Breaking News */}
-                            <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-10 z-20 hidden w-max max-w-xs rounded-md bg-black px-2 py-1 text-xs text-white shadow-lg group-hover:block">
-                              For Breaking News: only pick a maximum of 1
-                              <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-black" />
-                            </div>
-                          </div>
-                        </div>
-                      </td>
+                        </td>
+                      )}
                       <td className="w-1/6 px-4 py-3 text-m text-gray-900 text-center align-middle border-b border-gray-200">
                         <div className="flex flex-col gap-1 items-center">
                           {!a.isPublished && !a.isArchived && (
@@ -1560,11 +1698,30 @@ export default function AdminDashboardPage() {
                 </tbody>
               </table>
             </div>
-          ) : (
+          ) : isVideosTab ? (
             <div className="p-6">
               {videosError && (
                 <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                   {videosError}
+                </div>
+              )}
+
+              {videoValidationError && (
+                <div className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 font-semibold">
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className="w-5 h-5 flex-shrink-0"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>{videoValidationError}</span>
+                  </div>
                 </div>
               )}
 
@@ -1577,135 +1734,193 @@ export default function AdminDashboardPage() {
                   No videos found. Add one above!
                 </div>
               ) : (
-                <div className="max-h-[calc(100vh-350px)] overflow-y-auto">
-                  <table className="min-w-full table-fixed">
-                    <thead className="bg-gray-50 sticky top-0 z-10">
-                      <tr>
-                        <th className="w-1/4 px-4 py-3 font-bold text-gray-900 text-center align-middle">
-                          Preview
-                        </th>
-                        <th className="w-1/4 px-4 py-3 font-bold text-gray-900 text-center align-middle">
-                          Details
-                        </th>
-                        <th className="w-1/4 px-4 py-3 font-bold text-gray-900 text-center align-middle">
-                          Status
-                        </th>
-                        <th className="w-1/4 px-4 py-3 font-bold text-gray-900 text-center align-middle">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {videos.map((video) => (
-                        <tr
-                          key={video.id}
-                          className="hover:bg-gray-50 transition-colors border-b border-gray-200"
-                        >
-                          <td className="px-4 py-4 align-middle">
-                            <div className="mx-auto max-w-xs">
-                              <VideoCard
-                                id={video.id}
-                                title={video.title}
-                                url={video.url}
-                                platform={video.platform}
-                                orientation="horizontal"
-                                thumbnailUrl={video.thumbnail_url}
-                              />
-                            </div>
-                          </td>
-                          <td className="px-4 py-4 text-sm text-gray-900 align-middle">
-                            <p className="font-semibold">{video.title}</p>
-                            <p className="text-xs uppercase text-gray-500 mt-1">
-                              {video.platform}
-                            </p>
-                            <p className="text-xs text-gray-400 mt-2">
-                              Added{" "}
-                              {video.created_at
-                                ? new Date(video.created_at).toLocaleString()
-                                : "—"}
-                            </p>
-                            <a
-                              href={video.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-blue-600 text-xs hover:underline mt-2 inline-block"
-                            >
-                              Open Source Link
-                            </a>
-                            {editingVideoId === video.id ? (
-                              <div className="mt-3 flex flex-col gap-2">
-                                <input
-                                  type="text"
-                                  value={editingVideoTitle}
-                                  onChange={(e) =>
-                                    setEditingVideoTitle(e.target.value)
-                                  }
-                                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
+                <>
+                  <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
+                    <p className="text-sm text-gray-600">
+                      Showing{" "}
+                      <span className="font-semibold text-gray-900">
+                        {videos.length}
+                      </span>{" "}
+                      videos
+                    </p>
+                  </div>
+                  <div className={`${isHeroBannerTab ? "" : "max-h-[calc(100vh-350px)] overflow-y-auto"}`}>
+                    <table className="min-w-full table-fixed">
+                      <thead className="bg-gray-50 sticky top-0 z-10">
+                        <tr>
+                          <th className="w-1/6 px-4 py-3 font-bold text-gray-900 text-center align-middle bg-gray-50">
+                            Preview
+                          </th>
+                          <th className="w-1/6 px-4 py-3 font-bold text-gray-900 text-center align-middle bg-gray-50">
+                            Details
+                          </th>
+                          <th className="w-1/6 px-4 py-3 font-bold text-gray-900 text-center align-middle bg-gray-50">
+                            Status
+                          </th>
+                          <th className="w-1/6 px-4 py-3 font-bold text-gray-900 text-center align-middle bg-gray-50">
+                            Quick Actions
+                          </th>
+                          <th className="w-1/6 px-4 py-3 font-bold text-gray-900 text-center align-middle bg-gray-50">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {videos.map((video) => (
+                          <tr
+                            key={video.id}
+                            className="hover:bg-gray-50 transition-colors border-b border-gray-200"
+                          >
+                            <td className="px-4 py-4 text-sm text-gray-900 text-center align-middle border-b border-gray-200">
+                              <div className="mx-auto max-w-xs">
+                                <VideoCard
+                                  id={video.id}
+                                  title={video.title}
+                                  url={video.url}
+                                  platform={video.platform}
+                                  orientation="horizontal"
+                                  thumbnailUrl={video.thumbnail_url}
+                                  disablePlay={true}
                                 />
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={handleSaveVideoTitle}
-                                    disabled={editingVideoLoading}
-                                    className="flex-1 rounded-lg bg-green-500 px-3 py-2 text-sm font-semibold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-green-300"
-                                  >
-                                    {editingVideoLoading ? "Saving..." : "Save"}
-                                  </button>
-                                  <button
-                                    onClick={cancelEditingVideo}
-                                    className="flex-1 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200"
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
                               </div>
-                            ) : (
-                              <button
-                                onClick={() => startEditingVideo(video)}
-                                className="mt-1 block text-xs font-semibold text-blue-600 hover:text-blue-800"
+                            </td>
+                            <td className="px-4 py-4 text-sm text-gray-900 align-middle border-b border-gray-200">
+                              <p className="font-semibold">{video.title}</p>
+                              <p className="text-xs uppercase text-gray-500 mt-1">
+                                {video.platform}
+                              </p>
+                              <p className="text-xs text-gray-400 mt-2">
+                                Added{" "}
+                                {video.created_at
+                                  ? new Date(video.created_at).toLocaleString()
+                                  : "—"}
+                              </p>
+                              <a
+                                href={video.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-blue-600 text-xs hover:underline mt-2 inline-block"
                               >
-                                Edit Title
-                              </button>
-                            )}
-                          </td>
-                          <td className="px-4 py-4 text-center align-middle">
-                            <span
-                              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                                video.isActive
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-gray-100 text-gray-600"
-                              }`}
-                            >
-                              {video.isActive ? "Active" : "Inactive"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-4 text-center align-middle">
-                            <div className="flex flex-col gap-2 items-center">
-                              <button
-                                onClick={() => handleToggleVideoActive(video)}
-                                className={`w-full rounded-lg px-3 py-2 text-sm font-semibold ${
-                                  video.isActive
-                                    ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
-                                    : "bg-green-50 text-green-700 border border-green-200"
+                                Open Source Link
+                              </a>
+                              {editingVideoId === video.id ? (
+                                <div className="mt-3 flex flex-col gap-2">
+                                  <div>
+                                    <input
+                                      type="text"
+                                      value={editingVideoTitle}
+                                      onChange={(e) =>
+                                        setEditingVideoTitle(e.target.value)
+                                      }
+                                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
+                                    />
+                                    <p className="mt-1 text-xs text-gray-500">
+                                      {countWords(editingVideoTitle)}/50 words
+                                    </p>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={handleSaveVideoTitle}
+                                      disabled={editingVideoLoading}
+                                      className="flex-1 rounded-lg bg-green-500 px-3 py-2 text-sm font-semibold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-green-300"
+                                    >
+                                      {editingVideoLoading
+                                        ? "Saving..."
+                                        : "Save"}
+                                    </button>
+                                    <button
+                                      onClick={cancelEditingVideo}
+                                      className="flex-1 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => startEditingVideo(video)}
+                                  className="mt-1 block text-xs font-semibold text-blue-600 hover:text-blue-800"
+                                >
+                                  Edit Title
+                                </button>
+                              )}
+                            </td>
+                            <td className="px-4 py-4 text-sm text-gray-900 text-center align-middle border-b border-gray-200">
+                              <span
+                                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                                  video.isFeatured
+                                    ? "bg-yellow-100 text-yellow-700"
+                                    : "bg-gray-100 text-gray-600"
                                 }`}
                               >
-                                {video.isActive ? "Deactivate" : "Activate"}
-                              </button>
-                              <button
-                                onClick={() => handleDeleteVideo(video.id)}
-                                className="w-full rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-100"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                                {video.isFeatured ? "Featured" : "Not Featured"}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 text-sm text-gray-900 text-center align-middle border-b border-gray-200">
+                              <div className="flex flex-col gap-2 items-center">
+                                <div className="relative group w-full max-w-[140px]">
+                                  <button
+                                    onClick={() =>
+                                      handleToggleVideoFeatured(video)
+                                    }
+                                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 w-full ${
+                                      video.isFeatured
+                                        ? "bg-yellow-50 border-yellow-300 text-yellow-700 shadow-sm"
+                                        : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                                    }`}
+                                    aria-label={
+                                      video.isFeatured
+                                        ? "Remove from featured"
+                                        : "Mark as featured"
+                                    }
+                                  >
+                                    <Star
+                                      size={18}
+                                      className={
+                                        video.isFeatured
+                                          ? "text-yellow-600 fill-current"
+                                          : "text-gray-400"
+                                      }
+                                      fill={
+                                        video.isFeatured
+                                          ? "currentColor"
+                                          : "none"
+                                      }
+                                    />
+                                    <span className="text-sm font-medium">
+                                      {video.isFeatured
+                                        ? "Featured!"
+                                        : "Feature"}
+                                    </span>
+                                  </button>
+
+                                  {/* Tooltip for Featured */}
+                                  <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-10 z-20 hidden w-max max-w-xs rounded-md bg-black px-2 py-1 text-xs text-white shadow-lg group-hover:block">
+                                    Featured: only pick a maximum of 10
+                                    <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-black" />
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 text-sm text-gray-900 text-center align-middle border-b border-gray-200">
+                              <div className="flex flex-col gap-2 items-center">
+                                <button
+                                  onClick={() => handleDeleteVideo(video.id)}
+                                  className="text-white font-bold px-10 py-2 rounded-lg bg-red-600 hover:bg-red-700 w-full"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

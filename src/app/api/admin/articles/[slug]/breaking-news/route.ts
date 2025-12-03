@@ -3,9 +3,10 @@ import { NextResponse } from 'next/server';
 
 export async function PATCH(
     request: Request,
-    { params }: { params: { slug: string } }
+    { params }: { params: Promise<{ slug: string }> }
 ) {
     try {
+        const { slug } = await params;
         const supabase = await createClient();
 
         // Admin authentication
@@ -100,7 +101,7 @@ export async function PATCH(
                     isBreakingNews: false,
                     updated_at: new Date().toISOString()
                 })
-                .eq('slug', params.slug)
+                .eq('slug', slug)
                 .select()
                 .single();
 

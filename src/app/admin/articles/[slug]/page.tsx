@@ -37,13 +37,12 @@ export default async function AdminArticleView({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminHeader />
-      
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="bg-gray-50 max-w-4xl mx-auto p-6">
         {/* Admin Header with Controls */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-3 mt-6">
           <Link 
             href="/admin/dashboard" 
-            className="text-blue-600 hover:text-blue-800 font-medium"
+            className="text-blue-600 hover:text-blue-800 text-xl"
           >
             ← Back to Dashboard
           </Link>
@@ -72,7 +71,7 @@ export default async function AdminArticleView({ params }: PageProps) {
         </div>
 
         {/* Article Content using your existing ArticleRenderer */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-gray-50 rounded-lg overflow-hidden">
           <ArticleRenderer article={article} />
         </div>
 

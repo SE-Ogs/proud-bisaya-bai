@@ -33,7 +33,7 @@ async function requireAdmin() {
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabaseAdmin = await requireAdmin();
@@ -66,8 +66,8 @@ export async function PATCH(
       updates.platform = platform;
     }
 
-    if (body.isActive !== undefined) {
-      updates.isActive = Boolean(body.isActive);
+    if (body.isFeatured !== undefined) {
+      updates.isFeatured = Boolean(body.isFeatured);
     }
 
     if (Object.keys(updates).length === 0) {
@@ -96,7 +96,7 @@ export async function PATCH(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabaseAdmin = await requireAdmin();

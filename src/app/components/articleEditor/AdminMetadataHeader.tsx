@@ -30,6 +30,8 @@ interface ArticleMetadataHeaderProps {
   setCategorySlug: (slug: string) => void;
   subcategorySlug: string;
   setSubcategorySlug: (slug: string) => void;
+  readingTime: string;
+  setReadingTime: (slug: string) => void;
 }
 
 export function ArticleMetadataHeader({
@@ -60,6 +62,8 @@ export function ArticleMetadataHeader({
   setCategorySlug,
   subcategorySlug,
   setSubcategorySlug,
+  readingTime,
+  setReadingTime,
 }: ArticleMetadataHeaderProps) {
   const router = useRouter();
 
@@ -220,6 +224,19 @@ export function ArticleMetadataHeader({
                 accept="image/*"
                 onChange={onThumbnailUpload}
                 className="hidden"
+              />
+            </div>
+            <div>
+              <label className="block text-md font-medium text-gray-700 mb-1">
+                Reading Time (minutes) *
+              </label>
+              <input
+                type="text"
+                value={readingTime}
+                onChange={(e) => setReadingTime (e.target.value)}
+                placeholder="Approximate reading time"
+                className="w-full border border-gray-300 rounded-lg px-3 py-3 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
               />
             </div>
           </div>

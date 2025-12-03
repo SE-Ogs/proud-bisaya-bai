@@ -346,9 +346,6 @@ export default function Navbar({
                 d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z"
               />
             </svg>
-            <span className="flex items-center gap-1">
-              <span>SEARCH</span>
-            </span>
           </button>
 
           {/* Burger button - always visible */}
@@ -361,8 +358,8 @@ export default function Navbar({
             <img
               src="/images/burger_brown.webp"
               alt={isOpen ? "Close menu" : "Open menu"}
-              width={30}
-              height={30}
+              width={35}
+              height={35}
               className="cursor-pointer"
             />
           </button>
@@ -430,44 +427,11 @@ export default function Navbar({
                 <Link
                   href="/contact-us"
                   title="Get Featured"
-                  className="w-full inline-flex items-center justify-center rounded-md bg-gradient-to-r from-[var(--custom-brown)] to-[var(--custom-orange)] text-white text-sm font-semibold px-4 py-2 transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95"
+                  className="w-full inline-flex items-center justify-center rounded-md bg-[var(--custom-red)] text-white text-sm font-semibold px-4 py-2 transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95"
                   onClick={() => setIsOpen(false)}
                 >
                   Get Featured
                 </Link>
-              </div>
-              {/* Auth buttons */}
-              <div className="px-3 mt-3 space-y-2">
-                {session ? (
-                  <>
-                    <Link
-                      href="/admin"
-                      title="Admin Dashboard"
-                      className="w-full inline-flex items-center justify-center rounded-md bg-[var(--custom-blue)] text-white text-sm font-semibold px-4 py-2 transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      Admin Dashboard
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      disabled={isLoggingOut}
-                      title="Logout"
-                      className="w-full inline-flex items-center justify-center rounded-md bg-red-600 text-white text-sm font-semibold px-4 py-2 transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95 disabled:opacity-70 disabled:hover:scale-100"
-                    >
-                      {isLoggingOut ? "Logging out..." : "Logout"}
-                    </button>
-                  </>
-                ) : (
-                  <Link
-                    href="/admin/login"
-                    title="Login"
-                    className="w-full inline-flex items-center justify-center rounded-md bg-[var(--custom-blue)] text-white text-sm font-semibold px-4 py-2 transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Login
-                  </Link>
-                )}
               </div>
             </nav>
           </div>

@@ -35,6 +35,7 @@ export default function ArticleContentPage() {
         category_slug: string;
         subcategory_slug?: string;
         created_at?: string;
+        reading_time: string;
     } | null>(null);
 
     useEffect(() => {
@@ -72,6 +73,7 @@ export default function ArticleContentPage() {
                             category_slug: article.category_slug,
                             subcategory_slug: article.subcategory_slug,
                             created_at: article.created_at,
+                            reading_time: article.reading_time,
                         });
                     }
 
@@ -169,6 +171,7 @@ export default function ArticleContentPage() {
                 category_slug: metadata.category_slug,
                 subcategory_slug: metadata.subcategory_slug || undefined,
                 content: JSON.stringify(editorData),
+                reading_time: metadata.reading_time,
             };
 
             console.log('📤 Sending payload:', payload);
