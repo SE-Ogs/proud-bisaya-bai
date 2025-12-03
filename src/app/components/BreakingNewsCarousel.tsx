@@ -185,7 +185,7 @@ const BreakingNewsCarousel: React.FC<BreakingNewsCarouselProps> = ({
                 onPointerUp={(e) => e.stopPropagation()}
               >
                 <Link href={articlePath} className={`rounded-xl shadow-2xl overflow-hidden border-4 block ${
-                  isCenter ? 'border-red-600' : 'border-gray-300'
+                  isCenter ? 'border-[#9C2222]' : 'border-gray-300'
                 }`}>
                   {/* Image Section */}
                   <div className="relative h-64 overflow-hidden">
@@ -214,7 +214,7 @@ const BreakingNewsCarousel: React.FC<BreakingNewsCarouselProps> = ({
                   </div>
 
                   {/* Content Section */}
-                  <div className="p-6 bg-red-600">
+                  <div className="p-6 bg-[#9C2222]">
                     <h3 className="text-white font-bold text-xl leading-tight line-clamp-2">
                       {item.title}
                     </h3>
@@ -265,7 +265,7 @@ const BreakingNewsCarousel: React.FC<BreakingNewsCarouselProps> = ({
               onClick={() => goToSlide(index)}
               className={`h-2 rounded-full transition-all duration-300 ${
                 index === currentIndex
-                  ? "w-8 bg-red-600"
+                  ? "w-8 bg-[#9C2222]"
                   : "w-2 bg-gray-300 hover:bg-gray-400"
               }`}
               aria-label={`Go to slide ${index + 1}`}
