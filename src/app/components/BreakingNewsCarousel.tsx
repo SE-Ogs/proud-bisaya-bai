@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 
 interface BreakingNewsItem {
   title: string;
@@ -18,7 +19,7 @@ interface BreakingNewsCarouselProps {
 
 const BreakingNewsCarousel: React.FC<BreakingNewsCarouselProps> = ({
   newsItems,
-  autoPlayInterval = 5000,
+  autoPlayInterval = 4500,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
@@ -164,6 +165,7 @@ const BreakingNewsCarousel: React.FC<BreakingNewsCarouselProps> = ({
             const isCenter = position === 'center';
             const isLeft = position === 'left';
             const isRight = position === 'right';
+            const articlePath = `/articles/${item.category_slug}/${item.subcategory_slug}/${item.slug}`;
             
             return (
               <div
@@ -182,7 +184,7 @@ const BreakingNewsCarousel: React.FC<BreakingNewsCarouselProps> = ({
                 onPointerDown={(e) => e.stopPropagation()}
                 onPointerUp={(e) => e.stopPropagation()}
               >
-                <div className={`rounded-xl shadow-2xl overflow-hidden border-4 ${
+                <Link href={articlePath} className={`rounded-xl shadow-2xl overflow-hidden border-4 block ${
                   isCenter ? 'border-red-600' : 'border-gray-300'
                 }`}>
                   {/* Image Section */}
@@ -223,7 +225,7 @@ const BreakingNewsCarousel: React.FC<BreakingNewsCarouselProps> = ({
                       {getTimeAgo(item.created_at)}
                     </p>
                   </div>
-                </div>
+                </Link>
               </div>
             );
           })}
