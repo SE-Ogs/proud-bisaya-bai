@@ -7,6 +7,7 @@ import LatestUpdateCard from "@/app/components/LatestUpdateCard";
 import VideoCarousel from "@/app/components/VideoCarousel";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
+import BreakingNewsCarousel from "../components/BreakingNewsCarousel";
 
 const Home: React.FC = async () => {
   const stories = [
@@ -31,12 +32,13 @@ const Home: React.FC = async () => {
 
   const supabase = await createClient();
 
-  // Run all queries in parallel
+  // Run all queries in parallel - ADDED hero_banner query
   const [
     { data: articlesDataRaw, error: articlesErr },
     { data: breakingNewsDataRaw, error: breakingErr },
     { data: editorsPicksDataRaw, error: editorsErr },
     { data: newsEntertainmentDataRaw, error: newsErr },
+    { data: heroBannerDataRaw, error: heroBannerErr }, // NEW: Fetch hero banner
   ] = await Promise.all([
     // All Articles (for the grid)
     supabase
@@ -53,13 +55,13 @@ const Home: React.FC = async () => {
     supabase
       .from("articles")
       .select(
-        "title, slug, created_at, category_slug, subcategory_slug, thumbnail_url"
+        "title, slug, created_at, author, category_slug, subcategory_slug, thumbnail_url"
       )
       .eq("isPublished", true)
       .eq("isArchived", false)
       .eq("isBreakingNews", true)
       .order("created_at", { ascending: false })
-      .limit(1),
+      .limit(10),
 
     // Editor's Picks: up to 3
     supabase
@@ -84,6 +86,14 @@ const Home: React.FC = async () => {
       .eq("category_slug", "news-and-entertainment")
       .order("created_at", { ascending: false })
       .limit(3),
+
+    // NEW: Hero Banner - fetch active banner
+    supabase
+      .from("hero_banner")
+      .select("image_url")
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   // Optional: basic error logging (server console)
@@ -91,6 +101,7 @@ const Home: React.FC = async () => {
   if (breakingErr) console.error("Breaking news query failed:", breakingErr);
   if (editorsErr) console.error("Editors picks query failed:", editorsErr);
   if (newsErr) console.error("News & Entertainment query failed:", newsErr);
+  if (heroBannerErr) console.error("Hero banner query failed:", heroBannerErr); // NEW: Log error
 
   let videosDataRaw: any[] = [];
   let videosErr: any = null;
@@ -98,10 +109,9 @@ const Home: React.FC = async () => {
     const supabaseAdmin = createAdminClient();
     const { data, error } = await supabaseAdmin
       .from("videos")
-      .select("id, title, url, platform, thumbnail_url, isActive, created_at")
-      .eq("isActive", true)
-      .order("created_at", { ascending: false })
-      .limit(6);
+      .select("id, title, url, platform, thumbnail_url, isFeatured, created_at")
+      .eq("isFeatured", true)
+      .order("created_at", { ascending: false });
     if (error) {
       videosErr = error;
     } else {
@@ -112,9 +122,35 @@ const Home: React.FC = async () => {
   }
   if (videosErr) console.error("Videos query failed:", videosErr);
 
+  let facebookLive: {
+    fb_url: string;
+    fb_embed_url: string;
+    is_active: boolean;
+  } | null = null;
+  let facebookLiveErr: any = null;
+
+  try {
+    const supabaseAdmin = createAdminClient();
+    const { data, error } = await supabaseAdmin
+      .from("facebook_live")
+      .select("fb_url, fb_embed_url, is_active")
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      facebookLiveErr = error;
+    } else {
+      facebookLive = data as any;
+    }
+  } catch (err) {
+    facebookLiveErr = err;
+  }
+  if (facebookLiveErr)
+    console.error("Facebook Live query failed:", facebookLiveErr);
+
   // Null-safe fallbacks
   const articlesData = articlesDataRaw ?? [];
-  const breakingNews = (breakingNewsDataRaw ?? [])[0] ?? null;
+  const breakingNews = breakingNewsDataRaw ?? [];
   const editorsPicksData = editorsPicksDataRaw ?? [];
   const newsEntertainmentData = newsEntertainmentDataRaw ?? [];
   const videosData = (videosDataRaw ?? [])
@@ -122,9 +158,12 @@ const Home: React.FC = async () => {
       ...video,
       platform: (video.platform || "").toLowerCase(),
     }))
-    .filter(
-      (video) => video.platform === "youtube" || video.platform === "facebook"
+    .filter((video) =>
+      ["youtube", "facebook", "tiktok"].includes(video.platform)
     );
+
+  // NEW: Get hero banner image with fallback to default
+  const heroBannerImageUrl = heroBannerDataRaw?.image_url || "/images/banner.webp";
 
   return (
     <div>
@@ -140,10 +179,10 @@ const Home: React.FC = async () => {
         {/* Header */}
         <Header />
 
-        {/* Hero Banner */}
+        {/* Hero Banner - UPDATED: Now uses dynamic image from database */}
         <div
           className="relative h-screen bg-cover bg-center"
-          style={{ backgroundImage: "url('/images/banner.webp')" }}
+          style={{ backgroundImage: `url('${heroBannerImageUrl}')` }}
         >
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-4">
@@ -163,6 +202,54 @@ const Home: React.FC = async () => {
           </div>
         </div>
 
+        {/* Breaking News */}
+        <section className="bg-white py-8">
+          <div className="max-w-5xl mx-auto px-4">
+            <div className="flex items-center justify-center gap-3 mb-5">
+              {/* Pulsing red dot */}
+              <div className="relative h-5 w-5">
+                <span
+                  className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                  style={{ backgroundColor: "var(--custom-red)" }}
+                />
+                <span
+                  className="relative inline-flex h-full w-full rounded-full"
+                  style={{ backgroundColor: "var(--custom-red)" }}
+                />
+              </div>
+
+              <h2
+                className="text-2xl md:text-3xl font-extrabold tracking-tight"
+                style={{ color: "var(--custom-red)" }}
+              >
+                Breaking News
+              </h2>
+            </div>
+
+            {breakingNews.length > 0 ? (
+              <BreakingNewsCarousel newsItems={breakingNews} />
+            ) : (
+              <div className="bg-gray-100 p-8 rounded-lg text-gray-500 text-center border-2 border-dashed border-gray-300">
+                <svg
+                  className="w-12 h-12 mx-auto mb-3 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+                  />
+                </svg>
+                <p className="font-semibold">No breaking news at the moment.</p>
+                <p className="text-sm mt-1">Check back soon for updates</p>
+              </div>
+            )}
+          </div>
+        </section>
+
         {/* Videos Section */}
         {videosData.length > 0 && (
           <section className="bg-[var(--custom-blue)] py-12">
@@ -174,8 +261,9 @@ const Home: React.FC = async () => {
                 <h3 className="mt-2 text-3xl font-extrabold">
                   Watch the Latest Highlights
                 </h3>
+                <div className="h-1.5 w-16 bg-[var(--custom-orange)] rounded-full my-2 mb-4 mx-auto" />
                 <p className="mt-3 text-white/70 max-w-2xl mx-auto">
-                  Straight from Facebook and YouTube - curated stories,
+                  Straight from Facebook, Youtube, and TikTok - curated stories,
                   interviews, and moments from Proud Bisaya Bai.
                 </p>
               </div>
@@ -186,7 +274,10 @@ const Home: React.FC = async () => {
                     id: video.id,
                     title: video.title,
                     url: video.url,
-                    platform: video.platform as "youtube" | "facebook",
+                    platform: video.platform as
+                      | "youtube"
+                      | "facebook"
+                      | "tiktok",
                     created_at: video.created_at,
                     thumbnail_url: video.thumbnail_url,
                   }))}
@@ -196,36 +287,39 @@ const Home: React.FC = async () => {
           </section>
         )}
 
-        {/* Facebook Live Section */}
-        {/* Comment out if not used :D */}
-        {/* <section className="bg-[var(--custom-blue)] py-12">
-          <div className="text-center container mx-auto px-4">
-            <div className="text-center">
-              <h3 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-2">
-                Watch Us Live!
-              </h3>
-              <div className="h-1.5 w-16 bg-[var(--custom-orange)] rounded-full mb-4 mx-auto" />
-            </div>
-            <div className="max-w-3xl mx-auto">
-              <div
-                className="relative w-full"
-                style={{ paddingBottom: "56.25%" }}
-              >
-                <iframe
-                  src="https://www.facebook.com/plugins/video.php?height=314&href=https%3A%2F%2Fwww.facebook.com%2FSparta%2Fvideos%2F680780428062150%2F&show_text=false&width=560&t=0"
-                  className="absolute top-0 left-0 w-full h-full rounded-lg shadow-lg"
-                  style={{ border: "none", overflow: "hidden" }}
-                  allowFullScreen={true}
-                  allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                ></iframe>
+        {/* Facebook Live Section (controlled from admin) */}
+        {facebookLive &&
+          facebookLive.is_active &&
+          facebookLive.fb_embed_url && (
+            <section className="bg-[var(--custom-blue)] py-12">
+              <div className="text-center container mx-auto px-4">
+                <div className="text-center">
+                  <h3 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-2">
+                    Watch Us Live!
+                  </h3>
+                  <div className="h-1.5 w-16 bg-[var(--custom-orange)] rounded-full mb-4 mx-auto" />
+                </div>
+                <div className="max-w-3xl mx-auto">
+                  <div
+                    className="relative w-full"
+                    style={{ paddingBottom: "56.25%" }}
+                  >
+                    <iframe
+                      src={facebookLive.fb_embed_url}
+                      className="absolute top-0 left-0 w-full h-full rounded-lg shadow-lg"
+                      style={{ border: "none", overflow: "hidden" }}
+                      allowFullScreen
+                      allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                    ></iframe>
+                  </div>
+                  <p className="mt-4 text-center text-white text-sm">
+                    Join us live on Facebook for the latest updates and
+                    exclusive content!
+                  </p>
+                </div>
               </div>
-              <p className="mt-4 text-center text-white text-sm">
-                Join us live on Facebook for the latest updates and exclusive
-                content!
-              </p>
-            </div>
-          </div>
-        </section> */}
+            </section>
+          )}
 
         {/* Featured Stories */}
         <section className="bg-white py-12">
@@ -332,7 +426,7 @@ const Home: React.FC = async () => {
 
                       {/* Meta Information */}
                       <div className="space-y-2 pt-3 border-t border-gray-100">
-                        {/* Date with icon */}
+                        {/* Date and Time with icon */}
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <svg
                             className="w-4 h-4 flex-shrink-0 text-gray-400"
@@ -341,7 +435,7 @@ const Home: React.FC = async () => {
                           >
                             <path
                               fillRule="evenodd"
-                              d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
                               clipRule="evenodd"
                             />
                           </svg>
@@ -352,6 +446,17 @@ const Home: React.FC = async () => {
                                 year: "numeric",
                                 month: "short",
                                 day: "numeric",
+                              }
+                            )}
+                          </span>
+                          <span className="text-gray-400">•</span>
+                          <span className="font-medium">
+                            {new Date(article.created_at).toLocaleTimeString(
+                              "en-PH",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                timeZone: "Asia/Manila",
                               }
                             )}
                           </span>
@@ -422,163 +527,17 @@ const Home: React.FC = async () => {
           </div>
         </section>
 
-        {/* Breaking News */}
-        <section className="bg-white py-8">
-          <div className="max-w-5xl mx-auto px-4">
-            <div className="flex items-center justify-center gap-3 mb-5">
-              {/* Pulsing red dot */}
-              <div className="relative h-5 w-5">
-                <span
-                  className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-                  style={{ backgroundColor: "var(--custom-red)" }}
-                />
-                <span
-                  className="relative inline-flex h-full w-full rounded-full"
-                  style={{ backgroundColor: "var(--custom-red)" }}
-                />
-              </div>
-
-              <h2
-                className="text-2xl md:text-3xl font-extrabold tracking-tight"
-                style={{ color: "var(--custom-red)" }}
-              >
-                Breaking News
-              </h2>
-            </div>
-
-            {breakingNews ? (
-              <Link
-                href={`/articles/${breakingNews.category_slug}/${breakingNews.subcategory_slug}/${breakingNews.slug}`}
-                className="block rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] border-4 overflow-hidden group"
-                style={{ borderColor: "var(--custom-red)" }}
-              >
-                {/* Image Section */}
-                <div className="relative h-64 md:h-80 overflow-hidden">
-                  <img
-                    src={breakingNews.thumbnail_url || "/images/banner.webp"}
-                    alt={breakingNews.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  {/* Gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-
-                  {/* LIVE badge - positioned on image */}
-                  {/* <div className="absolute top-4 left-4">
-                    <span
-                      className="inline-flex items-center gap-2 text-white text-sm font-bold px-4 py-2 rounded-full shadow-lg uppercase"
-                      style={{ backgroundColor: "var(--custom-red)" }}
-                    >
-                      <span className="relative flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
-                      </span>
-                      Live
-                    </span>
-                  </div> */}
-
-                  {/* Time badge - positioned on image */}
-                  <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-lg">
-                    <p className="text-white font-bold text-lg">
-                      {new Date(breakingNews.created_at).toLocaleTimeString(
-                        [],
-                        {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        }
-                      )}
-                    </p>
-                    <p className="text-white/90 text-xs text-center">
-                      {new Date(breakingNews.created_at).toLocaleDateString(
-                        [],
-                        {
-                          month: "short",
-                          day: "numeric",
-                        }
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Content Section */}
-                <div
-                  className="p-6"
-                  style={{ backgroundColor: "var(--custom-red)" }}
-                >
-                  <h3 className="text-white font-bold text-2xl md:text-3xl leading-tight">
-                    {breakingNews.title}
-                  </h3>
-                  <p className="text-white/90 text-sm mt-2 flex items-center gap-2">
-                    <svg
-                      className="w-4 h-4"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    {(() => {
-                      const now = new Date();
-                      const postDate = new Date(breakingNews.created_at);
-                      const diffMs = now.getTime() - postDate.getTime();
-                      const diffMins = Math.floor(diffMs / 60000);
-                      const diffHours = Math.floor(diffMs / 3600000);
-                      const diffDays = Math.floor(diffMs / 86400000);
-
-                      if (diffMins < 1) return "Just now";
-                      if (diffMins < 60)
-                        return `${diffMins} minute${
-                          diffMins > 1 ? "s" : ""
-                        } ago`;
-                      if (diffHours < 24)
-                        return `${diffHours} hour${
-                          diffHours > 1 ? "s" : ""
-                        } ago`;
-                      if (diffDays === 1) return "1 day ago";
-                      return `${diffDays} days ago`;
-                    })()}
-                    {" • Click to read full story"}
-                  </p>
-                </div>
-              </Link>
-            ) : (
-              <div className="bg-gray-100 p-8 rounded-lg text-gray-500 text-center border-2 border-dashed border-gray-300">
-                <svg
-                  className="w-12 h-12 mx-auto mb-3 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-                  />
-                </svg>
-                <p className="font-semibold">No breaking news at the moment.</p>
-                <p className="text-sm mt-1">Check back soon for updates</p>
-              </div>
-            )}
-          </div>
-        </section>
-
         {/* Latest News and Entertainment + Editor's Picks with side ads */}
-        <section
-          className="py-8"
-          style={{ backgroundColor: "var(--custom-blue)" }}
-        >
+        <section className="py-8" style={{ backgroundColor: "white" }}>
           <div className="max-w-screen-xl mx-auto px-4 lg:px-0">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Left Ad (desktop only) */}
               <aside className="hidden lg:block lg:col-span-2">
                 <div className="sticky top-24">
-                  <div className="w-full h-[750px] bg-white/85 border border-white/70 rounded-lg flex items-center justify-center shadow-sm">
-                    <span className="text-gray-800 font-semibold">ADS</span>
+                  <div className="w-full h-[750px] bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center">
+                    <span className="text-gray-600 font-semibold">ADS</span>
                   </div>
-                  <p className="mt-2 text-xs text-white/90 text-center">
+                  <p className="mt-2 text-xs text-gray-500 text-center">
                     Sponsored by _____
                   </p>
                 </div>
@@ -591,7 +550,7 @@ const Home: React.FC = async () => {
                   <div className="flex flex-col">
                     {/* Header with fixed height so columns align */}
                     <div className="min-h-[88px] flex flex-col justify-end mb-2">
-                      <h3 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                      <h3 className="text-2xl md:text-3xl font-extrabold text-black tracking-tight">
                         Karon: Latest News and Entertainment
                       </h3>
                       <div className="h-1.5 w-16 bg-[var(--custom-orange)] rounded-full mt-2" />
@@ -628,7 +587,7 @@ const Home: React.FC = async () => {
                   <div className="flex flex-col">
                     {/* Header with the SAME fixed height */}
                     <div className="min-h-[88px] flex flex-col justify-end mb-2">
-                      <h3 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                      <h3 className="text-2xl md:text-3xl font-extrabold text-black tracking-tight">
                         Editor&apos;s Picks
                       </h3>
                       <div className="h-1.5 w-16 bg-[var(--custom-orange)] rounded-full mt-2" />
@@ -666,10 +625,10 @@ const Home: React.FC = async () => {
               {/* Right Ad (desktop only) */}
               <aside className="hidden lg:block lg:col-span-2">
                 <div className="sticky top-24">
-                  <div className="w-full h-[750px] bg-white/85 border border-white/70 rounded-lg flex items-center justify-center shadow-sm">
-                    <span className="text-gray-800 font-semibold">ADS</span>
+                  <div className="w-full h-[750px] bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center">
+                    <span className="text-gray-600 font-semibold">ADS</span>
                   </div>
-                  <p className="mt-2 text-xs text-white/90 text-center">
+                  <p className="mt-2 text-xs text-gray-500 text-center">
                     Sponsored by _____
                   </p>
                 </div>
@@ -677,6 +636,8 @@ const Home: React.FC = async () => {
             </div>
           </div>
         </section>
+
+        <div className="h-px w-full bg-gray-200 my-8"></div>
 
         {/* Our Partners Section */}
         <section className="bg-white py-12">

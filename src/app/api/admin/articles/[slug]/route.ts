@@ -8,6 +8,7 @@ export async function GET(
   { params }: { params: { slug: string } }
 ) {
   try {
+    const { slug } = await params;
     const supabase = await createClient();
     
     // Check if user is admin
@@ -34,7 +35,7 @@ export async function GET(
     const { data, error } = await supabase
       .from('articles')
       .select('*')
-      .eq('slug', params.slug)
+      .eq('slug', slug)
       .single();
 
     if (error) {
@@ -87,7 +88,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { title, slug: newSlug, content, author, category, subcategory, thumbnail_url, category_slug, subcategory_slug } = body;
+    const { title, slug: newSlug, content, author, category, subcategory, thumbnail_url, category_slug, subcategory_slug, reading_time } = body;
 
     // Validate category and subcategory if provided
     if (category && !CATEGORIES[category as keyof typeof CATEGORIES]) {
@@ -110,7 +111,8 @@ export async function PUT(
         thumbnail_url,
         updated_at: new Date().toISOString(),
         category_slug,
-        subcategory_slug
+        subcategory_slug,
+        reading_time
       })
       .eq('slug', params.slug)
       .select()

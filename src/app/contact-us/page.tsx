@@ -1,9 +1,71 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Footer from "@/app/components/Footer";
 import Header from "../components/Header";
+import type { ServiceCard } from "@/types/services";
+import { DEFAULT_SERVICE_CARDS } from "@/data/servicesDefaults";
 
 export default function ContactUsPage() {
+  useEffect(() => {
+    // Handle smooth scroll to our-services section when hash is present
+    const handleScroll = () => {
+      if (window.location.hash === "#our-services") {
+        const element = document.getElementById("our-services");
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+    };
+
+    // Try scrolling immediately
+    handleScroll();
+
+    // Also try after a short delay in case the page is still loading
+    const timeout = setTimeout(handleScroll, 300);
+
+    return () => clearTimeout(timeout);
+  }, []);
+  const [services, setServices] = useState<ServiceCard[]>(
+    DEFAULT_SERVICE_CARDS
+  );
+  const [servicesError, setServicesError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadServices() {
+      try {
+        const res = await fetch("/api/services");
+        if (!res.ok) {
+          throw new Error(`Failed to fetch services: ${res.status}`);
+        }
+        const data = await res.json();
+        const items = Array.isArray(data)
+          ? data
+          : Array.isArray(data.services)
+          ? data.services
+          : [];
+
+        if (isMounted && items.length > 0) {
+          setServices(items);
+          setServicesError(null);
+        }
+      } catch (error) {
+        console.error("Unable to load services data", error);
+        if (isMounted) {
+          setServices(DEFAULT_SERVICE_CARDS);
+          setServicesError("Unable to load the latest services right now.");
+        }
+      }
+    }
+
+    loadServices();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const packages = [
     {
       name: "Media & Content Creation",
@@ -61,7 +123,7 @@ export default function ContactUsPage() {
       <Header />
 
       {/* Advertising Packages */}
-      <section className="py-16">
+      <section className="pt-12 pb-6">
         <div className="mx-auto max-w-5xl px-4 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--custom-brown)] to-[var(--custom-orange)]">
             Join our growing community — Advertise with us today
@@ -82,86 +144,55 @@ export default function ContactUsPage() {
         </div>
       </section>
 
-      {/* Our Services (has grayish background) */}
-      <section className="relative mt-16 bg-gradient-to-b from-gray-50 via-white to-gray-100 py-16">
+      <hr
+        className="mx-auto mt-4 max-w-6xl border-t border-gray-200"
+        aria-hidden="true"
+      />
+
+      {/* Our Services */}
+      <section id="our-services" className="relative mt-8 bg-white py-16">
         <div className="mx-auto max-w-6xl px-6 text-center">
           {/* Section Title */}
-          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-black">
             Our Services
           </h2>
           <div className="h-1.5 w-16 bg-[var(--custom-orange)] rounded-full mx-auto mt-3 mb-4" />
-          <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
-            Explore a variety of creative and digital marketing services
-            designed to amplify your brand’s story and connect with proud Bisaya
-            audiences.
-          </p>
+          {servicesError ? (
+            <p className="text-red-600 max-w-2xl mx-auto text-sm sm:text-base">
+              {servicesError}
+            </p>
+          ) : (
+            <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
+              Explore a variety of creative and digital marketing services
+              designed to amplify your brand’s story and connect with proud
+              Bisaya audiences.
+            </p>
+          )}
         </div>
 
         {/* Cards Grid */}
         <div className="mx-auto mt-12 max-w-6xl grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-2 px-6">
-          {[
-            {
-              name: "Media & Content Creation",
-              description:
-                "Crafting authentic visuals and stories that spark engagement.",
-              features: [
-                "Video, Photography, and Graphic Design",
-                "Social Media Management",
-                "Vlogs and Short-Form Content (Reels, Tiktok, YouTube Shorts)",
-                "Branding and Visual Storytelling",
-              ],
-            },
-            {
-              name: "Promotions & Digital Marketing",
-              description:
-                "Building visibility through creative online campaigns.",
-              features: [
-                "Local Business Features",
-                "Tourism and Cultural Campaigns",
-                "Influencer Collaborations",
-                "Online Giveaways and Product Launches",
-              ],
-            },
-            {
-              name: "Events & Coverage",
-              description:
-                "Bringing your moments to life with energy and precision.",
-              features: [
-                "Event Hosting (Onsite and Online)",
-                "Coverage of Festivals, Launches, and Ceremonies",
-                "Press and Media Kit Preparation",
-              ],
-            },
-            {
-              name: "Photography & Videography",
-              description:
-                "Capturing your brand story through vibrant visuals.",
-              features: [
-                "Lifestyle and Portrait Sessions",
-                "Product Photography",
-                "Aerial Drone Coverage",
-                "Editorial and Conceptual Shots",
-              ],
-            },
-          ].map((service, index) => (
+          {services.map((service, index) => (
             <div
-              key={index}
+              key={service.id ?? index}
               className="flex flex-col items-center text-center rounded-2xl bg-white border border-gray-100 shadow-md p-8 transition-all transform hover:-translate-y-2 hover:shadow-xl hover:border-[var(--custom-orange)]"
             >
               <h3 className="text-xl font-bold text-gray-900 mb-1">
-                {service.name}
+                {service.title}
               </h3>
               <p className="text-sm text-gray-500 mb-5">
                 {service.description}
               </p>
 
               <ul className="space-y-3 text-left w-full max-w-sm mx-auto">
-                {service.features.map((f, subIdx) => (
-                  <li key={subIdx} className="flex items-start gap-3">
-                    <span className="mt-2 inline-block h-1.5 w-1.5 rounded-full bg-[var(--custom-orange)] flex-shrink-0" />
-                    <p className="text-sm text-gray-700">{f}</p>
-                  </li>
-                ))}
+                {service.features
+                  .filter((feature) => feature && feature.trim().length > 0)
+                  .map((feature, subIdx) => (
+                    <li key={subIdx} className="flex items-start gap-3">
+                      <span className="mt-2 inline-block h-1.5 w-1.5 rounded-full bg-[var(--custom-orange)] flex-shrink-0" />
+                      <p className="text-sm text-gray-700">{feature}</p>
+                    </li>
+                  ))}
               </ul>
 
               <a
@@ -172,7 +203,7 @@ export default function ContactUsPage() {
                     .getElementById("contact-form")
                     ?.scrollIntoView({ behavior: "smooth" });
                 }}
-                className="mt-8 inline-block w-full rounded-md bg-gradient-to-r from-[var(--custom-brown)] to-[var(--custom-orange)] text-white px-6 py-3 text-sm font-semibold transition-transform transform hover:scale-105 hover:shadow-lg"
+                className="mt-8 inline-block w-full rounded-md bg-[var(--custom-orange)] text-white px-6 py-3 text-sm font-semibold transition-transform transform hover:scale-105 hover:shadow-lg"
               >
                 Get Started
               </a>
@@ -180,6 +211,11 @@ export default function ContactUsPage() {
           ))}
         </div>
       </section>
+
+      <hr
+        className="mx-auto max-w-6xl border-t border-gray-200"
+        aria-hidden="true"
+      />
 
       {/* Contact Section */}
       <section
