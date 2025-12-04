@@ -49,7 +49,8 @@ export default async function SubcategoryPage({ params }: Props) {
       created_at,
       category_slug,
       subcategory_slug,
-      author
+      author,
+      reading_time
     `
     )
     .eq("isPublished", true)

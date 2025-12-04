@@ -10,6 +10,8 @@ interface BreakingNewsItem {
   category_slug: string;
   subcategory_slug: string;
   thumbnail_url: string | null;
+  author: string | null;
+  reading_time: number | null;
 }
 
 interface BreakingNewsCarouselProps {
@@ -185,7 +187,7 @@ const BreakingNewsCarousel: React.FC<BreakingNewsCarouselProps> = ({
                 onPointerUp={(e) => e.stopPropagation()}
               >
                 <Link href={articlePath} className={`rounded-xl shadow-2xl overflow-hidden border-4 block ${
-                  isCenter ? 'border-red-600' : 'border-gray-300'
+                  isCenter ? 'border-[var(--custom-red)]' : 'border-gray-300'
                 }`}>
                   {/* Image Section */}
                   <div className="relative h-64 overflow-hidden">
@@ -211,19 +213,43 @@ const BreakingNewsCarousel: React.FC<BreakingNewsCarouselProps> = ({
                         })}
                       </p>
                     </div>
+
+                    {/* Reading time badge */}
+                    {item.reading_time && (
+                      <div className="absolute top-4 left-4 bg-gray-900/60 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                        <div className="flex items-center gap-1.5">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <p className="text-white font-semibold text-sm">
+                            {item.reading_time} min read
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Content Section */}
-                  <div className="p-6 bg-red-600">
+                  <div className="p-6" style={{ backgroundColor: "var(--custom-red)" }}>
                     <h3 className="text-white font-bold text-xl leading-tight line-clamp-2">
                       {item.title}
                     </h3>
-                    <p className="text-white/90 text-sm mt-2 flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                      </svg>
-                      {getTimeAgo(item.created_at)}
-                    </p>
+                    <div className="mt-3 space-y-2">
+                      <p className="text-white/90 text-sm flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                        </svg>
+                        {getTimeAgo(item.created_at)}
+                      </p>
+                      {item.author && (
+                        <p className="text-white/90 text-sm flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                          </svg>
+                          By <span className="font-semibold">{item.author}</span>
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </Link>
               </div>
@@ -265,9 +291,10 @@ const BreakingNewsCarousel: React.FC<BreakingNewsCarouselProps> = ({
               onClick={() => goToSlide(index)}
               className={`h-2 rounded-full transition-all duration-300 ${
                 index === currentIndex
-                  ? "w-8 bg-red-600"
+                  ? "w-8"
                   : "w-2 bg-gray-300 hover:bg-gray-400"
               }`}
+              style={index === currentIndex ? { backgroundColor: "var(--custom-red)" } : {}}
               aria-label={`Go to slide ${index + 1}`}
             />
           ))}

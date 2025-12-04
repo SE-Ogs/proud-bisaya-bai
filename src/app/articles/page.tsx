@@ -9,7 +9,7 @@ export default async function ArticlesIndexPage() {
   const { data: articles } = await supabase
     .from("articles")
     .select(
-      "id, title, author, created_at, category, subcategory, slug, thumbnail_url, category_slug, subcategory_slug"
+      "id, title, author, created_at, category, subcategory, slug, thumbnail_url, category_slug, subcategory_slug, reading_time"
     )
     .eq("isPublished", true)
     .eq("isArchived", false)
