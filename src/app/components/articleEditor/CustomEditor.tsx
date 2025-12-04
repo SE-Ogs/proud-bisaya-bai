@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Type, Image, Layout, PanelLeft, GripVertical, ChevronUp, ChevronDown, CornerUpLeft } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { Type, Image, Layout, PanelLeft, GripVertical, CornerUpLeft } from 'lucide-react';
 import { ComponentRenderer } from '@/app/components/articleEditor/ComponentsCustomEditor';
+import SEOAnalyzerModal from '@/app/components/articleEditor/SEOAnalyzerModal';
 import {
   COMPONENT_TYPES,
   Component,
@@ -11,15 +12,127 @@ import {
   CustomEditorProps
 } from '@/app/components/articleEditor/PropsCustomEditor';
 
+// SEO Helper Functions
+const decodeHtmlEntities = (text: string) =>
+  text
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>');
+
+const stripHtml = (html: string) =>
+  decodeHtmlEntities(
+    html
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+  ).trim();
+
+const normalizeText = (text?: string) =>
+  text ? stripHtml(text).replace(/\s+/g, ' ').trim() : '';
+
+const countWords = (text: string) =>
+  text
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+
+interface ImageStats {
+  total: number;
+  missingAlt: number;
+}
+
+interface ContentMetrics {
+  readableText: string;
+  wordCount: number;
+  imageStats: ImageStats;
+}
+
+const collectContentMetrics = (components: Component[]): ContentMetrics => {
+  const parts: string[] = [];
+  let imageTotal = 0;
+  let imageMissingAlt = 0;
+
+  const collectFromComponent = (component?: Component) => {
+    if (!component) return;
+    const props = component.props || {};
+
+    const addText = (value?: string) => {
+      const normalized = normalizeText(value);
+      if (normalized) {
+        parts.push(normalized);
+      }
+    };
+
+    addText(props.text);
+    addText(props.content);
+    addText(props.caption);
+
+    if (component.type === COMPONENT_TYPES.IMAGE) {
+      imageTotal += 1;
+      if (!normalizeText(props.alt)) {
+        imageMissingAlt += 1;
+      }
+    }
+
+    if (component.type === COMPONENT_TYPES.COLUMNS && props.columns) {
+      props.columns.forEach((col) => {
+        if (Array.isArray(col.components)) {
+          col.components.forEach(collectFromComponent);
+        }
+      });
+    }
+  };
+
+  components.forEach(collectFromComponent);
+
+  const readableText = parts.join('\n').replace(/\s+/g, ' ').trim();
+  return {
+    readableText,
+    wordCount: countWords(readableText),
+    imageStats: {
+      total: imageTotal,
+      missingAlt: imageMissingAlt,
+    },
+  };
+};
+
+const extractFirstParagraph = (text: string): string => {
+  if (!text) return '';
+
+  const paragraphs = text
+    .split(/\n\s*\n|(?<=[.?!])\s{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  const meaningfulParagraphs = paragraphs.filter(
+    (p) =>
+      p.length > 40 &&
+      !/^#{1,6}\s/.test(p) &&
+      !/^by\s/i.test(p) &&
+      !/^(introduction|summary|about)\b/i.test(p)
+  );
+
+  const first = meaningfulParagraphs[0] || paragraphs[0] || '';
+  return first.length > 160 ? first.slice(0, 157).trim() + '...' : first;
+};
+
 export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = true, onToggleMetadata, metadata }: CustomEditorProps) {
   const [components, setComponents] = useState<Component[]>(data.content || []);
   const [showCanvasDropZone, setShowCanvasDropZone] = useState(false);
   const [showBottomDropZone, setShowBottomDropZone] = useState(false);
+  const [showSEO, setShowSEO] = useState(false);
   const isInitialMountRef = useRef(true);
   const lastSyncedDataRef = useRef<string>(JSON.stringify(data.content || []));
   const isUserActionRef = useRef(false);
   const skipNextSyncRef = useRef(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  // Calculate SEO metrics
+  const contentMetrics = useMemo(() => collectContentMetrics(components), [components]);
+  const { readableText, wordCount, imageStats } = contentMetrics;
+  const metaDescription = useMemo(() => extractFirstParagraph(readableText), [readableText]);
 
   useEffect(() => {
     (window as any).currentComponents = components;
@@ -151,7 +264,6 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
     }
   };
 
-  // Bottom drop zone handlers
   const handleBottomDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -172,7 +284,6 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
     const componentType = e.dataTransfer.getData('componentType');
 
     if (isNewComponent && componentType) {
-      // Add to the end
       isUserActionRef.current = true;
       const newComponent: Component = {
         type: componentType,
@@ -180,7 +291,6 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
       };
       setComponents([...components, newComponent]);
     } else {
-      // Moving existing component to end
       const fromIndex = parseInt(e.dataTransfer.getData('componentIndex'));
       if (!isNaN(fromIndex)) {
         moveComponent(fromIndex, components.length);
@@ -188,15 +298,12 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
     }
   };
 
-  // Preview handler
   const handlePreview = () => {
-    // Use the current components state (which has the latest dimensions)
     const previewData = { 
       content: components, 
       root: data.root || { props: {} } 
     };
     
-    console.log('Preview data:', JSON.stringify(previewData, null, 2));
     sessionStorage.setItem('articlePreview', JSON.stringify(previewData));
 
     const previewMetadata = {
@@ -217,172 +324,182 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-400 shrink-0 px-6 py-2 flex h-20 max-w-screen">
-        <div className='grow flex-row w-5xl flex'>
-          {/* TODO: Change route to back instead of dashboard */}
-          <a
-            href="/admin/dashboard"
-            className="px-3 hover:bg-gray-100 rounded-lg transition-colors inline-flex items-center"
-            title="Go back to Dashboard"
-          >
-            <CornerUpLeft size={20} className="text-gray-600" />
-          </a>
-          <button
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="px-3 hover:bg-gray-100 rounded-lg transition-colors"
-            title={isSidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
-          >
-            <PanelLeft size={20} className="text-gray-600" />
-          </button>
+    <>
+      <div className="h-full flex flex-col overflow-hidden bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-400 shrink-0 px-6 py-2 flex h-20 max-w-screen">
+          <div className='grow flex-row w-5xl flex'>
+            <a
+              href="/admin/dashboard"
+              className="px-3 hover:bg-gray-100 rounded-lg transition-colors inline-flex items-center"
+              title="Go back to Dashboard"
+            >
+              <CornerUpLeft size={20} className="text-gray-600" />
+            </a>
+            <button
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="px-3 hover:bg-gray-100 rounded-lg transition-colors"
+              title={isSidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
+            >
+              <PanelLeft size={20} className="text-gray-600" />
+            </button>
 
-          <div className='pl-4 flex items-center w-full'>
-            <div className='flex-col flex'>
-              <div className='text-lg/5 font-bold pb-1'>
-                {metadata?.title}
-              </div>
-              <div className='text-xs'>
-                By {metadata?.author}  |  {metadata?.created_at && (
-                  <>
-                    <time dateTime={metadata.created_at}>
-                      {new Date(metadata.created_at).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </time>
-                  </>
-                )}
+            <div className='pl-4 flex items-center w-full'>
+              <div className='flex-col flex'>
+                <div className='text-lg/5 font-bold pb-1'>
+                  {metadata?.title}
+                </div>
+                <div className='text-xs'>
+                  By {metadata?.author}  |  {metadata?.created_at && (
+                    <>
+                      <time dateTime={metadata.created_at}>
+                        {new Date(metadata.created_at).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </time>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
+          <div className="flex-auto flex flex-col overflow-hidden">
+          </div>
+          <div className="flex gap-2 flex-1 justify-end">
+            <button
+              onClick={() => setShowSEO(true)}
+              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 my-3 rounded-lg font-semibold transition-colors"
+            >
+              SEO
+            </button>
+            <button
+              onClick={handlePreview}
+              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 my-3 rounded-lg font-semibold transition-colors"
+            >
+              Preview
+            </button>
+            <button
+              onClick={() => onPublish({ content: components, root: data.root || { props: {} } })}
+              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 my-3 rounded-lg font-semibold transition-colors"
+            >
+              Save
+            </button>
+          </div>
         </div>
-        <div className="flex-auto flex flex-col overflow-hidden">
-        </div>
-        <div className="flex gap-2 flex-1 justify-end">
-          <button
-            onClick={() => console.log('SEO')}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 my-3 rounded-lg font-semibold transition-colors"
+
+        <div className="flex flex-1 overflow-hidden min-h-0">
+          {/* Left Sidebar - Components */}
+          <div
+            className={`bg-white border-r flex-shrink-0 overflow-y-auto transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'w-0' : 'w-85'
+              }`}
+            style={{
+              visibility: isSidebarCollapsed ? 'hidden' : 'visible'
+            }}
           >
-            SEO
-          </button>
-          <button
-            onClick={handlePreview}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 my-3 rounded-lg font-semibold transition-colors"
-          >
-            Preview
-          </button>
-          <button
-            onClick={() => onPublish({ content: components, root: data.root || { props: {} } })}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 my-3 rounded-lg font-semibold transition-colors"
-          >
-            Save
-          </button>
+            <div className="p-4 border-b border-gray-300">
+              <h2 className="text-lg font-bold text-gray-800">Components</h2>
+            </div>
+            <div className="p-4 space-y-2">
+              <button
+                draggable
+                onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.HEADING)}
+                onClick={() => addComponent(COMPONENT_TYPES.HEADING)}
+                className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
+              >
+                <Type size={20} className="text-gray-600 flex-shrink-0" />
+                <span className="font-medium flex-1 ml-3">Heading</span>
+                <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
+              </button>
+              <button
+                draggable
+                onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.PARAGRAPH)}
+                onClick={() => addComponent(COMPONENT_TYPES.PARAGRAPH)}
+                className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
+              >
+                <Type size={20} className="text-gray-600 flex-shrink-0" />
+                <span className="font-medium flex-1 ml-3">Paragraph</span>
+                <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
+              </button>
+              <button
+                draggable
+                onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.IMAGE)}
+                onClick={() => addComponent(COMPONENT_TYPES.IMAGE)}
+                className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
+              >
+                <Image size={20} className="text-gray-600 flex-shrink-0" />
+                <span className="font-medium flex-1 ml-3">Image</span>
+                <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
+              </button>
+              <button
+                draggable
+                onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.COLUMNS)}
+                onClick={() => addComponent(COMPONENT_TYPES.COLUMNS)}
+                className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
+              >
+                <Layout size={20} className="text-gray-600 flex-shrink-0" />
+                <span className="font-medium flex-1 ml-3">Columns</span>
+                <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
+              </button>
+            </div>
+          </div>
+          {/* Canvas - Scrollable Area */}
+          <div className="flex-1 overflow-y-auto">
+            <div 
+              className="max-w-screen mx-10 py-8 min-h-full"
+              onDragOver={handleCanvasDragOver}
+              onDragLeave={handleCanvasDragLeave}
+              onDrop={handleCanvasDrop}
+            >
+              {components.length === 0 ? (
+                <div className={`text-center py-16 border-2 border-dashed rounded-lg transition-colors ${showCanvasDropZone ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+                  }`}>
+                  <p className="text-lg text-gray-400">No components yet</p>
+                  <p className="text-sm mt-2 text-gray-400">Drag components from the left sidebar or click to add</p>
+                </div>
+              ) : (
+                <>
+                  {components.map((component, index) => (
+                    <ComponentRenderer
+                      key={index}
+                      component={component}
+                      index={index}
+                      updateComponent={updateComponent}
+                      deleteComponent={deleteComponent}
+                      moveComponent={moveComponent}
+                      removeFromMainCanvas={(fromIndex) => {
+                        isUserActionRef.current = true;
+                        setComponents(prevComponents => prevComponents.filter((_, i) => i !== fromIndex));
+                      }}
+                      setComponentsDirect={setComponents}
+                    />
+                  ))}
+                  
+                  <div
+                    className={`h-auto mt-4 rounded-lg flex items-center justify-center`}
+                    onDragOver={handleBottomDragOver}
+                    onDragLeave={handleBottomDragLeave}
+                    onDrop={handleBottomDrop}
+                  >
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden min-h-0">
-        {/* Left Sidebar - Components */}
-        <div
-          className={`bg-white border-r flex-shrink-0 overflow-y-auto transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'w-0' : 'w-85'
-            }`}
-          style={{
-            visibility: isSidebarCollapsed ? 'hidden' : 'visible'
-          }}
-        >
-          <div className="p-4 border-b border-gray-300">
-            <h2 className="text-lg font-bold text-gray-800">Components</h2>
-          </div>
-          <div className="p-4 space-y-2">
-            <button
-              draggable
-              onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.HEADING)}
-              onClick={() => addComponent(COMPONENT_TYPES.HEADING)}
-              className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
-            >
-              <Type size={20} className="text-gray-600 flex-shrink-0" />
-              <span className="font-medium flex-1 ml-3">Heading</span>
-              <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
-            </button>
-            <button
-              draggable
-              onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.PARAGRAPH)}
-              onClick={() => addComponent(COMPONENT_TYPES.PARAGRAPH)}
-              className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
-            >
-              <Type size={20} className="text-gray-600 flex-shrink-0" />
-              <span className="font-medium flex-1 ml-3">Paragraph</span>
-              <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
-            </button>
-            <button
-              draggable
-              onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.IMAGE)}
-              onClick={() => addComponent(COMPONENT_TYPES.IMAGE)}
-              className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
-            >
-              <Image size={20} className="text-gray-600 flex-shrink-0" />
-              <span className="font-medium flex-1 ml-3">Image</span>
-              <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
-            </button>
-            <button
-              draggable
-              onDragStart={(e) => handleSidebarDragStart(e, COMPONENT_TYPES.COLUMNS)}
-              onClick={() => addComponent(COMPONENT_TYPES.COLUMNS)}
-              className="w-full p-3 text-left hover:bg-gray-100 rounded-lg flex items-center justify-between transition-colors cursor-move"
-            >
-              <Layout size={20} className="text-gray-600 flex-shrink-0" />
-              <span className="font-medium flex-1 ml-3">Columns</span>
-              <GripVertical size={20} className="text-gray-400 flex-shrink-0" />
-            </button>
-          </div>
-        </div>
-        {/* Canvas - Scrollable Area */}
-        <div className="flex-1 overflow-y-auto">
-          {/* Actual Canvas Area */}
-          <div 
-            className="max-w-screen mx-10 py-8 min-h-full"
-            onDragOver={handleCanvasDragOver}
-            onDragLeave={handleCanvasDragLeave}
-            onDrop={handleCanvasDrop}
-          >
-            {components.length === 0 ? (
-              <div className={`text-center py-16 border-2 border-dashed rounded-lg transition-colors ${showCanvasDropZone ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-                }`}>
-                <p className="text-lg text-gray-400">No components yet</p>
-                <p className="text-sm mt-2 text-gray-400">Drag components from the left sidebar or click to add</p>
-              </div>
-            ) : (
-              <>
-                {components.map((component, index) => (
-                  <ComponentRenderer
-                    key={index}
-                    component={component}
-                    index={index}
-                    updateComponent={updateComponent}
-                    deleteComponent={deleteComponent}
-                    moveComponent={moveComponent}
-                    removeFromMainCanvas={(fromIndex) => {
-                      isUserActionRef.current = true;
-                      setComponents(prevComponents => prevComponents.filter((_, i) => i !== fromIndex));
-                    }}
-                    setComponentsDirect={setComponents}
-                  />
-                ))}
-                
-                {/* Bottom drop zone */}
-                <div
-                  className={`h-auto mt-4 rounded-lg flex items-center justify-center`}
-                  onDragOver={handleBottomDragOver}
-                  onDragLeave={handleBottomDragLeave}
-                  onDrop={handleBottomDrop}
-                >
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+      {/* SEO Analyzer Modal */}
+      <SEOAnalyzerModal
+        open={showSEO}
+        onClose={() => setShowSEO(false)}
+        title={metadata?.title || ''}
+        metaDescription={metaDescription}
+        content={readableText}
+        wordCount={wordCount}
+        imageStats={imageStats}
+      />
+    </>
   );
 }
