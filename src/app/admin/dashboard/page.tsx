@@ -896,6 +896,14 @@ export default function AdminDashboardPage() {
     updatedDateTo,
   ].filter(Boolean).length;
 
+  // Count breaking news and editors picks for published articles
+  const breakingNewsCount = articles.filter(
+    (article) => article.isBreakingNews && article.isPublished && !article.isArchived
+  ).length;
+  const editorsPicksCount = articles.filter(
+    (article) => article.isEditorsPick && article.isPublished && !article.isArchived
+  ).length;
+
   if (loading)
     return (
       <div className="max-w-6xl mx-auto p-6 text-center text-black">
@@ -975,13 +983,27 @@ export default function AdminDashboardPage() {
               </button>
               <button
                 onClick={() => setActiveTab("published")}
-                className={`py-4 font-medium border-b-2 transition-colors ${
+                className={`py-4 font-medium border-b-2 transition-colors relative ${
                   activeTab === "published"
                     ? "border-red-500 text-red-600"
                     : "border-transparent text-gray-600 hover:text-gray-900"
                 }`}
               >
-                Published Posts
+                <span className="flex items-center gap-2">
+                  Published Posts
+                  {breakingNewsCount > 0 && (
+                    <span className="flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-700 border border-red-300">
+                      <Bell className="w-3 h-3" />
+                      {breakingNewsCount}
+                    </span>
+                  )}
+                  {editorsPicksCount > 0 && (
+                    <span className="flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700 border border-yellow-300">
+                      <Star className="w-3 h-3" />
+                      {editorsPicksCount}
+                    </span>
+                  )}
+                </span>
               </button>
               <button
                 onClick={() => setActiveTab("videos")}
