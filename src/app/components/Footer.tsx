@@ -20,7 +20,7 @@ const Footer: React.FC = () => {
             This replaces the function of lg:left-79 without using relative positioning. */}
         <div className="max-w-screen grid grid-cols-1 gap-10 lg:grid-cols-3 items-start">
 
-          {/* Newsletter (Original structure) */}
+          {/* Newsletter */}
           <div className="lg:col-span-1">
             <h3 className="text-4xl font-bold text-[var(--custom-orange)]">Newsletter</h3>
             <p className="mt-5 text-lg text-white/90">
@@ -47,7 +47,7 @@ const Footer: React.FC = () => {
               </button>
             </form>
 
-            {/* Social icons (Original sizing/styling retained) */}
+            {/* Social icons */}
             <div className="mt-5 flex items-center gap-3">
               {[
                 { href: 'https://www.facebook.com/proudbisayabai', src: '/images/fb_svg.webp', alt: 'Facebook' },
@@ -67,6 +67,7 @@ const Footer: React.FC = () => {
           
           {/* Filler Column: This creates the gap on desktop */}
           <div className="hidden lg:block lg:col-span-1" aria-hidden="true" />
+          
 
 
           {/* Blogs + About + Contact (Original structure restored - now uses lg:col-span-1) */}
