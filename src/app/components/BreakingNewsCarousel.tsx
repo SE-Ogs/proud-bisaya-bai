@@ -273,19 +273,6 @@ const BreakingNewsCarousel: React.FC<BreakingNewsCarouselProps> = ({
           ))}
         </div>
       )}
-
-      {/* Auto-play toggle */}
-      {newsItems.length > 1 && (
-        <div className="flex justify-center mt-4">
-          <button
-            onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-            className="bg-black/50 hover:bg-black/70 text-white px-4 py-2 rounded-lg backdrop-blur-sm transition-all duration-200 text-sm font-medium"
-            aria-label={isAutoPlaying ? "Pause auto-play" : "Resume auto-play"}
-          >
-            {isAutoPlaying ? "⏸ Pause" : "▶ Play"}
-          </button>
-        </div>
-      )}
     </div>
   );
 };
