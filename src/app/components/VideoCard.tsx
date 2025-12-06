@@ -16,6 +16,7 @@ type VideoCardProps = {
   orientation?: "vertical" | "horizontal";
   onPlay?: () => void;
   thumbnailUrl?: string | null;
+  disablePlay?: boolean;
 };
 
 export default function VideoCard({
@@ -25,6 +26,7 @@ export default function VideoCard({
   orientation = "vertical",
   onPlay,
   thumbnailUrl,
+  disablePlay = false,
 }: VideoCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const embedUrl = getVideoEmbedUrl(platform, url);
@@ -55,7 +57,7 @@ export default function VideoCard({
 
   const mediaContent = (
     <div className="absolute inset-0">
-      {!onPlay && isPlaying && autoplayEmbedSrc ? (
+      {!onPlay && !disablePlay && isPlaying && autoplayEmbedSrc ? (
         <iframe
           src={autoplayEmbedSrc}
           title={title}
@@ -65,10 +67,10 @@ export default function VideoCard({
           loading="lazy"
         />
       ) : (
-        <button
-          type="button"
-          className="group relative flex h-full w-full items-center justify-center overflow-hidden"
-          onClick={() => embedUrl && handlePlay()}
+        <div
+          className={`relative flex h-full w-full items-center justify-center overflow-hidden ${
+            !disablePlay ? "cursor-pointer" : ""
+          }`}
         >
           <div
             className="absolute inset-0 bg-cover bg-center"
@@ -79,17 +81,23 @@ export default function VideoCard({
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-          <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[var(--custom-orange)] text-white shadow-sm transition-transform group-hover:scale-110">
-            <svg
-              className="h-6 w-6 translate-x-1.0"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              aria-hidden="true"
+          {!disablePlay && (
+            <button
+              type="button"
+              className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-[var(--custom-orange)] text-white shadow-sm transition-transform hover:scale-110"
+              onClick={() => embedUrl && handlePlay()}
             >
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </div>
-        </button>
+              <svg
+                className="h-6 w-6 translate-x-1.0"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

@@ -29,6 +29,7 @@ export default function ArticleMetadataPage() {
   const [thumbnail, setThumbnail] = useState("");
   const [categorySlug, setCategorySlug] = useState("");
   const [subcategorySlug, setSubcategorySlug] = useState("");
+  const [readingTime, setReadingTime] = useState("");
 
   const availableSubcategories = category
     ? CATEGORIES[category as keyof typeof CATEGORIES] || []
@@ -58,6 +59,7 @@ export default function ArticleMetadataPage() {
       setThumbnail(article.thumbnail_url || "");
       setCategorySlug(article.category_slug || "");
       setSubcategorySlug(article.subcategory_slug || "");
+      setReadingTime(article.reading_time || "");
     } catch (error: any) {
       console.error("Error fetching article:", error);
       alert(`Failed to load article: ${error.message}`);
@@ -169,6 +171,7 @@ export default function ArticleMetadataPage() {
         thumbnail_url: thumbnail.trim() || undefined,
         category_slug: categorySlug,
         subcategory_slug: subcategorySlug,
+        reading_time: readingTime,
       };
 
       sessionStorage.setItem("articleMetadata", JSON.stringify(metadata));
@@ -209,6 +212,8 @@ export default function ArticleMetadataPage() {
           category={category}
           setCategory={setCategory}
           subcategory={subcategory}
+          readingTime={readingTime}
+          setReadingTime={setReadingTime}
           setSubcategory={setSubcategory}
           thumbnail={thumbnail}
           setThumbnail={setThumbnail}

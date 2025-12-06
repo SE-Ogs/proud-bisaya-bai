@@ -33,10 +33,11 @@ async function requireAdmin() {
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabaseAdmin = await requireAdmin();
+    const { id } = await params;
     const body = await request.json();
     const updates: Record<string, any> = {};
 
@@ -65,8 +66,8 @@ export async function PATCH(
       updates.platform = platform;
     }
 
-    if (body.isActive !== undefined) {
-      updates.isActive = Boolean(body.isActive);
+    if (body.isFeatured !== undefined) {
+      updates.isFeatured = Boolean(body.isFeatured);
     }
 
     if (Object.keys(updates).length === 0) {
@@ -79,7 +80,7 @@ export async function PATCH(
     const { data, error } = await supabaseAdmin
       .from("videos")
       .update(updates)
-      .eq("id", params.id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -95,14 +96,15 @@ export async function PATCH(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabaseAdmin = await requireAdmin();
+    const { id } = await params;
     const { error } = await supabaseAdmin
       .from("videos")
       .delete()
-      .eq("id", params.id);
+      .eq("id", id);
 
     if (error) throw error;
 
