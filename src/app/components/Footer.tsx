@@ -70,7 +70,7 @@ const Footer: React.FC = () => {
           
 
 
-          {/* Blogs + About + Contact (Original structure restored - now uses lg:col-span-1) */}
+          {/* Blogs + About + Contact */}
           <div className="text-left mt-10 lg:mt-0">
             {/* Inner sections are organized below */}
             
@@ -166,7 +166,7 @@ const Footer: React.FC = () => {
         {/* Divider */}
         <div className="mt-15 h-px w-full bg-white/30" />
 
-        {/* Bottom row (Original structure) */}
+        {/* Bottom row */}
         <div className="mt-4 flex flex-col items-start justify-between gap-2 text-xs text-white/80 sm:flex-row">
           <span>© {new Date().getFullYear()}, Proud Bisaya Bai</span>
           <span>Powered by JSE | All Rights Reserved</span>
