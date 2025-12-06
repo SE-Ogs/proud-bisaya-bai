@@ -11,12 +11,15 @@ const Footer: React.FC = () => {
       style={{ backgroundColor: "var(--custom-blue)" }}
     >
       {/* Top section - full width edge-to-edge */}
-      <div className="max-w-screen-xl mx-auto w-full px-4 py-12 md:px-8 lg:px-16">
-      <div className="grid grid-cols-1 gap-10 md:grid-cols-2 items-start">
+      <div className="max-w-screen-xl mx-auto w-full px-3 pt-25 py-10 md:px-8 lg:px-16">
+
+        {/* GRID: Newsletter | Blogs + About + Contact */}
+        <div className="grid grid-cols-1 gap-25 md:grid-cols-2 lg:grid-cols-2 items-start">
+
           {/* Newsletter */}
           <div>
-            <h3 className="text-2xl font-bold text-[var(--custom-orange)]">Newsletter</h3>
-            <p className="mt-1 text-sm text-white/90">
+            <h3 className="text-4xl font-bold text-[var(--custom-orange)]">Newsletter</h3>
+            <p className="mt-5 text-lg text-white/90">
               Subscribe to our newsletter and get updated to our hottest news
             </p>
 
@@ -24,7 +27,6 @@ const Footer: React.FC = () => {
               className="mt-4 flex"
               onSubmit={(e) => {
                 e.preventDefault();
-                // TODO: handle newsletter subscribe
               }}
             >
               <input
@@ -51,129 +53,107 @@ const Footer: React.FC = () => {
                 { href: 'https://www.tiktok.com/@proudbisayabai', src: '/images/tiktok_icon.svg', alt: 'TikTok' },
               ].map((s) => (
                 <Link key={s.href} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.alt}>
-                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
-                    <Image src={s.src} alt={s.alt} width={18} height={18} />
+                  <div className="w-15 h-15 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
+                    <Image src={s.src} alt={s.alt} width={30} height={30} />
                   </div>
                 </Link>
               ))}
             </div>
           </div>
 
-          {/* Blogs */}
+          {/* Blogs + About */}
           <div>
-            <h3 className="text-2xl font-bold text-[var(--custom-orange)]">Blogs</h3>
-            <ul className="mt-3 space-y-2 text-white/90">
+            <h3 className="text-4xl font-bold text-[var(--custom-orange)]">Blogs</h3>
+            <ul className="mt-5 space-y-4 text-white/90 text-lg">
               <li>
-                <Link
-                  href="/articles/destinations"
-                  className="hover:text-[var(--custom-orange)] transition-colors"
-                >
+                <Link href="/articles/destinations" className="hover:text-[var(--custom-orange)] transition-colors">
                   Destinations
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/articles/brands-and-products"
-                  className="hover:text-[var(--custom-orange)] transition-colors"
-                >
+                <Link href="/articles/brands-and-products" className="hover:text-[var(--custom-orange)] transition-colors">
                   Brands &amp; Products
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/articles/stories"
-                  className="hover:text-[var(--custom-orange)] transition-colors"
-                >
+                <Link href="/articles/stories" className="hover:text-[var(--custom-orange)] transition-colors">
                   Stories
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/articles/news-and-entertainment"
-                  className="hover:text-[var(--custom-orange)] transition-colors"
-                >
+                <Link href="/articles/news-and-entertainment" className="hover:text-[var(--custom-orange)] transition-colors">
                   News &amp; Entertainment
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/articles/food"
-                  className="hover:text-[var(--custom-orange)] transition-colors"
-                >
+                <Link href="/articles/food" className="hover:text-[var(--custom-orange)] transition-colors">
                   Food
                 </Link>
               </li>
             </ul>
-          </div>
 
-          {/* About */}
-          <div>
-            <h3 className="text-2xl font-bold text-[var(--custom-orange)]">About</h3>
-            <ul className="mt-3 space-y-2 text-white/90">
-              <li>
-                <Link
-                  href="/about-us"
-                  className="hover:text-[var(--custom-orange)] transition-colors"
-                >
-                  Proud Bisaya Bai
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact-us#our-services"
-                  className="hover:text-[var(--custom-orange)] transition-colors"
-                >
-                  Hire Us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact-us#contact-form"
-                  className="hover:text-[var(--custom-orange)] transition-colors"
-                >
-                  Contact
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/privacy-and-support"
-                  className="hover:text-[var(--custom-orange)] transition-colors"
-                >
-                  Privacy &amp; Support
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact-us"
-                  className="hover:text-[var(--custom-orange)] transition-colors"
-                >
-                  Get Featured
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/*Contact Us*/}
-          <div>
-            <h3 className="text-2xl font-bold text-[var(--custom-orange)]">Contact Us</h3>
-            <div className="mt-3 space-y-3 text-white/90">
-              <div className="flex items-start gap-3">
-                <a href="mailto:proudbisayabai@gmail.com" className="hover:text-white">proudbisayabai@gmail.com</a>
+            {/* About */}
+            <div className="mt-10">
+              <h3 className="text-4xl font-bold text-[var(--custom-orange)]">About</h3>
+              <ul className="mt-5 space-y-4 text-white/90 text-lg">
+                <li>
+                  <Link href="/about-us" className="hover:text-[var(--custom-orange)] transition-colors">
+                    Proud Bisaya Bai
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/contact-us#our-services" className="hover:text-[var(--custom-orange)] transition-colors">
+                    Hire Us
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/contact-us#contact-form" className="hover:text-[var(--custom-orange)] transition-colors">
+                    Contact
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacy-and-support" className="hover:text-[var(--custom-orange)] transition-colors">
+                    Privacy &amp; Support
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/contact-us" className="hover:text-[var(--custom-orange)] transition-colors">
+                    Get Featured
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            {/* Contact Us */}
+          <div className="mt-10">
+            <h3 className="text-4xl font-bold text-[var(--custom-orange)]">Contact Us</h3>
+            <div className="mt-5 space-y-4 text-white/90">
+              <div>
+                <span>📧:</span>{" "}
+                <a href="mailto:proudbisayabai@gmail.com" className="hover:text-white">
+                  proudbisayabai@gmail.com
+                </a>
               </div>
-              <div className="flex items-start gap-3">
-                <a href="tel:+639123456789" className="hover:text-white">+63 912 345 6789</a>
+              <div>
+                <span>📞:</span>{" "}
+                <a href="tel:+639123456789" className="hover:text-white">
+                  +63 912 345 6789
+                </a>
               </div>
-              <div className="flex items-start gap-3">
+              <div>
+                <span>📍:</span>{" "}
                 <span>Cebu City, Philippines</span>
               </div>
             </div>
+
           </div>
+          </div>
+
+          
+
         </div>
 
-        
-
         {/* Divider */}
-        <div className="mt-8 h-px w-full bg-white/30" />
+        <div className="mt-15 h-px w-full bg-white/30" />
 
         {/* Bottom row */}
         <div className="mt-4 flex flex-col items-start justify-between gap-2 text-xs text-white/80 sm:flex-row">
