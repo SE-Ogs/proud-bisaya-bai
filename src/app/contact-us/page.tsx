@@ -29,6 +29,12 @@ export default function ContactUsPage() {
     DEFAULT_SERVICE_CARDS
   );
   const [servicesError, setServicesError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<{
+    type: "success" | "error" | null;
+    message: string;
+  }>({ type: null, message: "" });
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -116,6 +122,48 @@ export default function ContactUsPage() {
     document
       .getElementById("contact-form")
       ?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const validatePhoneNumber = (dial: string, phone: string): string | null => {
+    if (!phone || phone.trim() === "") {
+      return null; // Phone is optional
+    }
+
+    // Remove spaces, dashes, and other non-digit characters except +
+    const cleanedPhone = phone.replace(/[\s\-\(\)]/g, "");
+
+    // Check if it contains only digits
+    if (!/^\d+$/.test(cleanedPhone)) {
+      return "Phone number should contain only numbers";
+    }
+
+    // Validate based on country code
+    if (dial === "+63") {
+      // Philippines: should be 10 digits starting with 9
+      if (cleanedPhone.length !== 10) {
+        return "Philippines phone number should be 10 digits";
+      }
+      if (!cleanedPhone.startsWith("9")) {
+        return "Philippines mobile number should start with 9";
+      }
+    } else if (dial === "+1") {
+      // US/Canada: should be 10 digits
+      if (cleanedPhone.length !== 10) {
+        return "US/Canada phone number should be 10 digits";
+      }
+    } else if (dial === "+61") {
+      // Australia: should be 9 digits (without leading 0)
+      if (cleanedPhone.length !== 9) {
+        return "Australia phone number should be 9 digits";
+      }
+    } else {
+      // Generic validation: should be between 7 and 15 digits
+      if (cleanedPhone.length < 7 || cleanedPhone.length > 15) {
+        return "Phone number should be between 7 and 15 digits";
+      }
+    }
+
+    return null; // Valid
   };
 
   return (
@@ -273,18 +321,81 @@ export default function ContactUsPage() {
                 We’d love to hear from you!
               </h4>
               <p className="text-sm text-gray-600 mb-6">
-                Send us a message and we’ll get back soon.
+                Send us a message and we'll get back soon.
               </p>
 
               <form
                 className="space-y-5"
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
-                  const data = Object.fromEntries(
-                    new FormData(e.currentTarget as HTMLFormElement)
+                  setIsSubmitting(true);
+                  setSubmitStatus({ type: null, message: "" });
+                  setPhoneError(null);
+
+                  const formData = new FormData(
+                    e.currentTarget as HTMLFormElement
                   );
-                  alert("Thanks! We received your message.");
-                  console.log("Form payload:", data);
+                  const dial = formData.get("dial") as string;
+                  const phone = formData.get("phone") as string;
+
+                  // Validate phone number
+                  const phoneValidationError = validatePhoneNumber(
+                    dial,
+                    phone || ""
+                  );
+                  if (phoneValidationError) {
+                    setPhoneError(phoneValidationError);
+                    setIsSubmitting(false);
+                    return;
+                  }
+
+                  // Clean phone number (remove spaces, dashes, etc.)
+                  const cleanedPhone = phone
+                    ? phone.replace(/[\s\-\(\)]/g, "")
+                    : "";
+                  const phone_number = cleanedPhone
+                    ? `${dial} ${cleanedPhone}`.trim()
+                    : null;
+
+                  const data = {
+                    name: formData.get("fullName") as string,
+                    email: formData.get("email") as string,
+                    company: formData.get("company") as string,
+                    phone_number,
+                    message: formData.get("message") as string,
+                  };
+
+                  try {
+                    const response = await fetch("/api/contact-form", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(data),
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                      throw new Error(result.error || "Failed to submit form");
+                    }
+
+                    setSubmitStatus({
+                      type: "success",
+                      message:
+                        "Thanks! We received your message. We'll get back to you soon.",
+                    });
+                    (e.target as HTMLFormElement).reset();
+                  } catch (error: any) {
+                    setSubmitStatus({
+                      type: "error",
+                      message:
+                        error.message ||
+                        "Something went wrong. Please try again.",
+                    });
+                  } finally {
+                    setIsSubmitting(false);
+                  }
                 }}
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -300,23 +411,42 @@ export default function ContactUsPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Phone number
+                      Phone number{" "}
+                      <span className="text-gray-400">(optional)</span>
                     </label>
-                    <div className="flex">
-                      <select
-                        name="dial"
-                        defaultValue="+63"
-                        className="w-24 rounded-l-md border border-gray-300 bg-gray-50 px-2 py-2 text-sm outline-none"
-                      >
-                        <option value="+63">+63</option>
-                        <option value="+1">+1</option>
-                        <option value="+61">+61</option>
-                      </select>
-                      <input
-                        name="phone"
-                        placeholder="9xx xxx xxxx"
-                        className="w-full rounded-r-md border border-l-0 border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--custom-orange)]"
-                      />
+                    <div className="flex flex-col">
+                      <div className="flex">
+                        <select
+                          name="dial"
+                          defaultValue="+63"
+                          className="w-24 rounded-l-md border border-gray-300 bg-gray-50 px-2 py-2 text-sm outline-none"
+                        >
+                          <option value="+63">+63</option>
+                          <option value="+1">+1</option>
+                          <option value="+61">+61</option>
+                        </select>
+                        <input
+                          name="phone"
+                          type="tel"
+                          placeholder="9xx xxx xxxx"
+                          className={`w-full rounded-r-md border border-l-0 border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--custom-orange)] ${
+                            phoneError
+                              ? "border-red-500 focus:ring-red-500"
+                              : ""
+                          }`}
+                          onChange={(e) => {
+                            // Clear error when user starts typing
+                            if (phoneError) {
+                              setPhoneError(null);
+                            }
+                          }}
+                        />
+                      </div>
+                      {phoneError && (
+                        <p className="mt-1 text-xs text-red-600">
+                          {phoneError}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -357,11 +487,24 @@ export default function ContactUsPage() {
                   />
                 </div>
 
+                {submitStatus.type && (
+                  <div
+                    className={`mt-4 rounded-md p-3 text-sm ${
+                      submitStatus.type === "success"
+                        ? "bg-green-50 text-green-800 border border-green-200"
+                        : "bg-red-50 text-red-800 border border-red-200"
+                    }`}
+                  >
+                    {submitStatus.message}
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  className="w-full mt-4 rounded-md bg-[var(--custom-red)] text-white px-4 py-3 text-sm font-semibold transition-transform transform hover:scale-105 hover:shadow-lg"
+                  disabled={isSubmitting}
+                  className="w-full mt-4 rounded-md bg-[var(--custom-red)] text-white px-4 py-3 text-sm font-semibold transition-transform transform hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  Send message
+                  {isSubmitting ? "Sending..." : "Send message"}
                 </button>
 
                 <p className="mt-2 text-center text-[11px] text-gray-500">

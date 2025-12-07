@@ -35,7 +35,7 @@ export async function PATCH(
         const { data: article, error: articleError } = await supabase
             .from('articles')
             .select('*')    
-            .eq('slug', params.slug)
+            .eq('slug', (await params).slug)
             .single();
 
         if (articleError || !article) {
@@ -80,7 +80,7 @@ export async function PATCH(
                     isBreakingNews: true,
                     updated_at: new Date().toISOString()
                 })
-                .eq('slug', params.slug)
+                .eq('slug', (await params).slug)
                 .single();
             
             if(updateError) {
