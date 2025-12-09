@@ -39,80 +39,100 @@ export default function ArticleContentPage() {
     } | null>(null);
 
     useEffect(() => {
-        const loadData = async () => {
-            const savedMetadata = sessionStorage.getItem("articleMetadata");
+        loadData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-            if (slug === "new") {
-                if (savedMetadata) {
-                    setMetadata(JSON.parse(savedMetadata));
-                } else {
-                    alert("No metadata found. Redirecting to metadata page.");
-                    router.push("/admin/articles/new/metadata");
+    const loadData = async () => {
+        const savedMetadata = sessionStorage.getItem("articleMetadata");
+
+        if (slug === "new") {
+            // Creating new article - use saved metadata from sessionStorage
+            if (savedMetadata) {
+                setMetadata(JSON.parse(savedMetadata));
+
+                // Check for saved content from sessionStorage (when user goes back then forward again)
+                const savedContent = sessionStorage.getItem('articleContent');
+                if (savedContent) {
+                    try {
+                        const parsedContent = JSON.parse(savedContent);
+                        setData({
+                            content: parsedContent.content || [],
+                            root: parsedContent.root || { props: {} }
+                        });
+                        // Clear the saved content after loading
+                        sessionStorage.removeItem('articleContent');
+                    } catch (e) {
+                        console.error('Failed to parse saved content:', e);
+                    }
                 }
             } else {
-                try {
-                    const res = await fetch(`/api/admin/articles/${slug}`);
-                    if (!res.ok) throw new Error("Failed to fetch article");
+                alert("No metadata found. Redirecting to metadata page.");
+                router.push("/admin/articles/new/metadata");
+            }
+        } else {
+            // Editing existing article - fetch from database
+            try {
+                const res = await fetch(`/api/admin/articles/${slug}`);
+                if (!res.ok) throw new Error("Failed to fetch article");
 
-                    const article = await res.json();
+                const article = await res.json();
 
-                    if (savedMetadata) {
-                        const parsed = JSON.parse(savedMetadata);
-                        setMetadata({
-                            ...parsed,
-                            created_at: article.created_at || parsed.created_at,
-                        });
-                    } else {
-                        setMetadata({
-                            title: article.title,
-                            slug: article.slug,
-                            author: article.author,
-                            category: article.category,
-                            subcategory: article.subcategory,
-                            thumbnail_url: article.thumbnail_url,
-                            category_slug: article.category_slug,
-                            subcategory_slug: article.subcategory_slug,
-                            created_at: article.created_at,
-                            reading_time: article.reading_time,
-                        });
-                    }
+                // Use saved metadata if available (user might have edited metadata), otherwise use article data
+                if (savedMetadata) {
+                    const parsed = JSON.parse(savedMetadata);
+                    setMetadata({
+                        ...parsed,
+                        created_at: article.created_at || parsed.created_at,
+                    });
+                } else {
+                    setMetadata({
+                        title: article.title,
+                        slug: article.slug,
+                        author: article.author,
+                        category: article.category,
+                        subcategory: article.subcategory,
+                        thumbnail_url: article.thumbnail_url,
+                        category_slug: article.category_slug,
+                        subcategory_slug: article.subcategory_slug,
+                        created_at: article.created_at,
+                        reading_time: article.reading_time,
+                    });
+                }
 
-                    if (article.content) {
-                        try {
-                            const parsedContent =
-                                typeof article.content === "string"
-                                    ? JSON.parse(article.content)
-                                    : article.content;
+                if (article.content) {
+                    try {
+                        const parsedContent =
+                            typeof article.content === "string"
+                                ? JSON.parse(article.content)
+                                : article.content;
 
-                            if (parsedContent && Array.isArray(parsedContent.content)) {
-                                setData({
-                                    content: parsedContent.content,
-                                    root: parsedContent.root || { props: {} }
-                                });
-                            } else if (Array.isArray(parsedContent)) {
-                                setData({
-                                    content: parsedContent,
-                                    root: { props: {} }
-                                });
-                            } else {
-                                setData({ content: [], root: { props: {} } });
-                            }
-                        } catch (e) {
-                            console.error("Failed to parse content:", e);
+                        if (parsedContent && Array.isArray(parsedContent.content)) {
+                            setData({
+                                content: parsedContent.content,
+                                root: parsedContent.root || { props: {} }
+                            });
+                        } else if (Array.isArray(parsedContent)) {
+                            setData({
+                                content: parsedContent,
+                                root: { props: {} }
+                            });
+                        } else {
                             setData({ content: [], root: { props: {} } });
                         }
+                    } catch (e) {
+                        console.error("Failed to parse content:", e);
+                        setData({ content: [], root: { props: {} } });
                     }
-                } catch (error: any) {
-                    console.error("Error fetching article:", error);
-                    alert(`Failed to load article: ${error.message}`);
-                    router.push("/admin/dashboard");
                 }
+            } catch (error: any) {
+                console.error("Error fetching article:", error);
+                alert(`Failed to load article: ${error.message}`);
+                router.push("/admin/dashboard");
             }
-            setLoading(false);
-        };
-
-        loadData();
-    }, [slug, router]);
+        }
+        setLoading(false);
+    };
 
     const uploadImage = async (file: File): Promise<string> => {
         const formData = new FormData();
@@ -200,6 +220,7 @@ export default function ArticleContentPage() {
 
             alert(isEdit ? "Article updated successfully!" : "Article published successfully!");
             sessionStorage.removeItem("articleMetadata");
+            sessionStorage.removeItem("articleContent");
             router.push("/admin/dashboard");
         } catch (e: any) {
             console.error("Save error:", e);

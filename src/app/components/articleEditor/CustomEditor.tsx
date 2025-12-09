@@ -299,11 +299,11 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
   };
 
   const handlePreview = () => {
-    const previewData = { 
-      content: components, 
-      root: data.root || { props: {} } 
+    const previewData = {
+      content: components,
+      root: data.root || { props: {} }
     };
-    
+
     sessionStorage.setItem('articlePreview', JSON.stringify(previewData));
 
     const previewMetadata = {
@@ -329,13 +329,23 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
         {/* Header */}
         <div className="bg-white border-b border-gray-400 shrink-0 px-6 py-2 flex h-20 max-w-screen">
           <div className='grow flex-row w-5xl flex'>
-            <a
-              href="/admin/dashboard"
+            <button
+              onClick={() => {
+                // Save current content to sessionStorage before navigating back
+                const contentData = {
+                  content: components,
+                  root: data.root || { props: {} }
+                };
+                sessionStorage.setItem('articleContent', JSON.stringify(contentData));
+
+                // Navigate back to metadata page - always use 'new' for creation flow
+                window.location.href = `/admin/articles/new/metadata`;
+              }}
               className="px-3 hover:bg-gray-100 rounded-lg transition-colors inline-flex items-center"
-              title="Go back to Dashboard"
+              title="Go back to Metadata"
             >
               <CornerUpLeft size={20} className="text-gray-600" />
-            </a>
+            </button>
             <button
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
               className="px-3 hover:bg-gray-100 rounded-lg transition-colors"
@@ -446,7 +456,7 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
           </div>
           {/* Canvas - Scrollable Area */}
           <div className="flex-1 overflow-y-auto">
-            <div 
+            <div
               className="max-w-screen mx-10 py-8 min-h-full"
               onDragOver={handleCanvasDragOver}
               onDragLeave={handleCanvasDragLeave}
@@ -475,7 +485,7 @@ export function CustomEditor({ data, onChange, onPublish, isMetadataVisible = tr
                       setComponentsDirect={setComponents}
                     />
                   ))}
-                  
+
                   <div
                     className={`h-auto mt-4 rounded-lg flex items-center justify-center`}
                     onDragOver={handleBottomDragOver}
