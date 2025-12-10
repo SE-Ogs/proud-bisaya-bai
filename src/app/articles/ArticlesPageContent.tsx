@@ -170,7 +170,7 @@ export default function ArticlesPageContent({
             <SearchBar
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Search by title, author, category, or subcategory..."
+              placeholder="Search by title, category, or subcategory..."
             />
           </div>
 
