@@ -12,6 +12,7 @@ const defaultItems: NavItem[] = [
   { label: "Dashboard", href: "/admin/dashboard" },
   { label: "Articles", href: "/articles" },
   { label: "Content Editor", href: "/admin/content" },
+  { label: "Contact Form Submissions", href: "/admin/contact-form" },
   { label: "Back to Landing Page", href: "/home" },
 ];
 
@@ -88,6 +89,12 @@ export default function AdminHeader({
                   className="flex items-center gap-2 rounded px-3 py-2 text-sm text-black font-bold hover:bg-gray-100"
                   title={item.label}
                   onClick={() => setIsOpen(false)}
+                  target={item.label === "Articles" ? "_blank" : undefined}
+                  rel={
+                    item.label === "Articles"
+                      ? "noopener noreferrer"
+                      : undefined
+                  }
                 >
                   {item.label}
                 </Link>

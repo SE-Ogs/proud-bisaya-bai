@@ -113,29 +113,6 @@ export default function SuggestedArticlesCarousel({
     container.scrollLeft = scrollLeft - walk;
   };
 
-  // Handle scrollbar click - use native smooth scrolling
-  const handleScrollbarClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!scrollContainerRef.current) return;
-
-    const scrollbarTrack = e.currentTarget;
-    const rect = scrollbarTrack.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const percentage = clickX / rect.width;
-
-    const container = scrollContainerRef.current;
-    const maxScroll = container.scrollWidth - container.clientWidth;
-    const targetScroll = Math.max(
-      0,
-      Math.min(maxScroll, percentage * maxScroll)
-    );
-
-    // Use native smooth scrolling
-    container.scrollTo({
-      left: targetScroll,
-      behavior: "smooth",
-    });
-  };
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const months = [
@@ -161,17 +138,55 @@ export default function SuggestedArticlesCarousel({
     return null;
   }
 
-  // Calculate scrollbar thumb width and position
-  const thumbWidth =
-    scrollWidth > 0 ? (containerWidth / scrollWidth) * 100 : 100;
-  const thumbPosition =
-    maxScroll > 0 ? (scrollPosition / maxScroll) * (100 - thumbWidth) : 0;
-
   return (
     <div className="mt-0 pt-0 max-w-4xl mx-auto">
-      <h2 className="text-xl font-bold text-gray-900 mb-4">
-        You may also like
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold text-gray-900">You may also like</h2>
+
+        {/* Navigation buttons at top right */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              if (!scrollContainerRef.current) return;
+              const container = scrollContainerRef.current;
+              const cardWidth = 230;
+              const gap = 16;
+              const scrollAmount = cardWidth + gap;
+              container.scrollBy({
+                left: -scrollAmount,
+                behavior: "smooth",
+              });
+            }}
+            disabled={!canScrollLeft}
+            className={`text-gray-600 hover:text-gray-900 transition-colors flex-shrink-0 p-2 rounded-lg border border-gray-300 hover:bg-gray-50 ${
+              !canScrollLeft ? "opacity-30 cursor-not-allowed" : ""
+            }`}
+            aria-label="Scroll left"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => {
+              if (!scrollContainerRef.current) return;
+              const container = scrollContainerRef.current;
+              const cardWidth = 230;
+              const gap = 16;
+              const scrollAmount = cardWidth + gap;
+              container.scrollBy({
+                left: scrollAmount,
+                behavior: "smooth",
+              });
+            }}
+            disabled={!canScrollRight}
+            className={`text-gray-600 hover:text-gray-900 transition-colors flex-shrink-0 p-2 rounded-lg border border-gray-300 hover:bg-gray-50 ${
+              !canScrollRight ? "opacity-30 cursor-not-allowed" : ""
+            }`}
+            aria-label="Scroll right"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
 
       <div className="relative flex justify-center">
         {/* Carousel Container - Limited to show 3 cards at a time */}
@@ -234,67 +249,6 @@ export default function SuggestedArticlesCarousel({
             })}
           </div>
         </div>
-      </div>
-
-      {/* Custom Scrollbar with Navigation */}
-      <div
-        className="mt-4 flex items-center gap-2 justify-center mx-auto"
-        style={{ maxWidth: "calc(3 * (230px + 16px) - 16px)" }}
-      >
-        <button
-          onClick={() => {
-            if (!scrollContainerRef.current) return;
-            const container = scrollContainerRef.current;
-            const cardWidth = 230;
-            const gap = 16;
-            const scrollAmount = cardWidth + gap;
-            container.scrollBy({
-              left: -scrollAmount,
-              behavior: "smooth",
-            });
-          }}
-          disabled={!canScrollLeft}
-          className={`text-gray-600 hover:text-gray-900 transition-colors flex-shrink-0 p-1 ${
-            !canScrollLeft ? "opacity-30 cursor-not-allowed" : ""
-          }`}
-          aria-label="Scroll left"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <div
-          className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden relative cursor-pointer"
-          onClick={handleScrollbarClick}
-        >
-          <div
-            className="h-full rounded-full transition-all duration-200 absolute cursor-pointer hover:opacity-80"
-            style={{
-              width: `${Math.max(10, Math.min(thumbWidth, 100))}%`,
-              left: `${thumbPosition}%`,
-              minWidth: "30px",
-              backgroundColor: "var(--custom-blue)",
-            }}
-          />
-        </div>
-        <button
-          onClick={() => {
-            if (!scrollContainerRef.current) return;
-            const container = scrollContainerRef.current;
-            const cardWidth = 230;
-            const gap = 16;
-            const scrollAmount = cardWidth + gap;
-            container.scrollBy({
-              left: scrollAmount,
-              behavior: "smooth",
-            });
-          }}
-          disabled={!canScrollRight}
-          className={`text-gray-600 hover:text-gray-900 transition-colors flex-shrink-0 p-1 ${
-            !canScrollRight ? "opacity-30 cursor-not-allowed" : ""
-          }`}
-          aria-label="Scroll right"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
       </div>
     </div>
   );

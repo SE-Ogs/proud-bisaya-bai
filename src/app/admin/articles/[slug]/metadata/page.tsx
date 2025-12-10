@@ -39,9 +39,28 @@ export default function ArticleMetadataPage() {
     if (isEdit) {
       fetchArticle(slug);
     } else {
+      // For new articles, check if we have saved metadata from the previous session
+      const savedMetadata = sessionStorage.getItem("articleMetadata");
+      if (savedMetadata) {
+        try {
+          const parsed = JSON.parse(savedMetadata);
+          setTitle(parsed.title || "");
+          setArticleSlug(parsed.slug || "");
+          setAuthor(parsed.author || "");
+          setCategory(parsed.category || "");
+          setSubcategory(parsed.subcategory || "");
+          setThumbnail(parsed.thumbnail_url || "");
+          setCategorySlug(parsed.category_slug || "");
+          setSubcategorySlug(parsed.subcategory_slug || "");
+          setReadingTime(parsed.reading_time || "");
+        } catch (e) {
+          console.error("Failed to parse saved metadata:", e);
+        }
+      }
       setLoading(false);
     }
   }, [slug, isEdit]);
+
 
   const fetchArticle = async (articleSlug: string) => {
     setLoading(true);
@@ -142,6 +161,13 @@ export default function ArticleMetadataPage() {
     }
   };
 
+  const handleBackToDashboard = () => {
+    // Clear all session storage when going back to dashboard
+    sessionStorage.removeItem("articleMetadata");
+    sessionStorage.removeItem("articleContent");
+    router.push("/admin/dashboard");
+  };
+
   const handleNext = async () => {
     if (!title.trim()) {
       alert("Please enter a title");
@@ -159,6 +185,17 @@ export default function ArticleMetadataPage() {
       alert("Please select a category");
       return;
     }
+    if (!readingTime.trim()) {
+      alert("Please enter reading time");
+      return;
+    }
+
+    // Validate reading time is a positive integer
+    const readingTimeNum = parseInt(readingTime.trim());
+    if (isNaN(readingTimeNum) || readingTimeNum <= 0 || readingTime.trim() !== readingTimeNum.toString()) {
+      alert("Reading time must be a positive whole number (e.g., 5, 10, 15)");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -171,9 +208,10 @@ export default function ArticleMetadataPage() {
         thumbnail_url: thumbnail.trim() || undefined,
         category_slug: categorySlug,
         subcategory_slug: subcategorySlug,
-        reading_time: readingTime,
+        reading_time: readingTime.trim(),
       };
 
+      // Keep metadata in sessionStorage - DON'T remove it
       sessionStorage.setItem("articleMetadata", JSON.stringify(metadata));
 
       const targetSlug = isEdit ? slug : "new";
@@ -237,6 +275,7 @@ export default function ArticleMetadataPage() {
             .replace(/[^a-z0-9]+/g, "-")
             .replace(/(^-|-$)/g, "")}
           setSubcategorySlug={setSubcategorySlug}
+          onBackToDashboard={handleBackToDashboard}
         />
         <div className="bg-white">
           <LoadingOverlay
@@ -254,8 +293,8 @@ export default function ArticleMetadataPage() {
             {saving
               ? "Processing..."
               : isEdit
-              ? "Update & Continue"
-              : "Next: Create Content"}
+                ? "Update & Continue"
+                : "Next: Create Content"}
           </button>
         </div>
       </div>

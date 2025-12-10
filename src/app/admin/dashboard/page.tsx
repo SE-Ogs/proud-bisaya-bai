@@ -52,21 +52,19 @@ function ToggleSwitch({ checked, disabled, onChange }: ToggleSwitchProps) {
       type="button"
       onClick={() => !disabled && onChange(!checked)}
       disabled={disabled}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full border transition-colors ${
-        disabled
+      className={`relative inline-flex h-6 w-11 items-center rounded-full border transition-colors ${disabled
           ? "bg-gray-200 border-gray-300 cursor-not-allowed opacity-60"
           : checked
-          ? "bg-green-500 border-green-600"
-          : "bg-gray-300 border-gray-400"
-      }`}
+            ? "bg-green-500 border-green-600"
+            : "bg-gray-300 border-gray-400"
+        }`}
       aria-pressed={checked}
       role="switch"
       aria-checked={checked}
     >
       <span
-        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-          checked ? "translate-x-5" : "translate-x-1"
-        }`}
+        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${checked ? "translate-x-5" : "translate-x-1"
+          }`}
       />
     </button>
   );
@@ -118,7 +116,7 @@ export default function AdminDashboardPage() {
     null
   );
   const [showFacebookLiveForm, setShowFacebookLiveForm] = useState(false);
-  
+
   // Helper to check if current tab is hero-banner
   const isHeroBannerTab = activeTab === "hero-banner";
   const isVideosTab = activeTab === "videos";
@@ -129,7 +127,7 @@ export default function AdminDashboardPage() {
   }, []);
 
   useEffect(() => {
-    
+
     return () => {
       document.body.style.overflow = "unset";
     };
@@ -896,6 +894,14 @@ export default function AdminDashboardPage() {
     updatedDateTo,
   ].filter(Boolean).length;
 
+  // Count breaking news and editors picks for published articles
+  const breakingNewsCount = articles.filter(
+    (article) => article.isBreakingNews && article.isPublished && !article.isArchived
+  ).length;
+  const editorsPicksCount = articles.filter(
+    (article) => article.isEditorsPick && article.isPublished && !article.isArchived
+  ).length;
+
   if (loading)
     return (
       <div className="max-w-6xl mx-auto p-6 text-center text-black">
@@ -955,52 +961,61 @@ export default function AdminDashboardPage() {
             <div className="flex gap-8 px-6">
               <button
                 onClick={() => setActiveTab("pending")}
-                className={`py-4 font-medium border-b-2 transition-colors ${
-                  activeTab === "pending"
+                className={`py-4 font-medium border-b-2 transition-colors ${activeTab === "pending"
                     ? "border-red-500 text-red-600"
                     : "border-transparent text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
               >
                 Pending Posts
               </button>
               <button
                 onClick={() => setActiveTab("archived")}
-                className={`py-4 font-medium border-b-2 transition-colors ${
-                  activeTab === "archived"
+                className={`py-4 font-medium border-b-2 transition-colors ${activeTab === "archived"
                     ? "border-red-500 text-red-600"
                     : "border-transparent text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
               >
                 Archived Posts
               </button>
               <button
                 onClick={() => setActiveTab("published")}
-                className={`py-4 font-medium border-b-2 transition-colors ${
-                  activeTab === "published"
+                className={`py-4 font-medium border-b-2 transition-colors relative ${activeTab === "published"
                     ? "border-red-500 text-red-600"
                     : "border-transparent text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
               >
-                Published Posts
+                <span className="flex items-center gap-2">
+                  Published Posts
+                  {breakingNewsCount > 0 && (
+                    <span className="flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-700 border border-red-300">
+                      <Bell className="w-3 h-3" />
+                      {breakingNewsCount}
+                    </span>
+                  )}
+                  {editorsPicksCount > 0 && (
+                    <span className="flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700 border border-yellow-300">
+                      <Star className="w-3 h-3" />
+                      {editorsPicksCount}
+                    </span>
+                  )}
+                </span>
               </button>
               <button
                 onClick={() => setActiveTab("videos")}
-                className={`py-4 font-medium border-b-2 transition-colors ${
-                  activeTab === "videos"
+                className={`py-4 font-medium border-b-2 transition-colors ${activeTab === "videos"
                     ? "border-red-500 text-red-600"
                     : "border-transparent text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
               >
                 Videos
               </button>
               {/* NEW: Hero Banner Tab */}
               <button
                 onClick={() => setActiveTab("hero-banner")}
-                className={`py-4 font-medium border-b-2 transition-colors ${
-                  activeTab === "hero-banner"
+                className={`py-4 font-medium border-b-2 transition-colors ${activeTab === "hero-banner"
                     ? "border-red-500 text-red-600"
                     : "border-transparent text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
               >
                 Hero Banner
               </button>
@@ -1016,11 +1031,10 @@ export default function AdminDashboardPage() {
                         setShowVideoForm((prev) => !prev);
                         setShowFacebookLiveForm(false);
                       }}
-                      className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${
-                        showVideoForm
+                      className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${showVideoForm
                           ? "bg-gray-400 hover:bg-gray-500"
                           : "bg-red-500 hover:bg-red-600"
-                      }`}
+                        }`}
                     >
                       {showVideoForm ? "Hide Form" : "Add Video"}
                     </button>
@@ -1029,11 +1043,10 @@ export default function AdminDashboardPage() {
                         setShowFacebookLiveForm((prev) => !prev);
                         setShowVideoForm(false);
                       }}
-                      className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${
-                        showFacebookLiveForm
+                      className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${showFacebookLiveForm
                           ? "bg-gray-400 hover:bg-gray-500"
                           : "bg-blue-500 hover:bg-blue-600"
-                      }`}
+                        }`}
                     >
                       {showFacebookLiveForm ? "Hide" : "Facebook Live"}
                     </button>
@@ -1042,16 +1055,20 @@ export default function AdminDashboardPage() {
                   <>
                     <button
                       onClick={() => setShowFilters(!showFilters)}
-                      className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${
-                        hasActiveFilters
+                      className={`flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors ${hasActiveFilters
                           ? "bg-red-500 hover:bg-red-600"
                           : "bg-gray-400 hover:bg-gray-500"
-                      }`}
+                        }`}
                     >
                       Filter {activeFilterCount > 0 && `(${activeFilterCount})`}
                     </button>
                     <Link
                       href="/admin/articles/new/metadata"
+                      onClick={() => {
+                        sessionStorage.removeItem('articleMetadata');
+                        sessionStorage.removeItem('articleContent');
+                      }}
+
                       className="bg-red-500 flex items-center gap-2 text-white font-bold px-4 py-2 rounded transition-colors hover:bg-red-600 active:bg-red-700"
                     >
                       Add Article
@@ -1335,10 +1352,10 @@ export default function AdminDashboardPage() {
                           prev
                             ? { ...prev, fb_url: e.target.value }
                             : {
-                                fb_url: e.target.value,
-                                fb_embed_url: "",
-                                is_active: false,
-                              }
+                              fb_url: e.target.value,
+                              fb_embed_url: "",
+                              is_active: false,
+                            }
                         )
                       }
                       className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
@@ -1552,11 +1569,10 @@ export default function AdminDashboardPage() {
                                     a.isEditorsPick
                                   )
                                 }
-                                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 w-full ${
-                                  a.isEditorsPick
+                                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 w-full ${a.isEditorsPick
                                     ? "bg-yellow-50 border-yellow-300 text-yellow-700 shadow-sm"
                                     : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
-                                }`}
+                                  }`}
                                 aria-label={
                                   a.isEditorsPick
                                     ? "Remove from favorites"
@@ -1596,11 +1612,10 @@ export default function AdminDashboardPage() {
                                     a.isBreakingNews
                                   )
                                 }
-                                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 w-full ${
-                                  a.isBreakingNews
+                                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 w-full ${a.isBreakingNews
                                     ? "bg-red-50 border-red-300 text-red-700 shadow-sm"
                                     : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
-                                }`}
+                                  }`}
                                 aria-label={
                                   a.isBreakingNews
                                     ? "Mark as normal news"
@@ -1847,11 +1862,10 @@ export default function AdminDashboardPage() {
                             </td>
                             <td className="px-4 py-4 text-sm text-gray-900 text-center align-middle border-b border-gray-200">
                               <span
-                                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                                  video.isFeatured
+                                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${video.isFeatured
                                     ? "bg-yellow-100 text-yellow-700"
                                     : "bg-gray-100 text-gray-600"
-                                }`}
+                                  }`}
                               >
                                 {video.isFeatured ? "Featured" : "Not Featured"}
                               </span>
@@ -1863,11 +1877,10 @@ export default function AdminDashboardPage() {
                                     onClick={() =>
                                       handleToggleVideoFeatured(video)
                                     }
-                                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 w-full ${
-                                      video.isFeatured
+                                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 w-full ${video.isFeatured
                                         ? "bg-yellow-50 border-yellow-300 text-yellow-700 shadow-sm"
                                         : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
-                                    }`}
+                                      }`}
                                     aria-label={
                                       video.isFeatured
                                         ? "Remove from featured"

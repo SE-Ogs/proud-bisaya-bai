@@ -61,12 +61,27 @@ export async function middleware(request: NextRequest) {
     error,
   } = await supabase.auth.getUser();
 
-  // If the user is trying to access admin routes (except login/auth)
+  // If the user is trying to access admin routes
   if (request.nextUrl.pathname.startsWith("/admin")) {
+    // Handle /admin root path
+    if (request.nextUrl.pathname === "/admin") {
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+
+        if (profile?.role === "admin") {
+          return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+        }
+      }
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+    
     // Allow access to login and auth pages without authentication
     if (
-      request.nextUrl.pathname.startsWith("/admin/login") ||
-      request.nextUrl.pathname.startsWith("/admin/auth")
+      request.nextUrl.pathname.startsWith("/admin/login")
     ) {
       // If already logged in as admin, redirect to admin dashboard
       if (user) {

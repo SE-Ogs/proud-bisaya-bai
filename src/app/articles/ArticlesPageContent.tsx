@@ -86,6 +86,7 @@ export default function ArticlesPageContent({
         category_name,
         subcategory_name,
         author: a.author ?? null,
+        reading_time: a.reading_time ?? null,
       };
     });
 
