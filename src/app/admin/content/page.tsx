@@ -9,7 +9,9 @@ import type { ServiceCard } from "@/types/services";
 import { RichTextEditor } from "@/app/components/articleEditor/ComponentsCustomEditor";
 
 export default function AdminContentPage() {
-  const [activeTab, setActiveTab] = useState<"services" | "about">("services");
+  const [activeTab, setActiveTab] = useState<"services" | "about" | "partners">(
+    "services"
+  );
   const [serviceCards, setServiceCards] = useState<ServiceCard[]>(
     DEFAULT_SERVICE_CARDS
   );
@@ -46,6 +48,24 @@ export default function AdminContentPage() {
     null
   );
   const teamMemberFileInputRefs = useRef<{
+    [key: string]: HTMLInputElement | null;
+  }>({});
+  const [partners, setPartners] = useState<
+    Array<{
+      id: string;
+      name: string;
+      description: string | null;
+      image_url: string | null;
+      url: string | null;
+      created_at?: string;
+    }>
+  >([]);
+  const [partnersLoading, setPartnersLoading] = useState(false);
+  const [partnersSaving, setPartnersSaving] = useState(false);
+  const [partnersError, setPartnersError] = useState<string | null>(null);
+  const [partnersSuccess, setPartnersSuccess] = useState<string | null>(null);
+  const [partnersInitialized, setPartnersInitialized] = useState(false);
+  const partnerFileInputRefs = useRef<{
     [key: string]: HTMLInputElement | null;
   }>({});
 
@@ -265,12 +285,17 @@ export default function AdminContentPage() {
     ) {
       fetchTeamMembers();
     }
+    if (activeTab === "partners" && !partnersInitialized && !partnersLoading) {
+      fetchPartners();
+    }
   }, [
     activeTab,
     aboutInitialized,
     aboutLoading,
     teamMembersInitialized,
     teamMembersLoading,
+    partnersInitialized,
+    partnersLoading,
   ]);
 
   function handleAboutDescriptionChange(value: string) {
@@ -495,6 +520,163 @@ export default function AdminContentPage() {
     fetchTeamMembers(true);
   }
 
+  async function fetchPartners(showSuccessMessage = false) {
+    try {
+      setPartnersLoading(true);
+      setPartnersError(null);
+      const res = await fetch("/api/admin/partners");
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      setPartners(Array.isArray(data) ? data : []);
+      setPartnersSuccess(showSuccessMessage ? "Partners reloaded." : null);
+    } catch (error: any) {
+      console.error("Failed to load partners", error);
+      setPartners([]);
+      setPartnersError(error?.message || "Failed to load partners.");
+    } finally {
+      setPartnersLoading(false);
+      setPartnersInitialized(true);
+    }
+  }
+
+  function handlePartnerFieldChange(
+    id: string,
+    field: "name" | "description" | "image_url" | "url",
+    value: string
+  ) {
+    setPartners((prev) =>
+      prev.map((partner) =>
+        partner.id === id ? { ...partner, [field]: value } : partner
+      )
+    );
+    setPartnersSuccess(null);
+  }
+
+  async function handleAddPartner() {
+    try {
+      setPartnersSaving(true);
+      setPartnersError(null);
+
+      const res = await fetch("/api/admin/partners", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "New Partner",
+          description: "",
+          image_url: "",
+          url: "",
+        }),
+      });
+
+      const responseBody = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(responseBody.error || "Failed to add partner.");
+      }
+
+      setPartners((prev) => [...prev, responseBody]);
+      setPartnersSuccess("Partner added successfully.");
+    } catch (error: any) {
+      console.error("Failed to add partner", error);
+      setPartnersError(error?.message || "Failed to add partner.");
+    } finally {
+      setPartnersSaving(false);
+    }
+  }
+
+  async function handleSavePartner(partnerId: string) {
+    const partner = partners.find((p) => p.id === partnerId);
+    if (!partner) return;
+
+    try {
+      setPartnersSaving(true);
+      setPartnersError(null);
+
+      const res = await fetch("/api/admin/partners", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: partner.id,
+          name: partner.name.trim(),
+          description: partner.description?.trim() || "",
+          image_url: partner.image_url?.trim() || "",
+          url: partner.url?.trim() || "",
+        }),
+      });
+
+      const responseBody = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(responseBody.error || "Failed to save partner.");
+      }
+
+      setPartners((prev) =>
+        prev.map((p) => (p.id === partnerId ? responseBody : p))
+      );
+      setPartnersSuccess("Partner updated successfully.");
+    } catch (error: any) {
+      console.error("Failed to save partner", error);
+      setPartnersError(error?.message || "Failed to save partner.");
+    } finally {
+      setPartnersSaving(false);
+    }
+  }
+
+  async function handleDeletePartner(id: string) {
+    if (!confirm("Delete this partner?")) return;
+
+    try {
+      setPartnersSaving(true);
+      setPartnersError(null);
+
+      const res = await fetch(`/api/admin/partners?id=${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const responseBody = await res.json().catch(() => ({}));
+        throw new Error(responseBody.error || "Failed to delete partner.");
+      }
+
+      setPartners((prev) => prev.filter((p) => p.id !== id));
+      setPartnersSuccess("Partner deleted successfully.");
+    } catch (error: any) {
+      console.error("Failed to delete partner", error);
+      setPartnersError(error?.message || "Failed to delete partner.");
+    } finally {
+      setPartnersSaving(false);
+    }
+  }
+
+  const handlePartnerImageUpload = async (
+    partnerId: string,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImageFor(partnerId);
+    try {
+      const imageUrl = await uploadImage(file);
+      handlePartnerFieldChange(partnerId, "image_url", imageUrl);
+      setPartnersSuccess("Image uploaded successfully!");
+    } catch (error: any) {
+      setPartnersError(`Upload failed: ${error.message}`);
+    } finally {
+      setUploadingImageFor(null);
+      if (partnerFileInputRefs.current[partnerId]) {
+        partnerFileInputRefs.current[partnerId]!.value = "";
+      }
+    }
+  };
+
+  function handleReloadPartners() {
+    fetchPartners(true);
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-8 overflow-hidden">
       <AdminHeader />
@@ -531,10 +713,20 @@ export default function AdminContentPage() {
               >
                 About Us
               </button>
+              <button
+                onClick={() => setActiveTab("partners")}
+                className={`py-4 font-medium border-b-2 transition-colors ${
+                  activeTab === "partners"
+                    ? "border-red-500 text-red-600"
+                    : "border-transparent text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Our Partners
+              </button>
             </div>
           </div>
 
-          {activeTab === "services" ? (
+          {activeTab === "services" && (
             <div className="p-6 space-y-6">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
@@ -706,7 +898,9 @@ export default function AdminContentPage() {
                 </div>
               </div>
             </div>
-          ) : (
+          )}
+
+          {activeTab === "about" && (
             <div className="p-6 space-y-6">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
@@ -951,6 +1145,192 @@ export default function AdminContentPage() {
                     </div>
                   </div>
                 </>
+              )}
+            </div>
+          )}
+
+          {activeTab === "partners" && (
+            <div className="p-6 space-y-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Our Partners
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    Manage partners shown on the home page.
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleAddPartner}
+                    className="flex items-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:bg-red-300"
+                    disabled={partnersLoading || partnersSaving}
+                  >
+                    Add Partner
+                  </button>
+                  <button
+                    onClick={handleReloadPartners}
+                    className="flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-70"
+                    disabled={partnersLoading}
+                  >
+                    {partnersLoading ? "Refreshing..." : "Refresh"}
+                  </button>
+                </div>
+              </div>
+
+              {partnersError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {partnersError}
+                </div>
+              )}
+
+              {partnersSuccess && (
+                <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                  {partnersSuccess}
+                </div>
+              )}
+
+              {partnersLoading ? (
+                <div className="rounded-lg border border-gray-200 bg-white p-8 text-center text-gray-600">
+                  Loading partners...
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {partners.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-4">
+                      No partners yet. Add one to get started.
+                    </p>
+                  ) : (
+                    partners.map((partner) => (
+                      <div
+                        key={partner.id}
+                        className="grid gap-4 md:grid-cols-[auto,1fr,1fr,1fr,auto] items-start p-4 border border-gray-200 rounded-lg"
+                      >
+                        <div className="flex flex-col items-center gap-2">
+                          {partner.image_url ? (
+                            <img
+                              src={partner.image_url}
+                              alt={partner.name}
+                              className="w-20 h-20 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs">
+                              No Image
+                            </div>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            ref={(el) => {
+                              partnerFileInputRefs.current[partner.id] = el;
+                            }}
+                            onChange={(e) =>
+                              handlePartnerImageUpload(partner.id, e)
+                            }
+                            className="hidden"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              partnerFileInputRefs.current[partner.id]?.click()
+                            }
+                            disabled={uploadingImageFor === partner.id}
+                            className="w-full text-xs rounded-lg bg-blue-500 px-2 py-1 text-white hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {uploadingImageFor === partner.id
+                              ? "Uploading..."
+                              : "Upload Image"}
+                          </button>
+                          <input
+                            type="text"
+                            placeholder="Image URL"
+                            value={partner.image_url || ""}
+                            onChange={(e) =>
+                              handlePartnerFieldChange(
+                                partner.id,
+                                "image_url",
+                                e.target.value
+                              )
+                            }
+                            className="w-full text-xs rounded border border-gray-300 px-2 py-1"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-sm font-semibold text-gray-700">
+                            Name
+                          </label>
+                          <input
+                            type="text"
+                            value={partner.name}
+                            onChange={(e) =>
+                              handlePartnerFieldChange(
+                                partner.id,
+                                "name",
+                                e.target.value
+                              )
+                            }
+                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-sm font-semibold text-gray-700">
+                            Description
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={partner.description || ""}
+                            onChange={(e) =>
+                              handlePartnerFieldChange(
+                                partner.id,
+                                "description",
+                                e.target.value
+                              )
+                            }
+                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
+                            placeholder="Partner description"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-sm font-semibold text-gray-700">
+                            Website URL
+                          </label>
+                          <input
+                            type="url"
+                            value={partner.url || ""}
+                            onChange={(e) =>
+                              handlePartnerFieldChange(
+                                partner.id,
+                                "url",
+                                e.target.value
+                              )
+                            }
+                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
+                            placeholder="https://example.com"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2 pt-6">
+                          <button
+                            type="button"
+                            onClick={() => handleSavePartner(partner.id)}
+                            className="rounded-lg bg-green-500 px-3 py-1 text-xs font-semibold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-green-300"
+                            disabled={partnersSaving}
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePartner(partner.id)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                          >
+                            <X className="h-3 w-3" />
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               )}
             </div>
           )}

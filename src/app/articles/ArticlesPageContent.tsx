@@ -6,7 +6,7 @@ import Header from "@/app/components/Header";
 import ArticleList, {
   type ArticleCard as ArticleListCard,
 } from "@/app/components/ArticleList";
-import Link from "next/link";
+import { NavigationLink as Link } from "@/app/components/NavigationLink";
 import SearchBar from "@/app/components/SearchBar";
 
 type ArticlesPageContentProps = {
@@ -170,7 +170,7 @@ export default function ArticlesPageContent({
             <SearchBar
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Search by title, author, category, or subcategory..."
+              placeholder="Search by title, category, or subcategory..."
             />
           </div>
 

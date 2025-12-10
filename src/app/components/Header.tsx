@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useState, useRef } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { NavigationLink as Link } from "@/app/components/NavigationLink";
+import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
 import { Session } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 
@@ -147,7 +147,7 @@ export default function Navbar({
     null
   );
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
+  const { push: routerPush } = useNavigationWithLoading();
   const supabase = useMemo(() => createClient(), []);
 
   const { coreItems, categoryItems } = useMemo(() => {
@@ -211,8 +211,7 @@ export default function Navbar({
     try {
       await supabase.auth.signOut();
       setSession(null);
-      router.push("/home");
-      router.refresh();
+      routerPush("/home");
     } catch (error) {
       console.error("Failed to logout:", error);
     } finally {
@@ -328,7 +327,7 @@ export default function Navbar({
             type="button"
             onClick={() => {
               setIsOpen(false);
-              router.push("/articles?focus=search");
+              routerPush("/articles?focus=search");
             }}
             className="flex items-center gap-2 rounded-full border border-white/50 bg-white/10 px-3 py-1.5 text-white text-xs md:text-sm font-semibold tracking-[0.2em] uppercase hover:bg-white/20 transition flex-shrink-0"
             title="Search articles"

@@ -1,6 +1,6 @@
 import Head from "next/head";
 import React from "react";
-import Link from "next/link";
+import { NavigationLink as Link } from "@/app/components/NavigationLink";
 import Footer from "@/app/components/Footer";
 import Header from "@/app/components/Header";
 import LatestUpdateCard from "@/app/components/LatestUpdateCard";
@@ -8,6 +8,7 @@ import VideoCarousel from "@/app/components/VideoCarousel";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import BreakingNewsCarousel from "../components/BreakingNewsCarousel";
+import PartnersCarousel from "../components/PartnersCarousel";
 
 const Home: React.FC = async () => {
   const stories = [
@@ -103,6 +104,25 @@ const Home: React.FC = async () => {
   if (newsErr) console.error("News & Entertainment query failed:", newsErr);
   if (heroBannerErr) console.error("Hero banner query failed:", heroBannerErr); // NEW: Log error
 
+  // Fetch partners using admin client (similar to videos)
+  let partnersDataRaw: any[] = [];
+  let partnersErr: any = null;
+  try {
+    const supabaseAdmin = createAdminClient();
+    const { data, error } = await supabaseAdmin
+      .from("partners")
+      .select("id, name, description, image_url, url, created_at")
+      .order("created_at", { ascending: false });
+    if (error) {
+      partnersErr = error;
+    } else {
+      partnersDataRaw = data ?? [];
+    }
+  } catch (err) {
+    partnersErr = err;
+  }
+  if (partnersErr) console.error("Partners query failed:", partnersErr);
+
   let videosDataRaw: any[] = [];
   let videosErr: any = null;
   try {
@@ -169,6 +189,9 @@ const Home: React.FC = async () => {
     heroBannerDataRaw?.subtitle ||
     "Your daily guide to the best of Central Visayas.";
 
+  // NEW: Process partners data
+  const partnersData = partnersDataRaw ?? [];
+
   return (
     <div>
       <Head>
@@ -193,9 +216,7 @@ const Home: React.FC = async () => {
             <h1 className="text-9xl md:text-10xl font-bold bg-gradient-to-r from-[var(--custom-orange)] to-[var(--custom-orange)] bg-clip-text text-transparent leading-tight">
               Proud Bisaya Bai
             </h1>
-            <p className="mt-4 text-lg md:text-xl max-w-2xl">
-              {heroSubtitle}
-            </p>
+            <p className="mt-4 text-lg md:text-xl max-w-2xl">{heroSubtitle}</p>
             <Link href="/contact-us">
               <button className="mt-6 px-6 py-3 bg-[var(--custom-red)] text-white font-semibold rounded-lg shadow-lg cursor-pointer transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95">
                 Get Featured
@@ -668,82 +689,18 @@ const Home: React.FC = async () => {
         <div className="h-px w-full bg-gray-200 my-8"></div>
 
         {/* Our Partners Section */}
-        <section className="bg-white py-12">
+        <section className="bg-white py-8">
           <div className="max-w-6xl mx-auto px-6 text-center">
             {/* SECTION HEADER */}
             <div className="text-center mb-10">
-              <h3 className="text-2xl md:text-3xl font-extrabold text-black tracking-tight flex items-center justify-center gap-2">
-                <span className="inline-block w-1.5 h-6 md:h-7 rounded-full bg-[var(--custom-orange)]" />
+              <h3 className="text-3xl md:text-4xl font-extrabold text-black tracking-tight flex items-center justify-center gap-2">
+                <span className="inline-block w-2 h-8 md:h-9 rounded-full bg-[var(--custom-orange)]" />
                 Our Partners
               </h3>
             </div>
 
             {/* PARTNERS */}
-            <div className="flex flex-wrap justify-center gap-12">
-              {/* Partner 1 */}
-              <a
-                href="https://cebuhomepages.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col items-center max-w-[180px] transition-transform transform hover:scale-105"
-              >
-                <div className="w-28 h-28 flex items-center justify-center bg-white shadow-md rounded-full p-4 hover:shadow-lg">
-                  <img
-                    src="/images/cebuhomepages.webp"
-                    alt="Cebu Home Pages Logo"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <p className="text-sm font-semibold text-gray-800 mt-3">
-                  Cebu Home Pages
-                </p>
-                <p className="text-xs text-gray-600 mt-1 text-center">
-                  Helping Home Buyers and Investors Since 2011
-                </p>
-              </a>
-
-              {/* Partner 2 */}
-              <a
-                href="https://www.lalamove.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col items-center max-w-[180px] transition-transform transform hover:scale-105"
-              >
-                <div className="w-28 h-28 flex items-center justify-center bg-white shadow-md rounded-full overflow-hidden hover:shadow-lg">
-                  <img
-                    src="/images/lalamove.webp"
-                    alt="Lalamove Logo"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <p className="text-sm font-semibold text-gray-800 mt-3">
-                  Lalamove
-                </p>
-                <p className="text-xs text-gray-600 mt-1 text-center">
-                  Leading same‑day delivery app and courier service
-                </p>
-              </a>
-
-              {/* Partner 3 */}
-              <a
-                href="https://example.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col items-center max-w-[180px] transition-transform transform hover:scale-105"
-              >
-                <div className="w-28 h-28 flex items-center justify-center bg-white shadow-md rounded-full p-4 hover:shadow-lg">
-                  <img
-                    src="/images/jse.webp"
-                    alt="JSE Logo"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <p className="text-sm font-semibold text-gray-800 mt-3">JSE</p>
-                <p className="text-xs text-gray-600 mt-1 text-center">
-                  Empowering digital brands through creative innovation
-                </p>
-              </a>
-            </div>
+            <PartnersCarousel partners={partnersData} />
           </div>
         </section>
 
