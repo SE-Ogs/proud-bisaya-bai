@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
+import { NavigationLink as Link } from "@/app/components/NavigationLink";
 
 type NavItem = {
   label: string;
@@ -12,7 +12,6 @@ const defaultItems: NavItem[] = [
   { label: "Dashboard", href: "/admin/dashboard" },
   { label: "Articles", href: "/articles" },
   { label: "Content Editor", href: "/admin/content" },
-  { label: "Contact Form Submissions", href: "/admin/contact-form" },
   { label: "Back to Landing Page", href: "/home" },
 ];
 

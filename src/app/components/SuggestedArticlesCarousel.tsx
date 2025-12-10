@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import Link from "next/link";
+import { NavigationLink as Link } from "@/app/components/NavigationLink";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Article {
