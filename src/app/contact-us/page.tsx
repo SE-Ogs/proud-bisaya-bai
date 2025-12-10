@@ -7,7 +7,7 @@ import { DEFAULT_SERVICE_CARDS } from "@/data/servicesDefaults"
 import ReCAPTCHA from "react-google-recaptcha"
 
 export default function ContactUsPage() {
-  // const { captchaVal, setCaptchaVal } = useState<string | null>(null)
+  const [captchaVal, setCaptchaVal] = useState<string | null>(null)
   const recaptchaRef = useRef<ReCAPTCHA>(null)
   useEffect(() => {
     // Handle smooth scroll to our-services section when hash is present
@@ -387,6 +387,9 @@ export default function ContactUsPage() {
                         "Thanks! We received your message. We'll get back to you soon.",
                     })
                     ;(e.target as HTMLFormElement).reset()
+
+                    setCaptchaVal(null)
+                    recaptchaRef.current?.reset()
                   } catch (error: any) {
                     setSubmitStatus({
                       type: "error",
@@ -394,6 +397,9 @@ export default function ContactUsPage() {
                         error.message ||
                         "Something went wrong. Please try again.",
                     })
+
+                    setCaptchaVal(null)
+                    recaptchaRef.current?.reset()
                   } finally {
                     setIsSubmitting(false)
                   }
@@ -500,9 +506,16 @@ export default function ContactUsPage() {
                   </div>
                 )}
 
+                <ReCAPTCHA
+                  ref={recaptchaRef}
+                  sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+                  onChange={(val) => setCaptchaVal(val)}
+                  onExpired={() => setCaptchaVal(null)}
+                ></ReCAPTCHA>
+
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={!captchaVal || isSubmitting}
                   className="w-full mt-4 rounded-md bg-[var(--custom-red)] text-white px-4 py-3 text-sm font-semibold transition-transform transform hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   {isSubmitting ? "Sending..." : "Send message"}
