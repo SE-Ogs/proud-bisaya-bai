@@ -1,6 +1,6 @@
 import Head from "next/head";
 import React from "react";
-import Link from "next/link";
+import { NavigationLink as Link } from "@/app/components/NavigationLink";
 import Footer from "@/app/components/Footer";
 import Header from "@/app/components/Header";
 import LatestUpdateCard from "@/app/components/LatestUpdateCard";

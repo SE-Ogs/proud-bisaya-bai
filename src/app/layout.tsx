@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { NavigationLoadingProvider } from "@/contexts/NavigationLoadingContext";
 import Navbar from "@/app/components/Header";
 
 const inter = Inter({
@@ -29,18 +30,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${geistMono.variable} antialiased`}>
-        <div className="flex">
-          <div
-            className="flex-1 min-h-screen"
-            style={{
-              paddingTop: "var(--navbar-height, 64px)",
-              paddingRight: "var(--sidebar-width, 0px)",
-              transition: "padding-right 200ms ease",
-            }}
-          >
-            {children}
+        <NavigationLoadingProvider>
+          <div className="flex">
+            <div
+              className="flex-1 min-h-screen"
+              style={{
+                paddingTop: "var(--navbar-height, 64px)",
+                paddingRight: "var(--sidebar-width, 0px)",
+                transition: "padding-right 200ms ease",
+              }}
+            >
+              {children}
+            </div>
           </div>
-        </div>
+        </NavigationLoadingProvider>
       </body>
     </html>
   );
