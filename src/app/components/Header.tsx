@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useState, useRef } from "react";
-import { NavigationLink as Link } from "@/app/components/NavigationLink";
-import { useNavigationWithLoading } from "@/hooks/useNavigationWithLoading";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Session } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 
@@ -147,7 +147,7 @@ export default function Navbar({
     null
   );
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { push: routerPush } = useNavigationWithLoading();
+  const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
 
   const { coreItems, categoryItems } = useMemo(() => {
@@ -159,13 +159,6 @@ export default function Navbar({
     }
     return { coreItems: items.slice(0, idx), categoryItems: items.slice(idx) };
   }, [items]);
-
-  useEffect(() => {
-    if (typeof document !== "undefined") {
-      const width = isOpen ? "240px" : "0px";
-      document.documentElement.style.setProperty("--sidebar-width", width);
-    }
-  }, [isOpen]);
 
   useEffect(() => {
     let isMounted = true;
@@ -200,9 +193,9 @@ export default function Navbar({
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("click", handleClickOutside);
     };
   }, []);
 
@@ -211,7 +204,8 @@ export default function Navbar({
     try {
       await supabase.auth.signOut();
       setSession(null);
-      routerPush("/home");
+      router.push("/home");
+      router.refresh();
     } catch (error) {
       console.error("Failed to logout:", error);
     } finally {
@@ -248,8 +242,8 @@ export default function Navbar({
             </Link>
           </div>
 
-          {/* Categories - visible on all screens */}
-          <div className="flex items-center gap-2 flex-wrap flex-1 justify-center">
+          {/* Categories - visible on desktop, hidden on mobile (moved to sidebar) */}
+          <div className="hidden sm:flex items-center gap-2 flex-wrap flex-1 justify-center">
             {categoryItems.map((item) => (
               <div
                 key={item.href}
@@ -299,7 +293,7 @@ export default function Navbar({
                   </button>
                 </div>
 
-                {/* Dropdown menu */}
+                {/* Dropdown menu - desktop only (same as before) */}
                 {subcategories[item.label] &&
                   openHeaderDropdown === item.label && (
                     <div className="absolute left-0 top-full mt-1 z-50 min-w-[220px]">
@@ -327,9 +321,9 @@ export default function Navbar({
             type="button"
             onClick={() => {
               setIsOpen(false);
-              routerPush("/articles?focus=search");
+              router.push("/articles?focus=search");
             }}
-            className="flex items-center gap-2 rounded-full border border-white/50 bg-white/10 px-3 py-1.5 text-white text-xs md:text-sm font-semibold tracking-[0.2em] uppercase hover:bg-white/20 transition flex-shrink-0"
+            className="hidden sm:flex items-center gap-2 rounded-full border border-white/50 bg-white/10 px-3 py-1.5 text-white text-xs md:text-sm font-semibold tracking-[0.2em] uppercase hover:bg-white/20 transition flex-shrink-0"
             title="Search articles"
           >
             <svg
@@ -365,18 +359,25 @@ export default function Navbar({
         </div>
       </div>
 
-      {/* Sidebar Nav - contains core pages */}
+      {/* Mobile Overlay Backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 sm:hidden"
+          onClick={() => setIsOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar Nav - overlay on mobile, side panel on desktop */}
       <aside
-        className="fixed top-0 right-0 h-screen z-50 border-l border-gray-200 shadow-lg"
+        className="fixed top-0 right-0 h-screen z-50 border-l border-gray-200 shadow-lg sm:border-l-0 sm:shadow-none transition-all duration-200"
         style={{
-          width: isOpen ? 260 : 0,
-          overflow: "hidden",
-          transition: "width 200ms ease",
+          width: isOpen ? "260px" : "0px",
+          backgroundColor: "white",
           backgroundImage: "url('/images/pbb_hd_logo.webp')",
           backgroundSize: "contain",
           backgroundPosition: "center 80%",
           backgroundRepeat: "no-repeat",
-          backgroundColor: "white",
         }}
       >
         <div className="absolute inset-0 bg-white opacity-70 pointer-events-none" />
@@ -419,6 +420,62 @@ export default function Navbar({
                     {item.label}
                   </Link>
                 ))}
+              </div>
+
+              {/* Categories - moved here for mobile */}
+              <div className="mt-4 px-1">
+                <div className="px-3 text-xs font-semibold text-gray-500 uppercase mb-2">
+                  Categories
+                </div>
+
+                <div className="space-y-1">
+                  {categoryItems.map((item) => (
+                    <div key={item.href}>
+                      <button
+                        type="button"
+                        onClick={() => toggleDropdown(item.label)}
+                        className="w-full flex items-center justify-between px-3 py-2 text-sm font-semibold text-black rounded hover:bg-gray-100"
+                        aria-expanded={openDropdown === item.label}
+                        aria-controls={`cat-${item.label}`}
+                      >
+                        <span>{item.label}</span>
+                        <svg
+                          className={`h-4 w-4 transform transition-transform ${
+                            openDropdown === item.label ? "rotate-180" : ""
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </button>
+
+                      {/* Subcategories (expandable inside sidebar) */}
+                      {openDropdown === item.label &&
+                        subcategories[item.label] && (
+                          <div id={`cat-${item.label}`} className="pl-4">
+                            {subcategories[item.label].map((sub) => (
+                              <Link
+                                key={sub.href}
+                                href={sub.href}
+                                className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded"
+                                title={sub.label}
+                                onClick={() => setIsOpen(false)}
+                              >
+                                {sub.label}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Get Featured button */}
