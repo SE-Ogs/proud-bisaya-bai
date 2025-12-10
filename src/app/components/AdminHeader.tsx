@@ -12,6 +12,7 @@ const defaultItems: NavItem[] = [
   { label: "Dashboard", href: "/admin/dashboard" },
   { label: "Articles", href: "/articles" },
   { label: "Content Editor", href: "/admin/content" },
+  { label: "Contact Form Submissions", href: "/admin/contact-form" },
   { label: "Back to Landing Page", href: "/home" },
 ];
 
