@@ -139,9 +139,11 @@ export default function SuggestedArticlesCarousel({
   }
 
   return (
-    <div className="mt-0 pt-0 max-w-4xl mx-auto">
+    <div className="mt-0 pt-0 max-w-4xl mx-auto w-full px-4 sm:px-0">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-900">You may also like</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+          You may also like
+        </h2>
 
         {/* Navigation buttons at top right */}
         <div className="flex items-center gap-2">
@@ -188,17 +190,12 @@ export default function SuggestedArticlesCarousel({
         </div>
       </div>
 
-      <div className="relative flex justify-center">
-        {/* Carousel Container - Limited to show 3 cards at a time */}
-        <div
-          className="overflow-hidden mx-auto"
-          style={{
-            maxWidth: "calc(3 * (230px + 16px) - 16px)",
-          }}
-        >
+      <div className="relative flex justify-center w-full overflow-x-hidden">
+        {/* Carousel Container - Responsive width */}
+        <div className="overflow-hidden mx-auto w-full max-w-full sm:max-w-[calc(2*(230px+16px)-16px)] md:max-w-[calc(3*(230px+16px)-16px)]">
           <div
             ref={scrollContainerRef}
-            className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 cursor-grab active:cursor-grabbing"
+            className="flex gap-2 sm:gap-4 overflow-x-auto scrollbar-hide pb-4 cursor-grab active:cursor-grabbing px-4 sm:px-0"
             style={{
               scrollbarWidth: "none",
               msOverflowStyle: "none",
@@ -219,9 +216,9 @@ export default function SuggestedArticlesCarousel({
                 <Link
                   key={article.id}
                   href={href}
-                  className="flex-shrink-0 w-[230px] rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 group"
+                  className="flex-shrink-0 w-[calc((100%-1rem)/3)] sm:w-[230px] rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 group"
                 >
-                  <div className="relative h-[300px] overflow-hidden">
+                  <div className="relative h-[200px] sm:h-[300px] overflow-hidden">
                     <img
                       src={article.thumbnail_url || "/images/banner.webp"}
                       alt={article.title}
@@ -231,16 +228,18 @@ export default function SuggestedArticlesCarousel({
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
                     {/* Content overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                      <h3 className="text-base font-bold mb-2 text-white group-hover:text-[var(--custom-orange)] transition-colors">
+                    <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-4 text-white">
+                      <h3 className="text-xs sm:text-base font-bold mb-1 sm:mb-2 text-white group-hover:text-[var(--custom-orange)] transition-colors line-clamp-2 leading-tight">
                         {article.title}
                       </h3>
-                      <div className="flex items-center gap-1.5 text-xs text-white/90">
+                      <div className="flex items-center gap-1 text-[10px] sm:text-xs text-white/90">
                         <time dateTime={article.created_at}>
                           {formattedDate}
                         </time>
-                        <span>•</span>
-                        <span>{authorName}</span>
+                        <span className="hidden sm:inline">•</span>
+                        <span className="truncate hidden sm:inline">
+                          {authorName}
+                        </span>
                       </div>
                     </div>
                   </div>

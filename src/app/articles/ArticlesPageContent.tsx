@@ -38,6 +38,8 @@ export default function ArticlesPageContent({
     string | undefined
   >(undefined);
   const [displayCount, setDisplayCount] = useState(8);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isFiltering, setIsFiltering] = useState(false);
 
   // Search
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,6 +47,12 @@ export default function ArticlesPageContent({
   // Reset pagination when filters/search change
   useEffect(() => {
     setDisplayCount(8);
+    // Show brief loading state when filters change
+    if (activeCategory !== "all" || activeSubcategory || searchQuery) {
+      setIsFiltering(true);
+      const timer = setTimeout(() => setIsFiltering(false), 200);
+      return () => clearTimeout(timer);
+    }
   }, [searchQuery, activeCategory, activeSubcategory]);
 
   // 1) Filter by category/subcategory first
@@ -131,7 +139,14 @@ export default function ArticlesPageContent({
   // Pagination + ads
   const displayedArticles = shapedArticles.slice(0, displayCount);
   const hasMore = displayCount < shapedArticles.length;
-  const loadMore = () => setDisplayCount((prev) => prev + 8);
+  const loadMore = () => {
+    setIsLoadingMore(true);
+    // Simulate a brief loading state for better UX
+    setTimeout(() => {
+      setDisplayCount((prev) => prev + 8);
+      setIsLoadingMore(false);
+    }, 300);
+  };
 
   // After every 4 articles, show an advertisement
   const articleChunks = chunkBy<ArticleListCard>(displayedArticles, 4);
@@ -244,12 +259,28 @@ export default function ArticlesPageContent({
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-2">{getFilterTitle()}</h1>
             <p className="text-gray-600">
-              {shapedArticles.length}{" "}
-              {shapedArticles.length === 1 ? "article" : "articles"} found
+              {isFiltering ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-[var(--custom-orange)] border-t-transparent rounded-full animate-spin"></span>
+                  Filtering...
+                </span>
+              ) : (
+                <>
+                  {shapedArticles.length}{" "}
+                  {shapedArticles.length === 1 ? "article" : "articles"} found
+                </>
+              )}
             </p>
           </div>
 
-          {shapedArticles.length === 0 ? (
+          {isFiltering ? (
+            <div className="text-center py-20">
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-4 border-[var(--custom-orange)] border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-gray-600">Loading articles...</p>
+              </div>
+            </div>
+          ) : shapedArticles.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-gray-500 text-lg">No articles found.</p>
               <button
@@ -289,9 +320,17 @@ export default function ArticlesPageContent({
                 <div className="flex justify-center pt-8 mt-6">
                   <button
                     onClick={loadMore}
-                    className="px-8 py-3 bg-[var(--custom-blue)] text-white rounded-lg font-medium hover:bg-gray-800 transition-colors shadow-md hover:shadow-lg"
+                    disabled={isLoadingMore}
+                    className="px-8 py-3 bg-[var(--custom-blue)] text-white rounded-lg font-medium hover:bg-gray-800 transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    Load More Articles
+                    {isLoadingMore ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Loading...
+                      </>
+                    ) : (
+                      "Load More Articles"
+                    )}
                   </button>
                 </div>
               )}

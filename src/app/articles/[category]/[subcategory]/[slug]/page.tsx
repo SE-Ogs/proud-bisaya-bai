@@ -71,18 +71,18 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     .limit(10);
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen w-full overflow-x-hidden">
       <Header />
-      <div className="flex max-w-[1400px] mx-auto px-6 gap-6 bg-gray-50 min-h-screen">
+      <div className="flex max-w-[1400px] mx-auto px-4 sm:px-6 gap-4 sm:gap-6 bg-gray-50 min-h-screen w-full">
         {/* Left Ad */}
         <aside className="hidden xl:block w-64 flex-shrink-0">
-          <div className="sticky top-24 bg-gray-200 rounded-lg p-8 h-[600px] flex items-center justify-center">
+          <div className="sticky top-24 bg-gray-200 rounded-lg p-6 xl:p-8 h-[600px] flex items-center justify-center">
             <span className="text-gray-500 font-semibold">Ads Here</span>
           </div>
         </aside>
 
         {/* Main Article Content */}
-        <main className="flex-1 bg-gray-50 rounded-lg p-6">
+        <main className="flex-1 bg-gray-50 rounded-lg p-4 sm:p-6 w-full min-w-0">
           <ArticleRenderer article={article} />
           {suggestedArticles && suggestedArticles.length > 0 && (
             <SuggestedArticlesCarousel
@@ -94,7 +94,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
         {/* Right Ad */}
         <aside className="hidden xl:block w-64 flex-shrink-0">
-          <div className="sticky top-24 bg-gray-200 rounded-lg p-8 h-[600px] flex items-center justify-center">
+          <div className="sticky top-24 bg-gray-200 rounded-lg p-6 xl:p-8 h-[600px] flex items-center justify-center">
             <span className="text-gray-500 font-semibold">Ads Here</span>
           </div>
         </aside>

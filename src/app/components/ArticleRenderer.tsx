@@ -73,12 +73,12 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
           | "h5"
           | "h6";
         const headingStyles: Record<number, string> = {
-          1: "text-4xl font-bold mb-6 text-gray-900",
-          2: "text-3xl font-bold mb-5 text-gray-900",
-          3: "text-2xl font-bold mb-4 text-gray-900",
-          4: "text-xl font-bold mb-3 text-gray-900",
-          5: "text-lg font-bold mb-3 text-gray-900",
-          6: "text-base font-bold mb-2 text-gray-900",
+          1: "text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 text-gray-900",
+          2: "text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-5 text-gray-900",
+          3: "text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 text-gray-900",
+          4: "text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3 text-gray-900",
+          5: "text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3 text-gray-900",
+          6: "text-sm sm:text-base font-bold mb-2 text-gray-900",
         };
         return (
           <HeadingTag
@@ -200,9 +200,9 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
 
 
   return (
-    <article className="max-w-3xl mx-auto px-6 py-2 bg-gray-50">
+    <article className="max-w-3xl mx-auto px-4 sm:px-6 py-2 bg-gray-50 w-full">
       {mounted && (
-        <div className="fixed bottom-0 right-4 pb-6">
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
           <button 
             className={`shadow-xl rounded-full px-2 py-2 bg-white transition-all hover:scale-105 ${
               isScrolled ? 'opacity-100' : 'opacity-0 pointer-events-none'
@@ -210,37 +210,37 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
             onClick={ handleScrollToTop }
           >
             <ChevronUpIcon
-              className="h-10 w-10 text-[var(--custom-orange)] cursor-pointer"
+              className="h-8 w-8 sm:h-10 sm:w-10 text-[var(--custom-orange)] cursor-pointer"
             />
           </button>
         </div>
       )}
-      <header className="mb-12 mt-10">
+      <header className="mb-8 sm:mb-12 mt-6 sm:mt-10">
         {article.thumbnail_url && (
           <img
             src={article.thumbnail_url}
             alt={article.title}
-            className="w-full h-[400px] object-cover rounded-2xl shadow-xl mb-8"
+            className="w-full h-[250px] sm:h-[350px] md:h-[400px] object-cover rounded-xl sm:rounded-2xl shadow-xl mb-6 sm:mb-8"
           />
         )}
 
-        <h1 className="text-5xl font-bold mb-4 text-gray-900">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-gray-900 leading-tight">
           {article.title}
         </h1>
 
         <div className="flex flex-wrap gap-2 mb-4">
-          <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+          <span className="bg-blue-100 text-blue-800 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
             {article.category}
           </span>
           {article.subcategory && (
-            <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
+            <span className="bg-purple-100 text-purple-800 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
               {article.subcategory}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-4 text-gray-600">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm sm:text-base text-gray-600">
           <span className="font-medium">By {article.author}</span>
-          <span>&bull;</span>
+          <span className="hidden sm:inline">&bull;</span>
           <time dateTime={article.created_at}>
             {new Date(article.created_at).toLocaleDateString("en-US", {
               year: "numeric",
@@ -248,7 +248,7 @@ export default function ArticleRenderer({ article }: ArticleRendererProps) {
               day: "numeric",
             })}
           </time>
-          <span>&bull;</span>
+          <span className="hidden sm:inline">&bull;</span>
           <span>~{article.reading_time} minutes read</span>
         </div>
       </header>
