@@ -1,5 +1,4 @@
 import React, { useRef } from "react";
-import { useRouter } from "next/navigation";
 import { CATEGORIES } from "@/app/components/Categories";
 
 interface ArticleMetadataHeaderProps {
@@ -32,6 +31,7 @@ interface ArticleMetadataHeaderProps {
   setSubcategorySlug: (slug: string) => void;
   readingTime: string;
   setReadingTime: (slug: string) => void;
+  onBackToDashboard: () => void;
 }
 
 export function ArticleMetadataHeader({
@@ -64,9 +64,8 @@ export function ArticleMetadataHeader({
   setSubcategorySlug,
   readingTime,
   setReadingTime,
+  onBackToDashboard,
 }: ArticleMetadataHeaderProps) {
-  const router = useRouter();
-
   const handleSlugBlur = () => {
     // Convert to valid slug format when user finishes typing
     const cleanedSlug = articleSlug
@@ -81,7 +80,7 @@ export function ArticleMetadataHeader({
       <div className="bg-white overflow-y-hidden">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <button
-            onClick={() => router.push("/admin/dashboard")}
+            onClick={onBackToDashboard}
             className="text-blue-600 hover:underline text-2xl mb-2 inline-block pb-4 font-bold"
           >
             ← Back to Articles

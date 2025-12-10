@@ -11,6 +11,7 @@ export type ArticleCard = {
   category_name?: string | null;
   subcategory_name?: string | null;
   author: string | null;
+  reading_time?: number | null;
 };
 
 export default function ArticleList({ articles }: { articles: ArticleCard[] }) {
@@ -44,6 +45,20 @@ export default function ArticleList({ articles }: { articles: ArticleCard[] }) {
                 loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              
+              {/* Reading time badge */}
+              {article.reading_time && (
+                <div className="absolute top-3 right-3 bg-gray-900/60 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                  <div className="flex items-center gap-1.5">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-white font-semibold text-sm">
+                      {article.reading_time} min
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Content */}

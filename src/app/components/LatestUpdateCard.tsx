@@ -6,6 +6,7 @@ type LatestUpdateCardProps = {
   title: string;
   createdAt: string | Date; // ISO string from Supabase or Date
   author: string;
+  reading_time?: number | null;
   locale?: string;
   showSeconds?: boolean;
 };
@@ -15,6 +16,7 @@ const LatestUpdateCard: React.FC<LatestUpdateCardProps> = ({
   title,
   createdAt,
   author,
+  reading_time,
   locale,
   showSeconds = false,
 }) => {
@@ -42,6 +44,20 @@ const LatestUpdateCard: React.FC<LatestUpdateCardProps> = ({
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        
+        {/* Reading time badge */}
+        {reading_time && (
+          <div className="absolute top-3 right-3 bg-gray-900/60 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+            <div className="flex items-center gap-1.5">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-white font-semibold text-sm">
+                {reading_time} min
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Content Section - Flexible height */}
