@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useNavigationLoading } from "@/contexts/NavigationLoadingContext";
-import { ReactNode } from "react";
+import { ReactNode, startTransition } from "react";
 
 interface NavigationLinkProps {
   href: string;
@@ -25,12 +25,20 @@ export function NavigationLink({
 }: NavigationLinkProps) {
   const { startLoading } = useNavigationLoading();
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     // Only show loading for same-origin navigation (not external links or target="_blank")
     if (!target && !href.startsWith("http")) {
+      // Start loading immediately before navigation
       startLoading();
+      // Use startTransition to ensure loading state is set before navigation
+      startTransition(() => {
+        // Call onClick if provided
+        onClick?.();
+      });
+    } else {
+      // For external links, just call onClick
+      onClick?.();
     }
-    onClick?.();
   };
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
+import { NavigationLink as Link } from "@/app/components/NavigationLink";
 import ArticleList, {
   type ArticleCard as ArticleListCard,
 } from "@/app/components/ArticleList";
@@ -31,6 +31,7 @@ export default function SubcategoryPageContent({
   subcategory,
 }: SubcategoryPageContentProps) {
   const [displayCount, setDisplayCount] = useState(4);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const makeSubcatHref = (slug?: string) =>
     slug ? `/articles/${category}/${slug}` : `/articles/${category}`;
@@ -38,7 +39,14 @@ export default function SubcategoryPageContent({
   // Pagination
   const displayedArticles = articles.slice(0, displayCount);
   const hasMore = displayCount < articles.length;
-  const loadMore = () => setDisplayCount((prev) => prev + 4);
+  const loadMore = () => {
+    setIsLoadingMore(true);
+    // Simulate a brief loading state for better UX
+    setTimeout(() => {
+      setDisplayCount((prev) => prev + 4);
+      setIsLoadingMore(false);
+    }, 300);
+  };
 
   // After every 4 articles, show an advertisement
   const articleChunks = chunkBy<ArticleListCard>(displayedArticles, 4);
@@ -127,9 +135,17 @@ export default function SubcategoryPageContent({
             <div className="flex justify-center pt-8 mt-6">
               <button
                 onClick={loadMore}
-                className="px-8 py-3 bg-[var(--custom-blue)] text-white rounded-lg font-medium hover:bg-gray-800 transition-colors shadow-md hover:shadow-lg"
+                disabled={isLoadingMore}
+                className="px-8 py-3 bg-[var(--custom-blue)] text-white rounded-lg font-medium hover:bg-gray-800 transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                Load More Articles
+                {isLoadingMore ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Loading...
+                  </>
+                ) : (
+                  "Load More Articles"
+                )}
               </button>
             </div>
           )}
