@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 interface NavigationLoadingContextType {
@@ -13,6 +13,8 @@ const NavigationLoadingContext = createContext<
   NavigationLoadingContextType | undefined
 >(undefined);
 
+const MIN_LOADING_TIME = 300; // Minimum time to show loading overlay (ms)
+
 export function NavigationLoadingProvider({
   children,
 }: {
@@ -20,14 +22,54 @@ export function NavigationLoadingProvider({
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const pathname = usePathname();
+  const loadingStartTimeRef = useRef<number | null>(null);
+  const stopTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Stop loading when route actually changes
+  // Stop loading when route actually changes, but ensure minimum display time
   useEffect(() => {
-    setIsLoading(false);
-  }, [pathname]);
+    if (!isLoading) return;
 
-  const startLoading = () => setIsLoading(true);
-  const stopLoading = () => setIsLoading(false);
+    // Clear any existing timeout
+    if (stopTimeoutRef.current) {
+      clearTimeout(stopTimeoutRef.current);
+    }
+
+    // Calculate how long loading has been showing
+    const elapsed = loadingStartTimeRef.current 
+      ? Date.now() - loadingStartTimeRef.current 
+      : MIN_LOADING_TIME;
+    
+    const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsed);
+
+    // Stop loading after remaining minimum time
+    stopTimeoutRef.current = setTimeout(() => {
+      setIsLoading(false);
+      loadingStartTimeRef.current = null;
+    }, remainingTime);
+  }, [pathname]); // Only depend on pathname, not isLoading
+
+  const startLoading = () => {
+    loadingStartTimeRef.current = Date.now();
+    setIsLoading(true);
+  };
+
+  const stopLoading = () => {
+    if (stopTimeoutRef.current) {
+      clearTimeout(stopTimeoutRef.current);
+      stopTimeoutRef.current = null;
+    }
+    setIsLoading(false);
+    loadingStartTimeRef.current = null;
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (stopTimeoutRef.current) {
+        clearTimeout(stopTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <NavigationLoadingContext.Provider

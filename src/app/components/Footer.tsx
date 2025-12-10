@@ -32,12 +32,14 @@ const Footer: React.FC = () => {
               onSubmit={(e) => {
                 e.preventDefault();
               }}
+              suppressHydrationWarning
             >
               <input
                 type="email"
                 placeholder="Enter your email address"
                 className="w-full min-w-0 rounded-l-md bg-white px-3 py-3 text-sm text-black outline-none placeholder:text-gray-500"
                 required
+                suppressHydrationWarning
               />
               <button
                 type="submit"

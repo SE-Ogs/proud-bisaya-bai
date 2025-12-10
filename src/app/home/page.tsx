@@ -1,4 +1,3 @@
-import Head from "next/head";
 import React from "react";
 import { NavigationLink as Link } from "@/app/components/NavigationLink";
 import Footer from "@/app/components/Footer";
@@ -193,32 +192,26 @@ const Home: React.FC = async () => {
   const partnersData = partnersDataRaw ?? [];
 
   return (
-    <div>
-      <Head>
-        <title>Proud Bisaya Bai</title>
-        <meta
-          name="description"
-          content="Your daily guide to the best of Central Visayas."
-        />
-      </Head>
-
-      <main>
+    <div className="w-full overflow-x-hidden">
+      <main className="w-full overflow-x-hidden">
         {/* Header */}
         <Header />
 
         {/* Hero Banner - UPDATED: Now uses dynamic image from database */}
         <div
-          className="relative h-screen bg-cover bg-center"
+          className="relative h-[60vh] sm:h-[70vh] md:h-screen bg-cover bg-center"
           style={{ backgroundImage: `url('${heroBannerImageUrl}')` }}
         >
           <div className="absolute inset-0 bg-black/40" />
-          <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-4">
-            <h1 className="text-9xl md:text-10xl font-bold bg-gradient-to-r from-[var(--custom-orange)] to-[var(--custom-orange)] bg-clip-text text-transparent leading-tight">
+          <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-4 sm:px-6">
+            <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold bg-gradient-to-r from-[var(--custom-orange)] to-[var(--custom-orange)] bg-clip-text text-transparent leading-tight px-2">
               Proud Bisaya Bai
             </h1>
-            <p className="mt-4 text-lg md:text-xl max-w-2xl">{heroSubtitle}</p>
+            <p className="mt-4 text-base sm:text-lg md:text-xl max-w-2xl px-2">
+              {heroSubtitle}
+            </p>
             <Link href="/contact-us">
-              <button className="mt-6 px-6 py-3 bg-[var(--custom-red)] text-white font-semibold rounded-lg shadow-lg cursor-pointer transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95">
+              <button className="mt-6 px-5 py-2.5 sm:px-6 sm:py-3 bg-[var(--custom-red)] text-white text-sm sm:text-base font-semibold rounded-lg shadow-lg cursor-pointer transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95">
                 Get Featured
               </button>
             </Link>
@@ -226,11 +219,11 @@ const Home: React.FC = async () => {
         </div>
 
         {/* Breaking News */}
-        <section className="bg-white py-8">
-          <div className="max-w-5xl mx-auto px-4">
+        <section className="bg-white py-6 sm:py-8">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6">
             <div className="flex items-center justify-center gap-3 mb-5">
               {/* Pulsing red dot */}
-              <div className="relative h-5 w-5">
+              <div className="relative h-4 w-4 sm:h-5 sm:w-5">
                 <span
                   className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
                   style={{ backgroundColor: "var(--custom-red)" }}
@@ -242,7 +235,7 @@ const Home: React.FC = async () => {
               </div>
 
               <h2
-                className="text-2xl md:text-3xl font-extrabold tracking-tight"
+                className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight"
                 style={{ color: "var(--custom-red)" }}
               >
                 Breaking News
@@ -275,13 +268,13 @@ const Home: React.FC = async () => {
 
         {/* Videos Section */}
         {videosData.length > 0 && (
-          <section className="bg-[var(--custom-blue)] py-12">
-            <div className="container mx-auto px-4">
+          <section className="bg-[var(--custom-blue)] py-8 sm:py-12">
+            <div className="container mx-auto px-4 sm:px-6">
               <div className="text-center text-white">
-                <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--custom-orange)]">
+                <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-[var(--custom-orange)]">
                   Videos
                 </p>
-                <h3 className="mt-2 text-3xl font-extrabold">
+                <h3 className="mt-2 text-2xl sm:text-3xl font-extrabold">
                   Watch the Latest Highlights
                 </h3>
                 <div className="h-1.5 w-16 bg-[var(--custom-orange)] rounded-full my-2 mb-4 mx-auto" />
@@ -314,10 +307,10 @@ const Home: React.FC = async () => {
         {facebookLive &&
           facebookLive.is_active &&
           facebookLive.fb_embed_url && (
-            <section className="bg-[var(--custom-blue)] py-12">
-              <div className="text-center container mx-auto px-4">
+            <section className="bg-[var(--custom-blue)] py-8 sm:py-12">
+              <div className="text-center container mx-auto px-4 sm:px-6">
                 <div className="text-center">
-                  <h3 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-2">
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-2">
                     Watch Us Live!
                   </h3>
                   <div className="h-1.5 w-16 bg-[var(--custom-orange)] rounded-full mb-4 mx-auto" />
@@ -345,19 +338,19 @@ const Home: React.FC = async () => {
           )}
 
         {/* Featured Stories */}
-        <section className="bg-white py-12">
-          <div className="container mx-auto px-4">
+        <section className="bg-white py-8 sm:py-12">
+          <div className="container mx-auto px-4 sm:px-6">
             <div className="text-center">
-              <h3 className="text-2xl md:text-3xl font-extrabold text-black tracking-tight mb-5 flex items-center justify-center gap-3">
-                <span className="inline-block w-1.5 h-6 md:h-7 rounded-full bg-[var(--custom-orange)]" />
+              <h3 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-black tracking-tight mb-5 flex items-center justify-center gap-3">
+                <span className="inline-block w-1.5 h-5 sm:h-6 md:h-7 rounded-full bg-[var(--custom-orange)]" />
                 Featured Stories
               </h3>
             </div>
 
             {/* Desktop: 12-col grid -> [2 cols ad] [8 cols content] [2 cols ad] */}
-            {/* Mobile/Tablet: 1 col -> only content (ads hidden) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              {/* Left Ad */}
+            {/* Mobile: ads shown above and below content */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+              {/* Left Ad - Desktop only */}
               <aside className="hidden lg:block lg:col-span-2">
                 <div className="sticky top-24">
                   <div className="w-full h-[450px] bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center">
@@ -371,7 +364,19 @@ const Home: React.FC = async () => {
 
               {/* Main Content */}
               <div className="lg:col-span-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Mobile Ad - Above content */}
+                <div className="lg:hidden mb-4">
+                  <div className="w-full h-[100px] sm:h-[120px] bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center">
+                    <span className="text-gray-600 font-semibold text-sm">
+                      ADS
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500 text-center">
+                    Sponsored by _____
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                   {stories.map((story, index) => (
                     <Link
                       key={index}
@@ -388,9 +393,21 @@ const Home: React.FC = async () => {
                     </Link>
                   ))}
                 </div>
+
+                {/* Mobile Ad - Below content */}
+                <div className="lg:hidden mt-4">
+                  <div className="w-full h-[100px] sm:h-[120px] bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center">
+                    <span className="text-gray-600 font-semibold text-sm">
+                      ADS
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500 text-center">
+                    Sponsored by _____
+                  </p>
+                </div>
               </div>
 
-              {/* Right Ad */}
+              {/* Right Ad - Desktop only */}
               <aside className="hidden lg:block lg:col-span-2">
                 <div className="sticky top-24">
                   <div className="w-full h-[450px] bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center">
@@ -407,24 +424,24 @@ const Home: React.FC = async () => {
 
         {/* All Articles */}
         <section
-          className="py-12"
+          className="py-8 sm:py-12"
           style={{ backgroundColor: "var(--custom-blue)" }}
         >
-          <div className="container mx-auto px-4">
+          <div className="container mx-auto px-4 sm:px-6">
             <div className="text-center">
-              <h3 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-5 flex items-center justify-center gap-3">
-                <span className="inline-block w-1.5 h-6 md:h-7 rounded-full bg-[var(--custom-orange)]" />
+              <h3 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-5 flex items-center justify-center gap-3">
+                <span className="inline-block w-1.5 h-5 sm:h-6 md:h-7 rounded-full bg-[var(--custom-orange)]" />
                 All Articles
               </h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               {articlesData.slice(0, 4).map((article) => {
                 const href = `/articles/${article.category_slug}/${article.subcategory_slug}/${article.slug}`;
                 return (
                   <Link
                     key={article.slug}
                     href={href}
-                    className="group bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-white/20 flex flex-col h-[420px]"
+                    className="group bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-white/20 flex flex-col h-[380px] sm:h-[420px]"
                   >
                     {/* Image Section */}
                     <div className="relative h-48 overflow-hidden flex-shrink-0">
@@ -575,9 +592,9 @@ const Home: React.FC = async () => {
         </section>
 
         {/* Latest News and Entertainment + Editor's Picks with side ads */}
-        <section className="py-8" style={{ backgroundColor: "white" }}>
-          <div className="max-w-screen-xl mx-auto px-4 lg:px-0">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <section className="py-6 sm:py-8" style={{ backgroundColor: "white" }}>
+          <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
               {/* Left Ad (desktop only) */}
               <aside className="hidden lg:block lg:col-span-2">
                 <div className="sticky top-24">
@@ -592,12 +609,23 @@ const Home: React.FC = async () => {
 
               {/* Main content (2 columns inside) */}
               <div className="lg:col-span-8">
+                {/* Mobile Ad - Above content */}
+                <div className="lg:hidden mb-6">
+                  <div className="w-full h-[100px] sm:h-[120px] bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center">
+                    <span className="text-gray-600 font-semibold text-sm">
+                      ADS
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500 text-center">
+                    Sponsored by _____
+                  </p>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                   {/* Latest News and Entertainment */}
                   <div className="flex flex-col">
                     {/* Header with fixed height so columns align */}
                     <div className="min-h-[88px] flex flex-col justify-end mb-2">
-                      <h3 className="text-2xl md:text-3xl font-extrabold text-black tracking-tight">
+                      <h3 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-black tracking-tight">
                         Karon: Latest News and Entertainment
                       </h3>
                       <div className="h-1.5 w-16 bg-[var(--custom-orange)] rounded-full mt-2" />
@@ -635,7 +663,7 @@ const Home: React.FC = async () => {
                   <div className="flex flex-col">
                     {/* Header with the SAME fixed height */}
                     <div className="min-h-[88px] flex flex-col justify-end mb-2">
-                      <h3 className="text-2xl md:text-3xl font-extrabold text-black tracking-tight">
+                      <h3 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-black tracking-tight">
                         Editor&apos;s Picks
                       </h3>
                       <div className="h-1.5 w-16 bg-[var(--custom-orange)] rounded-full mt-2" />
@@ -669,6 +697,18 @@ const Home: React.FC = async () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Mobile Ad - Below content */}
+                <div className="lg:hidden mt-6">
+                  <div className="w-full h-[100px] sm:h-[120px] bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center">
+                    <span className="text-gray-600 font-semibold text-sm">
+                      ADS
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500 text-center">
+                    Sponsored by _____
+                  </p>
+                </div>
               </div>
 
               {/* Right Ad (desktop only) */}
@@ -689,12 +729,12 @@ const Home: React.FC = async () => {
         <div className="h-px w-full bg-gray-200 my-8"></div>
 
         {/* Our Partners Section */}
-        <section className="bg-white py-8">
-          <div className="max-w-6xl mx-auto px-6 text-center">
+        <section className="bg-white py-6 sm:py-8">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center">
             {/* SECTION HEADER */}
-            <div className="text-center mb-10">
-              <h3 className="text-3xl md:text-4xl font-extrabold text-black tracking-tight flex items-center justify-center gap-2">
-                <span className="inline-block w-2 h-8 md:h-9 rounded-full bg-[var(--custom-orange)]" />
+            <div className="text-center mb-8 sm:mb-10">
+              <h3 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-black tracking-tight flex items-center justify-center gap-2">
+                <span className="inline-block w-2 h-6 sm:h-8 md:h-9 rounded-full bg-[var(--custom-orange)]" />
                 Our Partners
               </h3>
             </div>
@@ -705,8 +745,8 @@ const Home: React.FC = async () => {
         </section>
 
         {/* Ads Section */}
-        <section className="bg-white py-8">
-          <div className="max-w-7xl mx-auto px-4">
+        <section className="bg-white py-6 sm:py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="mt-4">
               <div className="w-full h-[160px] bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center shadow-sm">
                 <span className="text-gray-700 font-semibold">ADS</span>

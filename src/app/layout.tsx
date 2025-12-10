@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { NavigationLoadingProvider } from "@/contexts/NavigationLoadingContext";
@@ -22,18 +22,27 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en" className="w-full" suppressHydrationWarning>
+      <body
+        className={`${inter.variable} ${geistMono.variable} antialiased w-full overflow-x-hidden`}
+        suppressHydrationWarning
+      >
         <NavigationLoadingProvider>
-          <div className="flex">
+          <div className="flex w-full">
             <div
-              className="flex-1 min-h-screen"
+              className="flex-1 min-h-screen w-full"
               style={{
                 paddingTop: "var(--navbar-height, 64px)",
                 paddingRight: "var(--sidebar-width, 0px)",
