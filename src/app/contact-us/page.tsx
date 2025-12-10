@@ -1,70 +1,71 @@
-"use client";
-import React, { useEffect, useState } from "react";
-import Footer from "@/app/components/Footer";
-import Header from "../components/Header";
-import type { ServiceCard } from "@/types/services";
-import { DEFAULT_SERVICE_CARDS } from "@/data/servicesDefaults";
+"use client"
+import React, { useEffect, useRef, useState } from "react"
+import Footer from "@/app/components/Footer"
+import Header from "../components/Header"
+import type { ServiceCard } from "@/types/services"
+import { DEFAULT_SERVICE_CARDS } from "@/data/servicesDefaults"
+import ReCAPTCHA from "react-google-recaptcha"
 
 export default function ContactUsPage() {
+  // const { captchaVal, setCaptchaVal } = useState<string | null>(null)
+  const recaptchaRef = useRef<ReCAPTCHA>(null)
   useEffect(() => {
     // Handle smooth scroll to our-services section when hash is present
     const handleScroll = () => {
       if (window.location.hash === "#our-services") {
-        const element = document.getElementById("our-services");
+        const element = document.getElementById("our-services")
         if (element) {
-          element.scrollIntoView({ behavior: "smooth" });
-        }
-      }
-    };
-
-    // Try scrolling immediately
-    handleScroll();
-
-    // Also try after a short delay in case the page is still loading
-    const timeout = setTimeout(handleScroll, 300);
-
-    return () => clearTimeout(timeout);
-  }, []);
-  const [services, setServices] = useState<ServiceCard[]>(
-    DEFAULT_SERVICE_CARDS
-  );
-  const [servicesError, setServicesError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadServices() {
-      try {
-        const res = await fetch("/api/services");
-        if (!res.ok) {
-          throw new Error(`Failed to fetch services: ${res.status}`);
-        }
-        const data = await res.json();
-        const items = Array.isArray(data)
-          ? data
-          : Array.isArray(data.services)
-          ? data.services
-          : [];
-
-        if (isMounted && items.length > 0) {
-          setServices(items);
-          setServicesError(null);
-        }
-      } catch (error) {
-        console.error("Unable to load services data", error);
-        if (isMounted) {
-          setServices(DEFAULT_SERVICE_CARDS);
-          setServicesError("Unable to load the latest services right now.");
+          element.scrollIntoView({ behavior: "smooth" })
         }
       }
     }
 
-    loadServices();
+    // Try scrolling immediately
+    handleScroll()
+
+    // Also try after a short delay in case the page is still loading
+    const timeout = setTimeout(handleScroll, 300)
+
+    return () => clearTimeout(timeout)
+  }, [])
+  const [services, setServices] = useState<ServiceCard[]>(DEFAULT_SERVICE_CARDS)
+  const [servicesError, setServicesError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadServices() {
+      try {
+        const res = await fetch("/api/services")
+        if (!res.ok) {
+          throw new Error(`Failed to fetch services: ${res.status}`)
+        }
+        const data = await res.json()
+        const items = Array.isArray(data)
+          ? data
+          : Array.isArray(data.services)
+          ? data.services
+          : []
+
+        if (isMounted && items.length > 0) {
+          setServices(items)
+          setServicesError(null)
+        }
+      } catch (error) {
+        console.error("Unable to load services data", error)
+        if (isMounted) {
+          setServices(DEFAULT_SERVICE_CARDS)
+          setServicesError("Unable to load the latest services right now.")
+        }
+      }
+    }
+
+    loadServices()
 
     return () => {
-      isMounted = false;
-    };
-  }, []);
+      isMounted = false
+    }
+  }, [])
 
   const packages = [
     {
@@ -109,14 +110,14 @@ export default function ContactUsPage() {
       ],
       cta: "Get Started",
     },
-  ];
+  ]
 
   const goToContact = (e?: React.MouseEvent) => {
-    e?.preventDefault();
+    e?.preventDefault()
     document
       .getElementById("contact-form")
-      ?.scrollIntoView({ behavior: "smooth" });
-  };
+      ?.scrollIntoView({ behavior: "smooth" })
+  }
 
   return (
     <main className="min-h-screen bg-white">
@@ -198,10 +199,10 @@ export default function ContactUsPage() {
               <a
                 href="#contact-form"
                 onClick={(e) => {
-                  e.preventDefault();
+                  e.preventDefault()
                   document
                     .getElementById("contact-form")
-                    ?.scrollIntoView({ behavior: "smooth" });
+                    ?.scrollIntoView({ behavior: "smooth" })
                 }}
                 className="mt-8 inline-block w-full rounded-md bg-[var(--custom-orange)] text-white px-6 py-3 text-sm font-semibold transition-transform transform hover:scale-105 hover:shadow-lg"
               >
@@ -279,12 +280,12 @@ export default function ContactUsPage() {
               <form
                 className="space-y-5"
                 onSubmit={(e) => {
-                  e.preventDefault();
+                  e.preventDefault()
                   const data = Object.fromEntries(
                     new FormData(e.currentTarget as HTMLFormElement)
-                  );
-                  alert("Thanks! We received your message.");
-                  console.log("Form payload:", data);
+                  )
+                  alert("Thanks! We received your message.")
+                  console.log("Form payload:", data)
                 }}
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -381,5 +382,5 @@ export default function ContactUsPage() {
 
       <Footer />
     </main>
-  );
+  )
 }
