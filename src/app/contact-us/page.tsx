@@ -1,76 +1,77 @@
-"use client";
-import React, { useEffect, useState } from "react";
-import Footer from "@/app/components/Footer";
-import Header from "../components/Header";
-import type { ServiceCard } from "@/types/services";
-import { DEFAULT_SERVICE_CARDS } from "@/data/servicesDefaults";
+"use client"
+import React, { useEffect, useRef, useState } from "react"
+import Footer from "@/app/components/Footer"
+import Header from "../components/Header"
+import type { ServiceCard } from "@/types/services"
+import { DEFAULT_SERVICE_CARDS } from "@/data/servicesDefaults"
+import ReCAPTCHA from "react-google-recaptcha"
 
 export default function ContactUsPage() {
+  const [captchaVal, setCaptchaVal] = useState<string | null>(null)
+  const recaptchaRef = useRef<ReCAPTCHA>(null)
   useEffect(() => {
     // Handle smooth scroll to our-services section when hash is present
     const handleScroll = () => {
       if (window.location.hash === "#our-services") {
-        const element = document.getElementById("our-services");
+        const element = document.getElementById("our-services")
         if (element) {
-          element.scrollIntoView({ behavior: "smooth" });
-        }
-      }
-    };
-
-    // Try scrolling immediately
-    handleScroll();
-
-    // Also try after a short delay in case the page is still loading
-    const timeout = setTimeout(handleScroll, 300);
-
-    return () => clearTimeout(timeout);
-  }, []);
-  const [services, setServices] = useState<ServiceCard[]>(
-    DEFAULT_SERVICE_CARDS
-  );
-  const [servicesError, setServicesError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<{
-    type: "success" | "error" | null;
-    message: string;
-  }>({ type: null, message: "" });
-  const [phoneError, setPhoneError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadServices() {
-      try {
-        const res = await fetch("/api/services");
-        if (!res.ok) {
-          throw new Error(`Failed to fetch services: ${res.status}`);
-        }
-        const data = await res.json();
-        const items = Array.isArray(data)
-          ? data
-          : Array.isArray(data.services)
-          ? data.services
-          : [];
-
-        if (isMounted && items.length > 0) {
-          setServices(items);
-          setServicesError(null);
-        }
-      } catch (error) {
-        console.error("Unable to load services data", error);
-        if (isMounted) {
-          setServices(DEFAULT_SERVICE_CARDS);
-          setServicesError("Unable to load the latest services right now.");
+          element.scrollIntoView({ behavior: "smooth" })
         }
       }
     }
 
-    loadServices();
+    // Try scrolling immediately
+    handleScroll()
+
+    // Also try after a short delay in case the page is still loading
+    const timeout = setTimeout(handleScroll, 300)
+
+    return () => clearTimeout(timeout)
+  }, [])
+  const [services, setServices] = useState<ServiceCard[]>(DEFAULT_SERVICE_CARDS)
+  const [servicesError, setServicesError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<{
+    type: "success" | "error" | null
+    message: string
+  }>({ type: null, message: "" })
+  const [phoneError, setPhoneError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadServices() {
+      try {
+        const res = await fetch("/api/services")
+        if (!res.ok) {
+          throw new Error(`Failed to fetch services: ${res.status}`)
+        }
+        const data = await res.json()
+        const items = Array.isArray(data)
+          ? data
+          : Array.isArray(data.services)
+          ? data.services
+          : []
+
+        if (isMounted && items.length > 0) {
+          setServices(items)
+          setServicesError(null)
+        }
+      } catch (error) {
+        console.error("Unable to load services data", error)
+        if (isMounted) {
+          setServices(DEFAULT_SERVICE_CARDS)
+          setServicesError("Unable to load the latest services right now.")
+        }
+      }
+    }
+
+    loadServices()
 
     return () => {
-      isMounted = false;
-    };
-  }, []);
+      isMounted = false
+    }
+  }, [])
 
   const packages = [
     {
@@ -115,56 +116,56 @@ export default function ContactUsPage() {
       ],
       cta: "Get Started",
     },
-  ];
+  ]
 
   const goToContact = (e?: React.MouseEvent) => {
-    e?.preventDefault();
+    e?.preventDefault()
     document
       .getElementById("contact-form")
-      ?.scrollIntoView({ behavior: "smooth" });
-  };
+      ?.scrollIntoView({ behavior: "smooth" })
+  }
 
   const validatePhoneNumber = (dial: string, phone: string): string | null => {
     if (!phone || phone.trim() === "") {
-      return null; // Phone is optional
+      return null // Phone is optional
     }
 
     // Remove spaces, dashes, and other non-digit characters except +
-    const cleanedPhone = phone.replace(/[\s\-\(\)]/g, "");
+    const cleanedPhone = phone.replace(/[\s\-\(\)]/g, "")
 
     // Check if it contains only digits
     if (!/^\d+$/.test(cleanedPhone)) {
-      return "Phone number should contain only numbers";
+      return "Phone number should contain only numbers"
     }
 
     // Validate based on country code
     if (dial === "+63") {
       // Philippines: should be 10 digits starting with 9
       if (cleanedPhone.length !== 10) {
-        return "Philippines phone number should be 10 digits";
+        return "Philippines phone number should be 10 digits"
       }
       if (!cleanedPhone.startsWith("9")) {
-        return "Philippines mobile number should start with 9";
+        return "Philippines mobile number should start with 9"
       }
     } else if (dial === "+1") {
       // US/Canada: should be 10 digits
       if (cleanedPhone.length !== 10) {
-        return "US/Canada phone number should be 10 digits";
+        return "US/Canada phone number should be 10 digits"
       }
     } else if (dial === "+61") {
       // Australia: should be 9 digits (without leading 0)
       if (cleanedPhone.length !== 9) {
-        return "Australia phone number should be 9 digits";
+        return "Australia phone number should be 9 digits"
       }
     } else {
       // Generic validation: should be between 7 and 15 digits
       if (cleanedPhone.length < 7 || cleanedPhone.length > 15) {
-        return "Phone number should be between 7 and 15 digits";
+        return "Phone number should be between 7 and 15 digits"
       }
     }
 
-    return null; // Valid
-  };
+    return null // Valid
+  }
 
   return (
     <main className="min-h-screen bg-white">
@@ -246,10 +247,10 @@ export default function ContactUsPage() {
               <a
                 href="#contact-form"
                 onClick={(e) => {
-                  e.preventDefault();
+                  e.preventDefault()
                   document
                     .getElementById("contact-form")
-                    ?.scrollIntoView({ behavior: "smooth" });
+                    ?.scrollIntoView({ behavior: "smooth" })
                 }}
                 className="mt-8 inline-block w-full rounded-md bg-[var(--custom-orange)] text-white px-6 py-3 text-sm font-semibold transition-transform transform hover:scale-105 hover:shadow-lg"
               >
@@ -327,35 +328,35 @@ export default function ContactUsPage() {
               <form
                 className="space-y-5"
                 onSubmit={async (e) => {
-                  e.preventDefault();
-                  setIsSubmitting(true);
-                  setSubmitStatus({ type: null, message: "" });
-                  setPhoneError(null);
+                  e.preventDefault()
+                  setIsSubmitting(true)
+                  setSubmitStatus({ type: null, message: "" })
+                  setPhoneError(null)
 
                   const formData = new FormData(
                     e.currentTarget as HTMLFormElement
-                  );
-                  const dial = formData.get("dial") as string;
-                  const phone = formData.get("phone") as string;
+                  )
+                  const dial = formData.get("dial") as string
+                  const phone = formData.get("phone") as string
 
                   // Validate phone number
                   const phoneValidationError = validatePhoneNumber(
                     dial,
                     phone || ""
-                  );
+                  )
                   if (phoneValidationError) {
-                    setPhoneError(phoneValidationError);
-                    setIsSubmitting(false);
-                    return;
+                    setPhoneError(phoneValidationError)
+                    setIsSubmitting(false)
+                    return
                   }
 
                   // Clean phone number (remove spaces, dashes, etc.)
                   const cleanedPhone = phone
                     ? phone.replace(/[\s\-\(\)]/g, "")
-                    : "";
+                    : ""
                   const phone_number = cleanedPhone
                     ? `${dial} ${cleanedPhone}`.trim()
-                    : null;
+                    : null
 
                   const data = {
                     name: formData.get("fullName") as string,
@@ -363,7 +364,7 @@ export default function ContactUsPage() {
                     company: formData.get("company") as string,
                     phone_number,
                     message: formData.get("message") as string,
-                  };
+                  }
 
                   try {
                     const response = await fetch("/api/contact-form", {
@@ -372,29 +373,35 @@ export default function ContactUsPage() {
                         "Content-Type": "application/json",
                       },
                       body: JSON.stringify(data),
-                    });
+                    })
 
-                    const result = await response.json();
+                    const result = await response.json()
 
                     if (!response.ok) {
-                      throw new Error(result.error || "Failed to submit form");
+                      throw new Error(result.error || "Failed to submit form")
                     }
 
                     setSubmitStatus({
                       type: "success",
                       message:
                         "Thanks! We received your message. We'll get back to you soon.",
-                    });
-                    (e.target as HTMLFormElement).reset();
+                    })
+                    ;(e.target as HTMLFormElement).reset()
+
+                    setCaptchaVal(null)
+                    recaptchaRef.current?.reset()
                   } catch (error: any) {
                     setSubmitStatus({
                       type: "error",
                       message:
                         error.message ||
                         "Something went wrong. Please try again.",
-                    });
+                    })
+
+                    setCaptchaVal(null)
+                    recaptchaRef.current?.reset()
                   } finally {
-                    setIsSubmitting(false);
+                    setIsSubmitting(false)
                   }
                 }}
               >
@@ -437,7 +444,7 @@ export default function ContactUsPage() {
                           onChange={(e) => {
                             // Clear error when user starts typing
                             if (phoneError) {
-                              setPhoneError(null);
+                              setPhoneError(null)
                             }
                           }}
                         />
@@ -499,9 +506,16 @@ export default function ContactUsPage() {
                   </div>
                 )}
 
+                <ReCAPTCHA
+                  ref={recaptchaRef}
+                  sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+                  onChange={(val) => setCaptchaVal(val)}
+                  onExpired={() => setCaptchaVal(null)}
+                ></ReCAPTCHA>
+
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={!captchaVal || isSubmitting}
                   className="w-full mt-4 rounded-md bg-[var(--custom-red)] text-white px-4 py-3 text-sm font-semibold transition-transform transform hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   {isSubmitting ? "Sending..." : "Send message"}
@@ -524,5 +538,5 @@ export default function ContactUsPage() {
 
       <Footer />
     </main>
-  );
+  )
 }
