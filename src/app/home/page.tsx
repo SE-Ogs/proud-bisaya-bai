@@ -90,7 +90,7 @@ const Home: React.FC = async () => {
     // NEW: Hero Banner - fetch active banner
     supabase
       .from("hero_banner")
-      .select("image_url")
+      .select("image_url, subtitle")
       .eq("is_active", true)
       .limit(1)
       .maybeSingle(),
@@ -165,6 +165,9 @@ const Home: React.FC = async () => {
   // NEW: Get hero banner image with fallback to default
   const heroBannerImageUrl =
     heroBannerDataRaw?.image_url || "/images/banner.webp";
+  const heroSubtitle =
+    heroBannerDataRaw?.subtitle ||
+    "Your daily guide to the best of Central Visayas.";
 
   return (
     <div>
@@ -191,9 +194,7 @@ const Home: React.FC = async () => {
               Proud Bisaya Bai
             </h1>
             <p className="mt-4 text-lg md:text-xl max-w-2xl">
-              Your daily guide to the best of Central Visayas. Discover
-              authentic Bisaya food, travel routes, and stories from Cebu and
-              beyond.
+              {heroSubtitle}
             </p>
             <Link href="/contact-us">
               <button className="mt-6 px-6 py-3 bg-[var(--custom-red)] text-white font-semibold rounded-lg shadow-lg cursor-pointer transition-transform transform hover:scale-105 hover:shadow-xl active:scale-95">

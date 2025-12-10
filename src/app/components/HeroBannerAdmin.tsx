@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 interface HeroBanner {
   id: string;
   image_url: string;
+  subtitle?: string | null;
   is_active: boolean;
   updated_at: string;
 }
@@ -18,6 +19,7 @@ export default function HeroBannerAdmin() {
   const [message, setMessage] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [subtitle, setSubtitle] = useState("");
 
   const supabase = createClient();
 
@@ -50,13 +52,19 @@ export default function HeroBannerAdmin() {
     try {
       const { data, error } = await supabase
         .from("hero_banner")
-        .select("*")
+        .select(
+          "id, image_url, is_active, updated_at, subtitle"
+        )
         .eq("is_active", true)
         .single();
 
       if (error) throw error;
       setHeroBanner(data);
       setPreviewUrl(data.image_url);
+      setSubtitle(
+        data.subtitle ||
+          "Your daily guide to the best of Central Visayas."
+      );
     } catch (error) {
       console.error("Error fetching hero banner:", error);
       setMessage("Error loading hero banner");
@@ -117,6 +125,10 @@ export default function HeroBannerAdmin() {
 
   const handleSave = async () => {
     if (!heroBanner) return;
+    if (!subtitle.trim()) {
+      setMessage("Please enter the hero subtitle before saving.");
+      return;
+    }
 
     setSaving(true);
     setMessage("");
@@ -128,6 +140,7 @@ export default function HeroBannerAdmin() {
         .from("hero_banner")
         .update({
           image_url: previewUrl,
+          subtitle: subtitle.trim(),
           updated_at: new Date().toISOString(),
           updated_by: user?.id,
         })
@@ -139,6 +152,7 @@ export default function HeroBannerAdmin() {
       setHeroBanner({
         ...heroBanner,
         image_url: previewUrl,
+        subtitle: subtitle.trim(),
         updated_at: new Date().toISOString(),
       });
 
@@ -155,6 +169,7 @@ export default function HeroBannerAdmin() {
   const handleReset = () => {
     if (heroBanner) {
       setPreviewUrl(heroBanner.image_url);
+      setSubtitle(heroBanner.subtitle || "");
       setMessage("");
     }
   };
@@ -194,7 +209,9 @@ export default function HeroBannerAdmin() {
     );
   }
 
-  const hasChanges = previewUrl !== heroBanner?.image_url;
+  const hasChanges =
+    previewUrl !== heroBanner?.image_url ||
+    subtitle !== (heroBanner?.subtitle || "");
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
@@ -309,7 +326,18 @@ export default function HeroBannerAdmin() {
                     <p className="text-xs text-gray-500 mt-1">Max file size: 5MB</p>
                   </div>
                 </div>
+              </div>
 
+              {/* Subtitle */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Hero Subtitle</label>
+                <textarea
+                  value={subtitle}
+                  onChange={(e) => setSubtitle(e.target.value)}
+                  rows={3}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  placeholder="Your daily guide to the best of Central Visayas."
+                />
               </div>
 
               {/* Action Buttons */}
