@@ -6,8 +6,15 @@ export function createAdminClient() {
     process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SERVICE_ROLE_KEY;
 
-  if (!url || !serviceKey) {
-    throw new Error("Missing Supabase service role configuration.");
+  if (!url) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL is not set in environment variables.");
+  }
+
+  if (!serviceKey) {
+    throw new Error(
+      "NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY is not set in Vercel environment variables. " +
+      "Please add it in Vercel Dashboard → Settings → Environment Variables and redeploy."
+    );
   }
 
   return createClient(url, serviceKey, {

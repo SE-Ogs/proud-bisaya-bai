@@ -5,7 +5,6 @@ import Header from "@/app/components/Header";
 import LatestUpdateCard from "@/app/components/LatestUpdateCard";
 import VideoCarousel from "@/app/components/VideoCarousel";
 import { createClient } from "@/utils/supabase/server";
-import { createAdminClient } from "@/utils/supabase/admin";
 import BreakingNewsCarousel from "../components/BreakingNewsCarousel";
 import PartnersCarousel from "../components/PartnersCarousel";
 
@@ -103,18 +102,11 @@ const Home: React.FC = async () => {
   if (newsErr) console.error("News & Entertainment query failed:", newsErr);
   if (heroBannerErr) console.error("Hero banner query failed:", heroBannerErr); // NEW: Log error
 
-  // Fetch partners using admin client (similar to videos)
+  // Fetch partners using regular client (same as articles)
   let partnersDataRaw: any[] = [];
   let partnersErr: any = null;
   try {
-    // Try admin client first, fall back to regular client
-    let partnersSupabase;
-    try {
-      partnersSupabase = createAdminClient();
-    } catch {
-      partnersSupabase = supabase;
-    }
-    const { data, error } = await partnersSupabase
+    const { data, error } = await supabase
       .from("partners")
       .select("id, name, description, image_url, url, created_at")
       .order("created_at", { ascending: false });
@@ -131,14 +123,7 @@ const Home: React.FC = async () => {
   let videosDataRaw: any[] = [];
   let videosErr: any = null;
   try {
-    // Try admin client first, fall back to regular client
-    let videosSupabase;
-    try {
-      videosSupabase = createAdminClient();
-    } catch {
-      videosSupabase = supabase;
-    }
-    const { data, error } = await videosSupabase
+    const { data, error } = await supabase
       .from("videos")
       .select("id, title, url, platform, thumbnail_url, isFeatured, created_at")
       .eq("isFeatured", true)
@@ -161,14 +146,7 @@ const Home: React.FC = async () => {
   let facebookLiveErr: any = null;
 
   try {
-    // Try admin client first, fall back to regular client
-    let facebookSupabase;
-    try {
-      facebookSupabase = createAdminClient();
-    } catch {
-      facebookSupabase = supabase;
-    }
-    const { data, error } = await facebookSupabase
+    const { data, error } = await supabase
       .from("facebook_live")
       .select("fb_url, fb_embed_url, is_active")
       .limit(1)
