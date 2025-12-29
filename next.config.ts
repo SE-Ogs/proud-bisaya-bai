@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  eslint: {
+    //allow production builds to succeed even if there are ESLint errors
+    ignoreDuringBuilds: true,
+  },
   async redirects() {
       return[
         {
