@@ -44,10 +44,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const supabaseAdmin = createAdminClient();
+    // Try admin client first, fall back to regular client if needed
+    let supabaseClient;
+    try {
+      supabaseClient = createAdminClient();
+    } catch (adminErr: any) {
+      // If admin client fails, try using regular server client
+      // This requires RLS policies to allow public inserts
+      const { createClient: createServerClient } = await import("@/utils/supabase/server");
+      supabaseClient = await createServerClient();
+    }
 
     // Insert into contact_form table
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabaseClient
       .from("contact_form")
       .insert([
         {
@@ -64,7 +73,7 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error("Contact form insert error:", error);
       return NextResponse.json(
-        { error: "Failed to submit contact form" },
+        { error: "Failed to submit contact form", details: error.message },
         { status: 500 }
       );
     }

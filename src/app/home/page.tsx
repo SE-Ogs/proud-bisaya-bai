@@ -107,8 +107,14 @@ const Home: React.FC = async () => {
   let partnersDataRaw: any[] = [];
   let partnersErr: any = null;
   try {
-    const supabaseAdmin = createAdminClient();
-    const { data, error } = await supabaseAdmin
+    // Try admin client first, fall back to regular client
+    let partnersSupabase;
+    try {
+      partnersSupabase = createAdminClient();
+    } catch {
+      partnersSupabase = supabase;
+    }
+    const { data, error } = await partnersSupabase
       .from("partners")
       .select("id, name, description, image_url, url, created_at")
       .order("created_at", { ascending: false });
@@ -125,8 +131,14 @@ const Home: React.FC = async () => {
   let videosDataRaw: any[] = [];
   let videosErr: any = null;
   try {
-    const supabaseAdmin = createAdminClient();
-    const { data, error } = await supabaseAdmin
+    // Try admin client first, fall back to regular client
+    let videosSupabase;
+    try {
+      videosSupabase = createAdminClient();
+    } catch {
+      videosSupabase = supabase;
+    }
+    const { data, error } = await videosSupabase
       .from("videos")
       .select("id, title, url, platform, thumbnail_url, isFeatured, created_at")
       .eq("isFeatured", true)
@@ -149,8 +161,14 @@ const Home: React.FC = async () => {
   let facebookLiveErr: any = null;
 
   try {
-    const supabaseAdmin = createAdminClient();
-    const { data, error } = await supabaseAdmin
+    // Try admin client first, fall back to regular client
+    let facebookSupabase;
+    try {
+      facebookSupabase = createAdminClient();
+    } catch {
+      facebookSupabase = supabase;
+    }
+    const { data, error } = await facebookSupabase
       .from("facebook_live")
       .select("fb_url, fb_embed_url, is_active")
       .limit(1)

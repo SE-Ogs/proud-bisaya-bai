@@ -1,10 +1,20 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 export async function GET() {
   try {
-    const supabaseAdmin = createAdminClient();
-    const { data, error } = await supabaseAdmin
+    // Try admin client first (if service role key is available)
+    // Fall back to regular client for public access
+    let supabase;
+    try {
+      supabase = createAdminClient();
+    } catch {
+      // If admin client fails (missing service role key), use regular client
+      supabase = await createClient();
+    }
+
+    const { data, error } = await supabase
       .from("about_us_content")
       .select("id, description, updated_at")
       .single();
