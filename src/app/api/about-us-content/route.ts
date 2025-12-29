@@ -20,14 +20,27 @@ export async function GET() {
           updated_at: null,
         });
       }
-      throw error;
+      console.error("About Us content query error:", error);
+      // Return detailed error for debugging
+      return NextResponse.json(
+        { 
+          error: "Failed to load About Us content",
+          details: error.message,
+          code: error.code,
+          hint: error.hint
+        },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json(data ?? { id: null, description: "", updated_at: null });
   } catch (err: any) {
     console.error("About Us content GET error:", err);
     return NextResponse.json(
-      { error: "Failed to load About Us content" },
+      { 
+        error: "Failed to load About Us content",
+        details: err.message || err.toString()
+      },
       { status: 500 }
     );
   }
